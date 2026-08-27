@@ -50,8 +50,8 @@ const btnBase =
 const btnPrimarySm = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
 const btnPrimaryLg = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-6 py-3.5 text-base hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
 const btnPrimaryLgInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-6 py-3.5 text-base hover:bg-surface-alt`
-const btnGhostSm = `${btnBase} border-border text-text px-4.5 py-2.25 text-sm hover:border-accent-solid hover:text-accent-solid`
-const btnGhostLg = `${btnBase} border-border text-text px-6 py-3.25 text-base hover:border-accent-solid hover:text-accent-solid`
+const btnGhostSm = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-4.5 py-2.25 text-sm hover:bg-stone-300`
+const btnGhostLg = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-6 py-3.25 text-base hover:bg-stone-300`
 
 function App() {
   return (
