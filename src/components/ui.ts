@@ -24,3 +24,16 @@ export const formAlert =
   'flex items-start gap-2.5 rounded-sm border border-error-solid bg-error-soft px-4 py-3 text-sm font-semibold text-error-solid'
 
 export const authCard = 'rounded-lg border border-border bg-surface p-8 shadow-md sm:p-9'
+
+export const surfaceCard = 'rounded-md border border-border bg-surface shadow-sm'
+export const iconChip =
+  'inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong'
+export const countPill =
+  'rounded-full bg-surface-alt px-2.5 py-1 text-xs font-bold text-text-muted tabular-nums'
+export const metaText = 'text-xs text-text-muted'
+
+export const btnPrimaryMd = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-5.5 py-3 text-base hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
+export const viewAllPill =
+  'inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-bold text-accent-solid no-underline shadow-sm transition-[box-shadow,border-color] duration-150 hover:border-accent-solid hover:shadow-md'
+export const cardLink =
+  'inline-flex items-center gap-1.5 text-sm font-bold text-accent-solid no-underline hover:underline'

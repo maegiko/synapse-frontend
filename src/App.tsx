@@ -1,52 +1,134 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { queryClient } from './lib/queryClient'
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <GuestRoute>
-                <LandingPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <LoginPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <GuestRoute>
-                <RegisterPage />
-              </GuestRoute>
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <GuestRoute>
+                  <LandingPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <LoginPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <GuestRoute>
+                  <RegisterPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notes/new"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Summarize a note"
+                    body="File upload and AI summarization land here next. The dashboard already links to it, so the route is in place."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flashcards/new"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Generate a flashcard deck"
+                    body="Picking one of your notes and generating a deck from it lands here next."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quiz/new"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Generate a quiz"
+                    body="Picking one of your notes and generating a ten-question quiz from it lands here next."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/library"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Your library"
+                    body="One place for every note, deck, and quiz you have made. The dashboard already links here."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notes"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Your notes"
+                    body="The full list of summarized notes, with search and detail views, lands here next."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flashcards"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Your flashcard decks"
+                    body="The full list of decks, plus studying a deck card by card, lands here next."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quiz"
+              element={
+                <ProtectedRoute>
+                  <ComingSoonPage
+                    title="Your quizzes"
+                    body="The full list of quizzes, plus running one and saving a score, lands here next."
+                  />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }
 
