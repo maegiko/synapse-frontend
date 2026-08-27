@@ -7,6 +7,7 @@ import {
   subscribeToAccessToken,
   type UserDetails,
 } from '../api'
+import { clearQueryCache } from '../lib/queryClient'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (token === null) {
           setUser(null)
           setStatus('anonymous')
+          clearQueryCache()
         }
       }),
     [],
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAccessToken(null)
       setUser(null)
       setStatus('anonymous')
+      clearQueryCache()
     }
   }, [])
 

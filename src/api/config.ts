@@ -21,4 +21,16 @@ export const API_PATHS = {
   user: {
     details: '/api/user/details',
   },
+  notes: {
+    list: '/api/notes/list',
+    summarise: '/api/notes/summarise',
+  },
+  flashcards: {
+    list: '/api/flashcards/list',
+    generate: '/api/flashcards/generate',
+  },
+  quiz: {
+    list: '/api/quiz/list',
+    generate: '/api/quiz/generate',
+  },
 } as const

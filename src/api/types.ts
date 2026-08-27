@@ -3,6 +3,9 @@
  * Property names match the backend JSON exactly; do not normalize them here.
  */
 
+export type PublicId = string
+export type LocalDateTimeString = string
+
 export interface ApiErrorBody {
   message: string
 }
@@ -41,3 +44,59 @@ export interface UserDetails {
 export type UpdateUserDetailsRequest =
   | { fullName: string; email?: string }
   | { fullName?: string; email: string }
+
+export interface ConceptSummary {
+  name: string
+  explanation: string
+}
+
+export interface NoteSummary {
+  id: PublicId
+  title: string
+  overview: string
+  keypoints: string[]
+  concepts: ConceptSummary[]
+  importantTerms: string[]
+}
+
+export interface NoteListResponse {
+  notes: NoteSummary[]
+}
+
+/** `title` is the flashcard *question*, both here and in generation responses. */
+export interface SavedFlashcard {
+  id: PublicId
+  title: string
+  answer: string
+}
+
+export interface FlashcardDeck {
+  deckId: PublicId
+  title: string
+  flashcards: SavedFlashcard[]
+}
+
+export interface FlashcardListResponse {
+  flashcardDecks: FlashcardDeck[]
+}
+
+/** List items carry question previews only: no answers and no questionType. */
+export interface QuizQuestionPreview {
+  id: PublicId
+  text: string
+  createdAt: LocalDateTimeString
+}
+
+export interface QuizListItem {
+  id: PublicId
+  title: string
+  description: string | null
+  questions: QuizQuestionPreview[]
+  /** 1 through 5, or null until it is set. */
+  difficulty: number | null
+  createdAt: LocalDateTimeString
+}
+
+export interface QuizListResponse {
+  quizzes: QuizListItem[]
+}
