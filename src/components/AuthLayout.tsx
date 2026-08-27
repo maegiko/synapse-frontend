@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import heroMark from '../assets/hero.png'
+import synapseLogo from '../assets/synapse_logo.png'
 import { authCard } from './ui'
 
 interface AuthLayoutProps {
@@ -28,7 +28,7 @@ export function AuthLayout({
           to="/"
           className="inline-flex items-center gap-2.5 self-start font-display text-lg font-semibold text-text no-underline lg:hidden"
         >
-          <img src={heroMark} alt="" className="rounded-md" width="28" height="28" />
+          <img src={synapseLogo} alt="" width="44" height="44" />
           <span>Synapse</span>
         </Link>
 
@@ -47,7 +47,7 @@ export function AuthLayout({
           to="/"
           className="inline-flex items-center gap-2.5 self-start font-display text-lg font-semibold text-on-accent no-underline"
         >
-          <img src={heroMark} alt="" className="rounded-md" width="28" height="28" />
+          <img src={synapseLogo} alt="" width="44" height="44" />
           <span>Synapse</span>
         </Link>
 

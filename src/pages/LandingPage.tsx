@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import heroMark from '../assets/hero.png'
+import synapseLogo from '../assets/synapse_logo.png'
 import {
   btnGhostLg,
   btnGhostSm,
@@ -8,6 +8,7 @@ import {
   btnPrimarySm,
   shell,
 } from '../components/ui'
+import { IconChart, IconDeck, IconSummary, IconUpload } from '../components/icons'
 
 const NAV_LINKS = [
   { href: '#how-it-works', label: 'How it works' },
@@ -65,7 +66,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
         <div className={`${shell} flex items-center gap-7 py-4`}>
           <Link to="/" className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-semibold text-text no-underline">
-            <img src={heroMark} alt="" className="rounded-md" width="28" height="28" />
+            <img src={synapseLogo} alt="" width="44" height="44" />
             <span>Synapse</span>
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-semibold" aria-label="Primary">
@@ -204,7 +205,7 @@ export function LandingPage() {
       <footer className="border-t border-border py-7">
         <div className={`${shell} flex flex-wrap items-center justify-between gap-4`}>
           <Link to="/" className="inline-flex items-center gap-2.5 text-base text-text-muted no-underline">
-            <img src={heroMark} alt="" className="rounded-md" width="22" height="22" />
+            <img src={synapseLogo} alt="" width="34" height="34" />
             <span>Synapse</span>
           </Link>
           <div className="flex gap-5 text-sm font-semibold">
@@ -321,41 +322,5 @@ function ScoreMock() {
       </ul>
       <p className="text-xs text-text-muted">Every attempt is saved automatically</p>
     </div>
-  )
-}
-
-function IconUpload() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5.5 w-5.5" aria-hidden="true">
-      <path d="M12 16V4M12 4 7 9M12 4l5 5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function IconSummary() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5.5 w-5.5" aria-hidden="true">
-      <path d="M12 3.5 13.6 8l4.4 1.6-4.4 1.6L12 15.7 10.4 11.2 6 9.6l4.4-1.6L12 3.5Z" strokeLinejoin="round" />
-      <path d="M19 15.5v3M17.5 17h3" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function IconDeck() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5.5 w-5.5" aria-hidden="true">
-      <rect x="6" y="7" width="13" height="9" rx="1.6" />
-      <path d="M4 10v6a2 2 0 0 0 2 2h9" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function IconChart() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5.5 w-5.5" aria-hidden="true">
-      <path d="M4 19V9M11 19V5M18 19v-6" strokeLinecap="round" />
-      <path d="M4 19h16" strokeLinecap="round" />
-    </svg>
   )
 }
