@@ -25,7 +25,7 @@ export function ActionCard({ to, icon, art, title, body, cta, blockedReason }: A
         {art}
       </span>
       <span className={`${iconChip} relative`}>{icon}</span>
-      <h3 className="relative mt-4 mb-2 font-body text-base font-bold">{title}</h3>
+      <h3 className="relative mt-4 mb-2 text-base font-bold">{title}</h3>
       <p className="relative max-w-[22ch] text-sm text-text-muted">{body}</p>
     </>
   )

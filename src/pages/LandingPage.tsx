@@ -128,7 +128,7 @@ export function LandingPage() {
                   <span className="mb-4 inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
                     {step.icon}
                   </span>
-                  <h3 className="mb-2 font-body text-base font-bold">{step.title}</h3>
+                  <h3 className="mb-2 text-base font-bold">{step.title}</h3>
                   <p className="text-sm text-text-muted">{step.body}</p>
                 </li>
               ))}
@@ -236,17 +236,17 @@ function SummaryCardMock() {
         <span className="ml-2 text-xs font-semibold text-text-muted">behavioural-modelling.pdf</span>
       </div>
       <div className="px-6 pt-5 pb-6">
-        <p className="mb-1.5 text-xs font-extrabold uppercase tracking-wide text-accent-solid">Overview</p>
+        <p className="mb-1.5 font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Overview</p>
         <p className="text-sm leading-relaxed text-text">
           Behavioural models simplify real systems into rules that predict how
           actors respond to change.
         </p>
-        <p className="mb-1.5 mt-4 text-xs font-extrabold uppercase tracking-wide text-accent-solid">Key points</p>
+        <p className="mb-1.5 mt-4 font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Key points</p>
         <ul className="grid gap-1 pl-4.5 text-sm text-text">
           <li>Models trade accuracy for tractability.</li>
           <li>State transitions capture behaviour over time.</li>
         </ul>
-        <p className="mb-1.5 mt-4 text-xs font-extrabold uppercase tracking-wide text-accent-solid">Terms</p>
+        <p className="mb-1.5 mt-4 font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Terms</p>
         <div className="flex flex-wrap gap-2">
           {['state machine', 'invariant', 'transition'].map((term) => (
             <span key={term} className="rounded-full bg-accent-soft px-2.5 py-1.5 text-xs font-bold text-accent-strong">
@@ -262,7 +262,7 @@ function SummaryCardMock() {
 function FlashcardMock() {
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-accent-solid">Flashcard deck</p>
+      <p className="font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Flashcard deck</p>
       <div className="flashcard relative h-42 cursor-pointer" tabIndex={0}>
         <div className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-md border border-border bg-surface-alt p-4.5 text-center font-semibold text-text transition-transform duration-500">
           <p>What does a state machine model?</p>
@@ -279,7 +279,7 @@ function FlashcardMock() {
 function QuizMock() {
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-accent-solid">Quiz - question 3 of 10</p>
+      <p className="font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Quiz - question 3 of 10</p>
       <div className="flex h-42 flex-col justify-center gap-3.5 rounded-md bg-surface-alt p-4.5">
         <p className="text-sm font-bold">A sequence diagram represents interactions over time.</p>
         <ul className="grid gap-2 p-0 text-sm">
@@ -308,7 +308,7 @@ function ScoreMock() {
   ]
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="text-xs font-extrabold uppercase tracking-wide text-accent-solid">Score history</p>
+      <p className="font-display text-xs font-extrabold uppercase tracking-wide text-accent-solid">Score history</p>
       <ul className="flex h-42 flex-col justify-center gap-4 p-0">
         {rows.map((row) => (
           <li key={row.label} className="grid grid-cols-[1fr_2fr_auto] items-center gap-2.5 text-xs">
