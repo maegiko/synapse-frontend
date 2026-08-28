@@ -6,7 +6,7 @@ import { AppHeader } from '../components/AppHeader'
 import { FileDropzone } from '../components/FileDropzone'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
-import { IconArrowRight, IconSpinner } from '../components/icons'
+import { IconArrowLeft, IconSpinner } from '../components/icons'
 import { btnSubmit, cardLink, shell, surfaceCard } from '../components/ui'
 import { api } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
@@ -126,8 +126,8 @@ export function NewNotePage() {
 
       <main className={`${shell} pt-10 pb-20`}>
         <Link to="/dashboard" className={cardLink}>
+          <IconArrowLeft />
           Back to dashboard
-          <IconArrowRight />
         </Link>
 
         <h1 className="mt-5 text-2xl">Summarise a note</h1>

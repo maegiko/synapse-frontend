@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { LibraryCard } from '../components/LibraryCard'
-import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
+import { IconArrowLeft, IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { btnPrimaryLg, cardLink, countPill, fieldInput, shell, surfaceCard } from '../components/ui'
 import { toFormMessage } from '../lib/apiErrors'
 import { formatRelative } from '../lib/formatDate'
@@ -165,8 +165,8 @@ export function LibraryPage() {
 
       <main className={`${shell} pt-10 pb-20`}>
         <Link to="/dashboard" className={cardLink}>
+          <IconArrowLeft />
           Back to dashboard
-          <IconArrowRight />
         </Link>
 
         <h1 className="mt-5 text-2xl">Your library</h1>

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
-import { IconArrowRight } from '../components/icons'
+import { IconArrowLeft, IconArrowRight } from '../components/icons'
 import { btnGhostSm, cardLink, countPill, shell, surfaceCard } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { useNote } from '../lib/queries'
@@ -129,8 +129,8 @@ export function NotePage() {
 
       <main className={`${shell} pt-10 pb-20`}>
         <Link to="/dashboard" className={cardLink}>
+          <IconArrowLeft />
           Back to dashboard
-          <IconArrowRight />
         </Link>
 
         <div className="mt-5">

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
-import { IconArrowRight } from '../components/icons'
+import { IconArrowLeft } from '../components/icons'
 import { shell, surfaceCard } from '../components/ui'
 
 interface ComingSoonPageProps {
@@ -22,8 +22,8 @@ export function ComingSoonPage({ title, body }: ComingSoonPageProps) {
             to="/dashboard"
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-accent-solid no-underline hover:underline"
           >
+            <IconArrowLeft />
             Back to dashboard
-            <IconArrowRight />
           </Link>
         </div>
       </main>

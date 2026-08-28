@@ -5,7 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from './AppHeader'
 import { FormAlert } from './FormAlert'
 import { GenerationStatus } from './GenerationStatus'
-import { IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
+import { IconArrowLeft, IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
 import {
   btnGhostLg,
   btnPrimaryLg,
@@ -218,8 +218,8 @@ export function GenerateFromNote({
 
       <main className={`${shell} pt-10 pb-20`}>
         <Link to="/dashboard" className={cardLink}>
+          <IconArrowLeft />
           Back to dashboard
-          <IconArrowRight />
         </Link>
 
         <h1 className="mt-5 text-2xl">{heading}</h1>
@@ -240,8 +240,8 @@ export function GenerateFromNote({
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Link to="/dashboard" className={btnPrimaryLg}>
+                  <IconArrowLeft />
                   Back to dashboard
-                  <IconArrowRight />
                 </Link>
                 <button type="button" className={btnGhostLg} onClick={startAnother}>
                   Start another
