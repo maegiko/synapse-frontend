@@ -73,7 +73,7 @@ export function DashboardPage() {
       </section>
 
       <main className={`${shell} pb-20`}>
-        <h2 className="mt-12 mb-5 text-lg">Start something new</h2>
+        <h2 className="mt-12 mb-5 text-xl">Start something new</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <ActionCard
             to="/notes/new"
@@ -101,7 +101,7 @@ export function DashboardPage() {
         </div>
 
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
-          <h2 className="text-lg">Your library</h2>
+          <h2 className="text-xl">Your library</h2>
           <Link to="/library" className={viewAllButton}>
             View all
             <IconArrowRight />
