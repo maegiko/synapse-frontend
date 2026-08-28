@@ -117,3 +117,12 @@ export function IconTrash({ className = 'h-4 w-4' }: IconProps) {
     </svg>
   )
 }
+
+/** Whole stars only, so this is either filled or outlined — never partial. */
+export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.6" className={className} aria-hidden="true">
+      <path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9L12 3.6Z" strokeLinejoin="round" />
+    </svg>
+  )
+}

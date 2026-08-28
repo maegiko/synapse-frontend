@@ -14,6 +14,7 @@ import { NewNotePage } from './pages/NewNotePage'
 import { NewQuizPage } from './pages/NewQuizPage'
 import { NotePage } from './pages/NotePage'
 import { PlayDeckPage } from './pages/PlayDeckPage'
+import { PlayQuizPage } from './pages/PlayQuizPage'
 import { QuizPage } from './pages/QuizPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { queryClient } from './lib/queryClient'
@@ -110,6 +111,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <QuizPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quiz/:quizId/play"
+              element={
+                <ProtectedRoute>
+                  <PlayQuizPage />
                 </ProtectedRoute>
               }
             />

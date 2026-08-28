@@ -170,6 +170,11 @@ export interface UpdateDifficultyRequest {
   difficulty: number
 }
 
+export interface SaveScoreRequest {
+  /** At least zero, and no more than the quiz's current question count. */
+  score: number
+}
+
 /** The only resource whose identifier is named `publicId` rather than `id`. */
 export interface QuizScore {
   publicId: PublicId

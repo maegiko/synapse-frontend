@@ -41,6 +41,7 @@ export const API_PATHS = {
     question: (quizId: string, questionId: string) =>
       `/api/quiz/${encodeURIComponent(quizId)}/questions/${encodeURIComponent(questionId)}`,
     difficulty: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/difficulty`,
+    score: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/score`,
     scores: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/score/list`,
   },
 } as const

@@ -4,12 +4,21 @@ import synapseLogo from '../assets/synapse_logo.png'
 import { useAuth } from '../auth/useAuth'
 import { btnGhostSm, shell } from './ui'
 
+interface AppHeaderProps {
+  /**
+   * Called before the header navigates away. Return false to cancel, which is
+   * how the quiz player holds someone on the page until they confirm.
+   */
+  onLeave?: () => boolean
+}
+
 /** Signed-in header, matching the landing page's header treatment. */
-export function AppHeader() {
+export function AppHeader({ onLeave }: AppHeaderProps = {}) {
   const { user, logout } = useAuth()
   const [loggingOut, setLoggingOut] = useState(false)
 
   async function handleLogout() {
+    if (onLeave && !onLeave()) return
     setLoggingOut(true)
     try {
       await logout()
@@ -23,6 +32,9 @@ export function AppHeader() {
       <div className={`${shell} flex items-center gap-7 py-4`}>
         <Link
           to="/dashboard"
+          onClick={(event) => {
+            if (onLeave && !onLeave()) event.preventDefault()
+          }}
           className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline"
         >
           <img src={synapseLogo} alt="" width="48" height="48" />

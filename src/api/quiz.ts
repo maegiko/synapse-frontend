@@ -72,6 +72,18 @@ export async function setDifficulty(quizId: PublicId, difficulty: number): Promi
   })
 }
 
+/**
+ * Records one attempt. `totalQuestions` is snapshotted server-side, so the
+ * saved row stays meaningful even if the quiz is edited afterwards.
+ */
+export async function saveScore(quizId: PublicId, score: number): Promise<QuizScore> {
+  return apiRequest<QuizScore>(API_PATHS.quiz.score(quizId), {
+    method: 'POST',
+    json: { score },
+    authenticated: true,
+  })
+}
+
 /** Newest first, unpaginated. */
 export async function scores(quizId: PublicId): Promise<QuizScore[]> {
   const { scores: saved } = await apiRequest<QuizScoreListResponse>(

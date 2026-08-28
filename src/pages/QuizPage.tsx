@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
 import { FormAlert } from '../components/FormAlert'
 import {
   IconArrowLeft,
@@ -38,8 +39,8 @@ import type { QuestionType, Quiz, QuizQuestion } from '../api'
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
 
-/** Running a quiz is not built yet, so the button says why it does nothing. */
-const PLAY_BLOCKED_REASON = 'Answering a quiz question by question lands here next.'
+/** An empty quiz is the one case where playing is not possible. */
+const PLAY_EMPTY_REASON = 'Add a question before you can play this quiz.'
 
 const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5]
 const QUESTION_MAX_LENGTH = 1000
@@ -232,6 +233,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const [actionError, setActionError] = useState('')
   const [confirmingQuestionId, setConfirmingQuestionId] = useState<string | null>(null)
   const [isConfirmingQuiz, setIsConfirmingQuiz] = useState(false)
+  const [isShuffled, setIsShuffled] = useState(false)
 
   const questions = quiz.questions ?? []
 
@@ -370,15 +372,26 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
-          disabled
-          title={PLAY_BLOCKED_REASON}
-        >
-          <IconPlay />
-          Play quiz
-        </button>
+        {questions.length > 0 ? (
+          <Link
+            to={`/quiz/${quiz.id}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
+            className={btnPrimarySm}
+          >
+            <IconPlay />
+            Play quiz
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+            disabled
+            title={PLAY_EMPTY_REASON}
+          >
+            <IconPlay />
+            Play quiz
+          </button>
+        )}
+        <ShuffleSwitch isOn={isShuffled} onToggle={() => setIsShuffled((on) => !on)} />
         <button
           type="button"
           className={btnGhostSm}
@@ -401,7 +414,13 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
           Delete quiz
         </button>
       </div>
-      <p className="mt-2.5 text-xs text-text-muted">{PLAY_BLOCKED_REASON}</p>
+      <p className="mt-2.5 text-xs text-text-muted">
+        {questions.length === 0
+          ? PLAY_EMPTY_REASON
+          : isShuffled
+            ? 'Questions will be asked in a random order.'
+            : 'Questions will be asked in their saved order.'}
+      </p>
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}
