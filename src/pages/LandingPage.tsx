@@ -242,9 +242,21 @@ function SummaryCardMock() {
           actors respond to change.
         </p>
         <p className="mb-1.5 mt-4 font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Key points</p>
-        <ul className="grid gap-1 pl-4.5 text-sm text-text">
-          <li>Models trade accuracy for tractability.</li>
-          <li>State transitions capture behaviour over time.</li>
+        <ul className="grid gap-1 p-0 text-sm text-text">
+          <li className="flex items-start gap-2.5">
+            <span
+              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
+              aria-hidden="true"
+            />
+            <span>Models trade accuracy for tractability.</span>
+          </li>
+          <li className="flex items-start gap-2.5">
+            <span
+              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
+              aria-hidden="true"
+            />
+            <span>State transitions capture behaviour over time.</span>
+          </li>
         </ul>
         <p className="mb-1.5 mt-4 font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Terms</p>
         <div className="flex flex-wrap gap-2">
