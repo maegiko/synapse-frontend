@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
@@ -18,6 +18,7 @@ import {
 } from './ui'
 import type { NoteSummary } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { plural } from '../lib/plural'
 import { useNotes } from '../lib/queries'
 
 export interface GenerationStep {
@@ -45,9 +46,12 @@ interface GenerateFromNoteProps {
 
 const SEARCH_THRESHOLD = 5
 
-function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : pluralForm}`
-}
+/** Matches the `pb-20` under the card, so it keeps that gap above the fold. */
+const PAGE_BOTTOM_GAP = 80
+const LIST_MIN_HEIGHT = 192
+const LIST_MAX_HEIGHT = 500
+/** Below this the aside stacks under the card, so fitting the card is pointless. */
+const TWO_COLUMN = '(min-width: 64rem)'
 
 function NoteListSkeleton() {
   return (
@@ -82,7 +86,8 @@ export function GenerateFromNote({
   onGenerate,
 }: GenerateFromNoteProps) {
   const notes = useNotes()
-  const listRef = useRef<HTMLFieldSetElement>(null)
+  const fieldsetRef = useRef<HTMLFieldSetElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
 
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -136,6 +141,55 @@ export function GenerateFromNote({
     )
   }, [notes.data, search])
 
+  /**
+   * Sizes the list to whatever the viewport has left, so a long list stops
+   * pushing the page into a scroll and swallowing the card's bottom padding.
+   * Measured rather than hard-coded: the space above the list changes with the
+   * viewport width, since the heading and intro wrap. Writes to the node
+   * directly instead of through state, so it cannot cause a render loop.
+   */
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+
+    function fitToViewport() {
+      const element = listRef.current
+      const form = element?.closest('form')
+      if (!element || !form) return
+
+      if (!window.matchMedia(TWO_COLUMN).matches) {
+        element.style.maxHeight = ''
+        return
+      }
+
+      // Measure unconstrained, so `below` is the button and padding only.
+      element.style.maxHeight = ''
+      const listTop = element.getBoundingClientRect().top
+      const below = form.getBoundingClientRect().bottom - element.getBoundingClientRect().bottom
+      const available = window.innerHeight - listTop - below - PAGE_BOTTOM_GAP
+
+      const target = Math.round(Math.min(LIST_MAX_HEIGHT, Math.max(LIST_MIN_HEIGHT, available)))
+      element.style.maxHeight = `${target}px`
+
+      // One corrective pass, since applying the height can rewrap text or add
+      // the list's own scrollbar in ways the first measurement cannot predict.
+      const overshoot = document.documentElement.scrollHeight - window.innerHeight
+      if (overshoot <= 0) return
+
+      element.style.maxHeight = `${Math.max(LIST_MIN_HEIGHT, target - overshoot)}px`
+      if (document.documentElement.scrollHeight > window.innerHeight) {
+        // Something else is the tallest thing on the page (on a short viewport
+        // the sidebar outgrows the card), so a shorter list buys no less
+        // scrolling. Keep the taller list instead of paying for nothing.
+        element.style.maxHeight = `${target}px`
+      }
+    }
+
+    fitToViewport()
+    window.addEventListener('resize', fitToViewport)
+    return () => window.removeEventListener('resize', fitToViewport)
+  }, [filteredNotes.length, formError, isBusy])
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     // Guards a second submit while the first request is still running.
@@ -145,7 +199,7 @@ export function GenerateFromNote({
     const note = notes.data?.find((candidate) => candidate.id === selectedNoteId)
     if (!note) {
       setFormError('Choose one of your notes first.')
-      listRef.current?.querySelector<HTMLInputElement>('input[type="radio"]')?.focus()
+      fieldsetRef.current?.querySelector<HTMLInputElement>('input[type="radio"]')?.focus()
       return
     }
     setStep(0)
@@ -243,7 +297,7 @@ export function GenerateFromNote({
                 )}
 
                 {notes.isSuccess && notes.data.length > 0 && (
-                  <fieldset ref={listRef} className="m-0 min-w-0 border-0 p-0" disabled={isBusy}>
+                  <fieldset ref={fieldsetRef} className="m-0 min-w-0 border-0 p-0" disabled={isBusy}>
                     <legend className="sr-only">Choose a note</legend>
 
                     {notes.data.length > SEARCH_THRESHOLD && (
@@ -262,13 +316,17 @@ export function GenerateFromNote({
                         No note matches “{search.trim()}”.
                       </p>
                     ) : (
-                      <ul className="grid max-h-125 gap-3 overflow-y-auto p-0">
+                      <ul ref={listRef} className="grid max-h-125 gap-3 overflow-y-auto p-0">
                         {filteredNotes.map((note) => {
                           const selected = note.id === selectedNoteId
                           return (
                             <li key={note.id} className="list-none">
                               <label
-                                className={`flex cursor-pointer items-start gap-3.5 rounded-md border p-4 transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
+                                // `relative` matters: the sr-only radio is absolutely
+                                // positioned, so without a positioned ancestor its
+                                // containing block is the page itself and it stretches
+                                // the document past the scrolling list.
+                                className={`relative flex cursor-pointer items-start gap-3.5 rounded-md border p-4 transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
                                   selected
                                     ? 'border-accent-solid bg-accent-soft'
                                     : 'border-border bg-surface hover:border-accent-solid'

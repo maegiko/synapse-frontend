@@ -69,7 +69,9 @@ export function FileDropzone({
   }
 
   return (
-    <div>
+    // `relative` keeps the sr-only input's absolute position scoped here rather
+    // than to the page, which would extend the document's scroll area.
+    <div className="relative">
       <input
         ref={inputRef ?? ownRef}
         id={inputId}

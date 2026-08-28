@@ -12,13 +12,10 @@ import { btnPrimaryMdInverted, shell, viewAllButton } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
+import { plural } from '../lib/plural'
 
 const RECENT_LIMIT = 3
 const ROW_ICON = 'h-4 w-4'
-
-function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : pluralForm}`
-}
 
 export function DashboardPage() {
   const { user } = useAuth()
