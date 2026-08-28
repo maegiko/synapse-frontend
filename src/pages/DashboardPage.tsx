@@ -4,8 +4,10 @@ import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
-import { ArtDeck, ArtNote, ArtQuiz } from '../components/illustrations'
 import dashboardHero from '../assets/dashboard_hero.png'
+import deckSplash from '../assets/deck_splash.png'
+import noteSplash from '../assets/note_splash.png'
+import quizSplash from '../assets/quiz_splash.png'
 import { btnPrimaryMd, shell, viewAllPill } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
@@ -79,14 +81,14 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <ActionCard
             to="/notes/new"
-            art={<ArtNote />}
+            art={<img src={noteSplash} alt="" />}
             title="Summarize a note"
-            body="Upload a PDF, DOCX, TXT, or Markdown file, up to 10 MB, and get an overview, key points, and terms."
+            body="Upload a PDF, DOCX, TXT, or Markdown file (up to 10 MB) and get an overview, key points, and terms."
             cta="Upload a file"
           />
           <ActionCard
             to="/flashcards/new"
-            art={<ArtDeck />}
+            art={<img src={deckSplash} alt="" />}
             title="Generate a deck"
             body="Turn one of your notes into a flashcard deck, built from its concepts and key points."
             cta="Pick a note"
@@ -94,7 +96,7 @@ export function DashboardPage() {
           />
           <ActionCard
             to="/quiz/new"
-            art={<ArtQuiz />}
+            art={<img src={quizSplash} alt="" className="translate-x-2" />}
             title="Generate a quiz"
             body="Turn one of your notes into a 10-question quiz, then save a score for every attempt."
             cta="Pick a note"
