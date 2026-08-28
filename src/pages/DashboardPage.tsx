@@ -8,7 +8,7 @@ import dashboardHero from '../assets/dashboard_hero.png'
 import deckSplash from '../assets/deck_splash.png'
 import noteSplash from '../assets/note_splash.png'
 import quizSplash from '../assets/quiz_splash.png'
-import { btnPrimaryMd, shell, viewAllButton } from '../components/ui'
+import { btnPrimaryMdInverted, shell, viewAllButton } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
@@ -54,21 +54,20 @@ export function DashboardPage() {
     <>
       <AppHeader />
 
-      <section className="relative overflow-hidden border-b border-border bg-[linear-gradient(115deg,var(--color-accent-soft)_0%,var(--color-background)_46%,var(--color-accent-soft)_100%)]">
-        <div className={`${shell} relative py-14 lg:py-16`}>
-          {/* Anchored to the content column so it lines up with the header. The
-              artwork carries transparent padding of its own (~21% vertically,
+      <section className={`${shell} pt-6`}>
+        <div className="relative overflow-hidden rounded-lg border border-accent-strong bg-[linear-gradient(115deg,#493662_0%,#60467f_48%,#76589e_100%)] px-6 py-14 lg:px-12 lg:py-16">
+          {/* The artwork carries transparent padding of its own (~21% vertically,
               ~7.5% on the right), so it is oversized and pulled right to make the
-              *visible* art sit flush; the band clips only the empty margin. */}
+              visible art sit close to the panel edge. */}
           <img
             src={dashboardHero}
             alt=""
-            className="pointer-events-none absolute top-1/2 -right-3 hidden h-[112%] w-auto -translate-y-1/2 lg:block"
+            className="pointer-events-none absolute top-1/2 -right-3 hidden h-[112%] w-auto -translate-y-1/2 drop-shadow-[0_18px_22px_rgba(15,5,30,0.45)] lg:block"
           />
           <div className="relative max-w-[54ch]">
-            <h1 className="text-2xl">Welcome back, {firstName}.</h1>
-            <p className="mt-3 text-base text-text-muted">{summary}</p>
-            <Link to={hero.to} className={`${btnPrimaryMd} mt-7`}>
+            <h1 className="text-2xl text-on-accent">Welcome back, {firstName}.</h1>
+            <p className="mt-3 text-base text-accent-soft">{summary}</p>
+            <Link to={hero.to} className={`${btnPrimaryMdInverted} mt-7`}>
               {hero.label}
               <IconArrowRight />
             </Link>
