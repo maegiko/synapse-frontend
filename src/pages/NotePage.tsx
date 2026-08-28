@@ -40,7 +40,7 @@ function Section({
   return (
     <section className={surfaceCard}>
       <div className="flex items-center gap-3 border-b border-border px-6 py-4">
-        <h2 className="mr-auto text-sm font-medium">{title}</h2>
+        <h2 className="mr-auto text-base font-medium">{title}</h2>
         {count !== undefined && <span className={countPill}>{count}</span>}
       </div>
       <div className="px-6 py-5">{children}</div>
