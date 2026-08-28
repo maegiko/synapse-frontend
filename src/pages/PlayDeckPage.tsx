@@ -17,6 +17,7 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck } from '../lib/queries'
 import { newSeed, shuffled } from '../lib/shuffle'
+import { api } from '../api'
 import type { FlashcardDeck } from '../api'
 
 /** One is drawn at the end of every run, so finishing twice reads differently. */
@@ -87,6 +88,9 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setClosingNote(drawClosingNote())
     setIsConfirmingFinish(false)
     setIsFinished(true)
+    // Records the session for the streak. Only reaching the end counts, and the
+    // result is not shown anywhere here, so a failure must not block the screen.
+    void api.flashcards.complete(deck.deckId).catch(() => {})
   }
 
   function restart() {
