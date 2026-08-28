@@ -24,6 +24,7 @@ export const API_PATHS = {
   notes: {
     list: '/api/notes/list',
     summarise: '/api/notes/summarise',
+    detail: (noteId: string) => `/api/notes/${encodeURIComponent(noteId)}`,
   },
   flashcards: {
     list: '/api/flashcards/list',

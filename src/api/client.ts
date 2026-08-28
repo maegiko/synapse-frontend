@@ -21,6 +21,11 @@ export interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   /** Serialized as a JSON body with the matching Content-Type. */
   json?: unknown
+  /**
+   * Multipart body. The Content-Type header is deliberately left unset so the
+   * browser can add the multipart boundary itself.
+   */
+  formData?: FormData
   /** Attach the bearer access token, and refresh-and-retry once on 401. */
   authenticated?: boolean
   /** Required for every /api/auth call so the refresh cookie is sent and stored. */
@@ -33,6 +38,7 @@ const DEFAULT_MESSAGES: Record<number, string> = {
   401: 'Your session has expired. Please log in again.',
   404: 'We could not find what you were looking for.',
   409: 'That already belongs to another account.',
+  413: 'That file is too large to upload.',
   429: 'Too many attempts. Please wait a moment and try again.',
   502: 'The AI service is unavailable right now. Please try again.',
 }
@@ -73,11 +79,15 @@ async function parseBody<T>(response: Response): Promise<T> {
 
 async function send(path: string, config: RequestConfig): Promise<Response> {
   const headers = new Headers()
-  let body: string | undefined
+  let body: BodyInit | undefined
 
   if (config.json !== undefined) {
     headers.set('Content-Type', 'application/json')
     body = JSON.stringify(config.json)
+  } else if (config.formData) {
+    // No Content-Type here on purpose; see RequestConfig.formData. FormData is
+    // re-sendable, so a refresh-and-retry can reuse this same body.
+    body = config.formData
   }
   if (config.authenticated) {
     const token = getAccessToken()
