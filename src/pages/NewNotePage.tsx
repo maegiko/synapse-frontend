@@ -131,7 +131,7 @@ export function NewNotePage() {
           Back to dashboard
         </Link>
 
-        <h1 className="mt-5 text-2xl">Summarise a note</h1>
+        <h1 className="mt-5 text-3xl">Summarise a note</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">
           Upload one file and Synapse reads it, then gives you back an overview, the key points, the
           concepts explained, and the terms worth remembering.

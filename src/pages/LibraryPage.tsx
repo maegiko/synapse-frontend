@@ -169,7 +169,7 @@ export function LibraryPage() {
           Back to dashboard
         </Link>
 
-        <h1 className="mt-5 text-2xl">Your library</h1>
+        <h1 className="mt-5 text-3xl">Your library</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{summary}</p>
 
         {isLibraryEmpty ? (

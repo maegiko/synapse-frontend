@@ -51,7 +51,7 @@ export function QuizScoresPage() {
         </Link>
 
         <div className="mt-5 max-w-200">
-          <h1 className="text-2xl">Attempt history</h1>
+          <h1 className="text-3xl">Attempt history</h1>
           {quiz.isSuccess && (
             <p className="mt-3 max-w-[60ch] text-base text-text-muted">
               Every run you have saved for “{quiz.data.title}”, newest first.

@@ -33,7 +33,7 @@ export function AuthLayout({
         </Link>
 
         <div className="mx-auto flex w-full max-w-115 flex-1 flex-col justify-center py-12">
-          <h1 className="mb-2.5 text-2xl">{title}</h1>
+          <h1 className="mb-2.5 text-3xl">{title}</h1>
           <p className="mb-7 text-base text-text-muted">{subtitle}</p>
 
           <div className={authCard}>{children}</div>

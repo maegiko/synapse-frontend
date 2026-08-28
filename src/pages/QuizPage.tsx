@@ -360,7 +360,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
 
   return (
     <>
-      <h1 className="text-2xl">{quiz.title}</h1>
+      <h1 className="text-3xl">{quiz.title}</h1>
       {quiz.description && (
         <p className="mt-3 max-w-[72ch] text-base text-text-muted">{quiz.description}</p>
       )}
@@ -717,7 +717,7 @@ export function QuizPage() {
 
           {quiz.isError && (
             <div className={`${surfaceCard} max-w-150 p-8`}>
-              <h1 className="text-2xl">
+              <h1 className="text-3xl">
                 {isMissing ? 'We could not find that quiz' : 'We could not load that quiz'}
               </h1>
               <p className="mt-3 text-base text-text-muted">

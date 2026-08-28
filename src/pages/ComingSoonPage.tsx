@@ -16,7 +16,7 @@ export function ComingSoonPage({ title, body }: ComingSoonPageProps) {
 
       <main className={`${shell} pt-12 pb-20`}>
         <div className={`${surfaceCard} max-w-150 p-8`}>
-          <h1 className="text-2xl">{title}</h1>
+          <h1 className="text-3xl">{title}</h1>
           <p className="mt-3 text-base text-text-muted">{body}</p>
           <Link
             to="/dashboard"

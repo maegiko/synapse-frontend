@@ -51,7 +51,7 @@ function Section({
 function NoteContent({ note }: { note: NoteSummary }) {
   return (
     <>
-      <h1 className="text-2xl">{note.title}</h1>
+      <h1 className="text-3xl">{note.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={countPill}>{plural(note.keypoints.length, 'key point')}</span>
         <span className={countPill}>{plural(note.concepts.length, 'concept')}</span>
@@ -138,7 +138,7 @@ export function NotePage() {
 
           {note.isError && (
             <div className={`${surfaceCard} max-w-150 p-8`}>
-              <h1 className="text-2xl">{isMissing ? 'We could not find that note' : 'We could not load that note'}</h1>
+              <h1 className="text-3xl">{isMissing ? 'We could not find that note' : 'We could not load that note'}</h1>
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
                   ? 'It may have been deleted, or it belongs to another account.'

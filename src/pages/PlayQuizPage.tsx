@@ -397,7 +397,7 @@ function Runner({
 
         {phase === 'rating' && (
           <section className={`${surfaceCard} mx-auto max-w-160 p-8 text-center sm:p-10`}>
-            <h1 className="text-2xl">How hard was that?</h1>
+            <h1 className="text-3xl">How hard was that?</h1>
             <p className="mx-auto mt-3 max-w-[42ch] text-base text-text-muted">
               Rating the quiz sets its difficulty, which shows on the quiz and in your library. You
               can skip this.
@@ -443,7 +443,7 @@ function Runner({
             >
               <IconCheck className="h-7 w-7" />
             </span>
-            <h1 className="mt-5 text-2xl">Quiz complete</h1>
+            <h1 className="mt-5 text-3xl">Quiz complete</h1>
 
             <p className="mt-6 font-display text-5xl font-medium text-accent-solid tabular-nums">
               {score}
@@ -531,7 +531,7 @@ export function PlayQuizPage() {
 
         {quiz.isError && (
           <div className={`${surfaceCard} max-w-150 p-8`}>
-            <h1 className="text-2xl">
+            <h1 className="text-3xl">
               {isMissing ? 'We could not find that quiz' : 'We could not load that quiz'}
             </h1>
             <p className="mt-3 text-base text-text-muted">
@@ -555,7 +555,7 @@ export function PlayQuizPage() {
 
         {isEmpty && (
           <div className={`${surfaceCard} max-w-150 p-8`}>
-            <h1 className="text-2xl">There is nothing to answer yet</h1>
+            <h1 className="text-3xl">There is nothing to answer yet</h1>
             <p className="mt-3 text-base text-text-muted">
               “{quiz.data.title}” has no questions. Add one and it will be waiting here.
             </p>

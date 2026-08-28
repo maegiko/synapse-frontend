@@ -232,7 +232,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
 
   return (
     <>
-      <h1 className="text-2xl">{deck.title}</h1>
+      <h1 className="text-3xl">{deck.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={countPill}>{plural(cards.length, 'card')}</span>
       </div>
@@ -463,7 +463,7 @@ export function DeckPage() {
 
           {deck.isError && (
             <div className={`${surfaceCard} max-w-150 p-8`}>
-              <h1 className="text-2xl">
+              <h1 className="text-3xl">
                 {isMissing ? 'We could not find that deck' : 'We could not load that deck'}
               </h1>
               <p className="mt-3 text-base text-text-muted">

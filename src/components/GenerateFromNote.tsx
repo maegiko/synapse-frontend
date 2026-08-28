@@ -230,7 +230,7 @@ export function GenerateFromNote({
           Back to dashboard
         </Link>
 
-        <h1 className="mt-5 text-2xl">{heading}</h1>
+        <h1 className="mt-5 text-3xl">{heading}</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{intro}</p>
 
         <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">

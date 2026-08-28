@@ -137,7 +137,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
         >
           <IconCheck className="h-7 w-7" />
         </span>
-        <h1 className="mt-5 text-2xl">Deck complete</h1>
+        <h1 className="mt-5 text-3xl">Deck complete</h1>
         <p className="mx-auto mt-3 max-w-[46ch] text-base text-text-muted">
           You worked through all {plural(order.length, 'card')} in “{deck.title}”.
           {isShuffled ? ' Replay to deal them in a new order.' : ''}
@@ -274,7 +274,7 @@ export function PlayDeckPage() {
 
         {deck.isError && (
           <div className={`${surfaceCard} max-w-150 p-8`}>
-            <h1 className="text-2xl">
+            <h1 className="text-3xl">
               {isMissing ? 'We could not find that deck' : 'We could not load that deck'}
             </h1>
             <p className="mt-3 text-base text-text-muted">
@@ -298,7 +298,7 @@ export function PlayDeckPage() {
 
         {isEmpty && (
           <div className={`${surfaceCard} max-w-150 p-8`}>
-            <h1 className="text-2xl">There is nothing to play yet</h1>
+            <h1 className="text-3xl">There is nothing to play yet</h1>
             <p className="mt-3 text-base text-text-muted">
               “{deck.data.title}” has no cards. Add one and it will be waiting here.
             </p>
