@@ -130,10 +130,10 @@ export function DashboardPage() {
                 icon={<IconNote className={ROW_ICON} />}
                 title={note.title}
                 preview={note.overview}
-                meta={`${plural(note.keypoints.length, 'key point')} · ${plural(
-                  note.importantTerms.length,
-                  'term',
-                )}`}
+                metadata={[
+                  plural(note.keypoints.length, 'key point'),
+                  plural(note.importantTerms.length, 'term'),
+                ]}
               />
             ))}
           </RecentsCard>
@@ -156,7 +156,7 @@ export function DashboardPage() {
                 title={deck.title}
                 // `title` on a saved flashcard is the question, not a heading.
                 preview={deck.flashcards[0]?.title}
-                meta={plural(deck.flashcards.length, 'card')}
+                metadata={[plural(deck.flashcards.length, 'card')]}
               />
             ))}
           </RecentsCard>
@@ -178,10 +178,10 @@ export function DashboardPage() {
                 icon={<IconQuiz className={ROW_ICON} />}
                 title={quiz.title}
                 preview={quiz.description}
-                meta={[
+                metadata={[
                   plural(quiz.questions.length, 'question'),
                   quiz.difficulty === null ? 'No difficulty set' : `Difficulty ${quiz.difficulty}/5`,
-                ].join(' · ')}
+                ]}
                 // Quizzes are the only listed resource the API timestamps.
                 timestamp={formatRelative(quiz.createdAt)}
               />
