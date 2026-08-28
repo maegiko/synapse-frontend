@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
 import {
   btnGhostLg,
@@ -11,13 +12,12 @@ import {
   shell,
   surfaceCard,
 } from '../components/ui'
+import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck } from '../lib/queries'
-import type { FlashcardDeck, SavedFlashcard } from '../api'
-
-/** Set by the deck page's shuffle switch. Absent means saved order. */
-export const SHUFFLE_PARAM = 'shuffle'
+import { newSeed, shuffled } from '../lib/shuffle'
+import type { FlashcardDeck } from '../api'
 
 /** One is drawn at the end of every run, so finishing twice reads differently. */
 const CLOSING_NOTES = [
@@ -31,128 +31,6 @@ const CLOSING_NOTES = [
 
 function drawClosingNote(): string {
   return CLOSING_NOTES[Math.floor(Math.random() * CLOSING_NOTES.length)]
-}
-
-/**
- * Confirms the end of a run. Modal, so it owns focus, the Escape key, and the
- * page's scrolling for as long as it is open.
- */
-function FinishDialog({
-  cardCount,
-  onConfirm,
-  onCancel,
-}: {
-  cardCount: number
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const panelRef = useRef<HTMLDivElement>(null)
-  const confirmRef = useRef<HTMLButtonElement>(null)
-  const titleId = useId()
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null
-    confirmRef.current?.focus()
-
-    // Locking the page also removes its scrollbar, which would shift everything
-    // sideways as the dialog opens; the freed width is padded back on.
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
-    const restore = {
-      overflow: document.body.style.overflow,
-      paddingRight: document.body.style.paddingRight,
-    }
-    document.body.style.overflow = 'hidden'
-    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`
-
-    return () => {
-      document.body.style.overflow = restore.overflow
-      document.body.style.paddingRight = restore.paddingRight
-      previouslyFocused?.focus?.()
-    }
-  }, [])
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.preventDefault()
-        onCancel()
-        return
-      }
-      // Focus stays inside the dialog while it is open.
-      if (event.key !== 'Tab') return
-      const focusable = panelRef.current?.querySelectorAll<HTMLElement>('button')
-      if (!focusable?.length) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [onCancel])
-
-  return (
-    <div
-      className="dialog-overlay fixed inset-0 z-50 flex items-center justify-center bg-text/45 p-6 backdrop-blur-[2px]"
-      onClick={onCancel}
-    >
-      <div
-        ref={panelRef}
-        className={`${surfaceCard} dialog-panel w-full max-w-120 p-6 shadow-md sm:p-8`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id={titleId} className="text-xl">
-          That was the last card
-        </h2>
-        <p className="mt-2.5 max-w-[46ch] text-base text-text-muted">
-          You have reached the end of all {plural(cardCount, 'card')}. Finish the session, or go
-          back and keep reviewing.
-        </p>
-        <div className="mt-7 flex flex-wrap gap-3">
-          <button type="button" ref={confirmRef} className={btnPrimaryLg} onClick={onConfirm}>
-            Finish session
-          </button>
-          <button type="button" className={btnGhostLg} onClick={onCancel}>
-            Keep reviewing
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** mulberry32: a seeded generator, so one seed always deals the same order. */
-function randomFrom(seed: number): () => number {
-  let state = seed >>> 0
-  return () => {
-    state = (state + 0x6d2b79f5) >>> 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-/**
- * Fisher-Yates on a copy, so the query cache's array is never reordered. The
- * shuffle is seeded rather than free: `useMemo` may drop its cache at any time,
- * and a re-shuffle mid-run would repeat cards and skip others.
- */
-function shuffled(cards: SavedFlashcard[], seed: number): SavedFlashcard[] {
-  const random = randomFrom(seed)
-  const copy = [...cards]
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1))
-    ;[copy[i], copy[j]] = [copy[j], copy[i]]
-  }
-  return copy
 }
 
 function PlaySkeleton() {
@@ -169,7 +47,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   // array is built here — a fresh one each render would defeat the memo below.
   const cards = deck.flashcards
 
-  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 2 ** 32))
+  const [seed, setSeed] = useState(newSeed)
   const [index, setIndex] = useState(0)
   const [isRevealed, setIsRevealed] = useState(false)
   const [isConfirmingFinish, setIsConfirmingFinish] = useState(false)
@@ -212,7 +90,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   }
 
   function restart() {
-    setSeed(Math.floor(Math.random() * 2 ** 32))
+    setSeed(newSeed())
     setIndex(0)
     setIsRevealed(false)
     setIsFinished(false)
@@ -356,8 +234,11 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
       </p>
 
       {isConfirmingFinish && (
-        <FinishDialog
-          cardCount={order.length}
+        <ConfirmDialog
+          title="That was the last card"
+          body={`You have reached the end of all ${plural(order.length, 'card')}. Finish the session, or go back and keep reviewing.`}
+          confirmLabel="Finish session"
+          cancelLabel="Keep reviewing"
           onConfirm={finishSession}
           onCancel={() => setIsConfirmingFinish(false)}
         />

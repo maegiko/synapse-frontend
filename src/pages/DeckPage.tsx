@@ -30,7 +30,7 @@ import {
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck, queryKeys } from '../lib/queries'
-import { SHUFFLE_PARAM } from './PlayDeckPage'
+import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
 import { queryClient } from '../lib/queryClient'
 import { api } from '../api'
 import type { FlashcardDeck, SavedFlashcard } from '../api'
@@ -40,40 +40,6 @@ const placeholderPanel =
 
 /** An empty deck is the one case where playing is not possible. */
 const PLAY_EMPTY_REASON = 'Add a card before you can play this deck.'
-
-/** Whether the run is dealt at random. Sent to the player as a query parameter. */
-function ShuffleSwitch({
-  isOn,
-  onToggle,
-}: {
-  isOn: boolean
-  onToggle: () => void
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={isOn}
-      onClick={onToggle}
-      className={`inline-flex items-center gap-2.5 rounded-sm py-1 text-sm font-bold transition-colors duration-150 ${
-        isOn ? 'text-text' : 'text-text-muted hover:text-text'
-      }`}
-    >
-      <span
-        className={`inline-flex h-5.5 w-10 shrink-0 items-center rounded-full border transition-colors duration-150 ${
-          isOn ? 'border-accent-solid bg-accent-solid' : 'border-border bg-surface-alt'
-        }`}
-      >
-        <span
-          className={`h-4 w-4 rounded-full bg-surface shadow-sm transition-transform duration-150 ease-out ${
-            isOn ? 'translate-x-5' : 'translate-x-0.5'
-          }`}
-        />
-      </span>
-      Shuffle
-    </button>
-  )
-}
 
 /** Matches the note skeleton, so a cold load reads the same on either page. */
 function DeckSkeleton() {
