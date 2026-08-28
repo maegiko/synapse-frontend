@@ -12,10 +12,20 @@ interface RecentsItemProps {
   metadata: string[]
   /** Only shown for resources the API timestamps. */
   timestamp?: string
+  /** Removes the stacked-row treatment when items share a horizontal strip. */
+  compact?: boolean
 }
 
 /** One row in a quick-view card, optionally linked when its detail screen exists. */
-export function RecentsItem({ icon, title, to, preview, metadata, timestamp }: RecentsItemProps) {
+export function RecentsItem({
+  icon,
+  title,
+  to,
+  preview,
+  metadata,
+  timestamp,
+  compact = false,
+}: RecentsItemProps) {
   const content = (
     <>
       <span
@@ -53,7 +63,13 @@ export function RecentsItem({ icon, title, to, preview, metadata, timestamp }: R
   )
 
   return (
-    <li className="min-w-0 border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0">
+    <li
+      className={`min-w-0 ${
+        compact
+          ? 'border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0 sm:border-r sm:border-b-0 sm:pr-4 sm:pb-0 sm:last:border-r-0 sm:last:pr-0'
+          : 'border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0'
+      }`}
+    >
       {to ? (
         <Link
           to={to}

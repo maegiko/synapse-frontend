@@ -112,12 +112,12 @@ export function DashboardPage() {
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
           <h2 className="text-xl">Your library</h2>
           <Link to="/library" className={viewAllButton}>
-            View all
+            Browse library
             <IconArrowRight />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RecentsCard
             title="Recent notes"
             count={notes.data?.length}
@@ -140,30 +140,6 @@ export function DashboardPage() {
                   plural(note.keypoints.length, 'key point'),
                   plural(note.importantTerms.length, 'term'),
                 ]}
-              />
-            ))}
-          </RecentsCard>
-
-          <RecentsCard
-            title="Recent decks"
-            count={decks.data?.length}
-            isLoading={decks.isPending}
-            isError={decks.isError}
-            onRetry={() => void decks.refetch()}
-            isEmpty={decks.data?.length === 0}
-            emptyMessage="Decks you generate from a note will show up here."
-            viewAllTo="/library?type=decks"
-            viewAllLabel="View all decks"
-          >
-            {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
-              <RecentsItem
-                key={deck.deckId}
-                icon={<IconDeck className={ROW_ICON} />}
-                title={deck.title}
-                to={`/flashcards/${deck.deckId}`}
-                // `title` on a saved flashcard is the question, not a heading.
-                preview={deck.flashcards[0]?.title}
-                metadata={[plural(deck.flashcards.length, 'card')]}
               />
             ))}
           </RecentsCard>
@@ -192,6 +168,31 @@ export function DashboardPage() {
                 ]}
                 // Quizzes are the only listed resource the API timestamps.
                 timestamp={formatRelative(quiz.createdAt)}
+              />
+            ))}
+          </RecentsCard>
+
+          <RecentsCard
+            title="Recent decks"
+            count={decks.data?.length}
+            isLoading={decks.isPending}
+            isError={decks.isError}
+            onRetry={() => void decks.refetch()}
+            isEmpty={decks.data?.length === 0}
+            emptyMessage="Decks you generate from a note will show up here."
+            viewAllTo="/library?type=decks"
+            viewAllLabel="View all decks"
+            variant="strip"
+            className="md:col-span-2"
+          >
+            {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
+              <RecentsItem
+                key={deck.deckId}
+                icon={<IconDeck className={ROW_ICON} />}
+                title={deck.title}
+                to={`/flashcards/${deck.deckId}`}
+                metadata={[plural(deck.flashcards.length, 'card')]}
+                compact
               />
             ))}
           </RecentsCard>

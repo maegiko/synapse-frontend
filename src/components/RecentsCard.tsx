@@ -15,11 +15,13 @@ interface RecentsCardProps {
   isEmpty: boolean
   viewAllTo: string
   viewAllLabel: string
+  variant?: 'list' | 'strip'
+  className?: string
 }
 
-function Skeleton() {
+function Skeleton({ isStrip }: { isStrip: boolean }) {
   return (
-    <div className="grid gap-5" aria-hidden="true">
+    <div className={`grid gap-5 ${isStrip ? 'sm:grid-cols-3' : ''}`} aria-hidden="true">
       {[0, 1, 2].map((row) => (
         <div key={row} className="flex gap-3">
           <span className="h-8 w-8 shrink-0 animate-pulse rounded-sm bg-surface-alt" />
@@ -45,16 +47,24 @@ export function RecentsCard({
   children,
   viewAllTo,
   viewAllLabel,
+  variant = 'list',
+  className = '',
 }: RecentsCardProps) {
+  const isStrip = variant === 'strip'
+
   return (
-    <section className={`${surfaceCard} min-w-0 flex flex-col`}>
+    <section className={`${surfaceCard} min-w-0 flex flex-col overflow-hidden ${className}`}>
       <div className="flex items-center gap-3 border-b border-border px-5.5 py-4">
-        <h3 className="mr-auto text-sm font-medium">{title}</h3>
+        <h3 className="text-sm font-medium">{title}</h3>
         {count !== undefined && <span className={countPill}>{count}</span>}
+        <Link to={viewAllTo} className={`${cardLink} ml-auto`}>
+          {viewAllLabel}
+          <IconArrowRight />
+        </Link>
       </div>
 
-      <div className="min-w-0 flex-1 px-5.5 py-5">
-        {isLoading && <Skeleton />}
+      <div className={`min-w-0 flex-1 px-5.5 ${isStrip ? 'py-4' : 'py-5'}`}>
+        {isLoading && <Skeleton isStrip={isStrip} />}
 
         {isError && (
           <div className="grid justify-items-start gap-2.5">
@@ -74,16 +84,12 @@ export function RecentsCard({
         )}
 
         {!isLoading && !isError && !isEmpty && (
-          <ul className="grid min-w-0 gap-4 p-0">{children}</ul>
+          <ul className={`grid min-w-0 gap-4 p-0 ${isStrip ? 'sm:grid-cols-3' : ''}`}>
+            {children}
+          </ul>
         )}
       </div>
 
-      <div className="mt-auto px-5.5 pb-5">
-        <Link to={viewAllTo} className={cardLink}>
-          {viewAllLabel}
-          <IconArrowRight />
-        </Link>
-      </div>
     </section>
   )
 }
