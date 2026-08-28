@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { api } from '../api'
 
 export const queryKeys = {
+  streak: ['streak'] as const,
   notes: ['notes'] as const,
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
@@ -9,6 +10,10 @@ export const queryKeys = {
   quizzes: ['quizzes'] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
+}
+
+export function useStreak() {
+  return useQuery({ queryKey: queryKeys.streak, queryFn: api.user.getStreak })
 }
 
 export function useNotes() {

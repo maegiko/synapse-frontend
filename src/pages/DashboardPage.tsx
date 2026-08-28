@@ -3,6 +3,7 @@ import { AppHeader } from '../components/AppHeader'
 import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
+import { StreakCard } from '../components/StreakCard'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import dashboardHero from '../assets/dashboard_hero.png'
 import deckSplash from '../assets/deck_splash.png'
@@ -10,7 +11,7 @@ import noteSplash from '../assets/note_splash.png'
 import quizSplash from '../assets/quiz_splash.png'
 import { btnPrimaryMdInverted, shell, viewAllButton } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
-import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
+import { useFlashcardDecks, useNotes, useQuizzes, useStreak } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
@@ -22,6 +23,7 @@ export function DashboardPage() {
   const notes = useNotes()
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
+  const streak = useStreak()
 
   const firstName = user?.fullName.trim().split(' ')[0] ?? 'there'
 
@@ -73,7 +75,14 @@ export function DashboardPage() {
       </section>
 
       <main className={`${shell} pb-20`}>
-        <h2 className="mt-12 mb-5 text-xl">Start something new</h2>
+        <StreakCard
+          streak={streak.data}
+          isLoading={streak.isPending}
+          isError={streak.isError}
+          onRetry={() => void streak.refetch()}
+        />
+
+        <h2 className="mt-10 mb-5 text-xl">Start something new</h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <ActionCard
             to="/notes/new"
