@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 interface RecentsItemProps {
   icon: ReactNode
   title: string
+  /** When provided, the whole row navigates to the resource detail page. */
+  to?: string
   /** Optional second line, e.g. a note overview or the first card's question. */
   preview?: string | null
   /** Compact facts displayed separately from the descriptive preview. */
@@ -11,10 +14,10 @@ interface RecentsItemProps {
   timestamp?: string
 }
 
-/** One row in a quick-view card. Read-only until the detail screens exist. */
-export function RecentsItem({ icon, title, preview, metadata, timestamp }: RecentsItemProps) {
-  return (
-    <li className="flex min-w-0 gap-3 border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0">
+/** One row in a quick-view card, optionally linked when its detail screen exists. */
+export function RecentsItem({ icon, title, to, preview, metadata, timestamp }: RecentsItemProps) {
+  const content = (
+    <>
       <span
         className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong"
         aria-hidden="true"
@@ -22,7 +25,13 @@ export function RecentsItem({ icon, title, preview, metadata, timestamp }: Recen
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-bold text-text">{title}</p>
+        <p
+          className={`truncate text-sm font-bold text-text ${
+            to ? 'transition-colors group-hover:text-accent-solid' : ''
+          }`}
+        >
+          {title}
+        </p>
         {preview && <p className="mt-1 line-clamp-2 text-xs text-text-muted">{preview}</p>}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {metadata.map((item) => (
@@ -40,6 +49,21 @@ export function RecentsItem({ icon, title, preview, metadata, timestamp }: Recen
           )}
         </div>
       </div>
+    </>
+  )
+
+  return (
+    <li className="min-w-0 border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0">
+      {to ? (
+        <Link
+          to={to}
+          className="group -mx-2 -my-1 flex min-w-0 gap-3 rounded-sm px-2 py-1 no-underline transition-colors hover:bg-surface-alt"
+        >
+          {content}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 gap-3">{content}</div>
+      )}
     </li>
   )
 }

@@ -126,6 +126,7 @@ export function DashboardPage() {
             {notes.data?.slice(0, RECENT_LIMIT).map((note) => (
               <RecentsItem
                 key={note.id}
+                to={`/notes/${note.id}`}
                 icon={<IconNote className={ROW_ICON} />}
                 title={note.title}
                 preview={note.overview}
