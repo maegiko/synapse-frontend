@@ -63,3 +63,14 @@ export async function removeCard(deckId: PublicId, cardId: PublicId): Promise<vo
     authenticated: true,
   })
 }
+
+/**
+ * Records that a study session was finished, which feeds the streak. Safe to
+ * repeat: any number of qualifying sessions still counts as one streak day.
+ */
+export async function complete(deckId: PublicId): Promise<void> {
+  await apiRequest<void>(API_PATHS.flashcards.complete(deckId), {
+    method: 'POST',
+    authenticated: true,
+  })
+}

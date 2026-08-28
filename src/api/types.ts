@@ -5,6 +5,7 @@
 
 export type PublicId = string
 export type LocalDateTimeString = string
+export type LocalDateString = string
 
 export interface ApiErrorBody {
   message: string
@@ -39,6 +40,13 @@ export interface RefreshResponse {
 export interface UserDetails {
   fullName: string
   email: string
+}
+
+export interface StreakResponse {
+  currentStreak: number
+  longestStreak: number
+  activeToday: boolean
+  lastActiveDate: LocalDateString | null
 }
 
 export type UpdateUserDetailsRequest =
@@ -163,6 +171,21 @@ export interface CreateQuestionRequest {
   question: string
   questionType: QuestionType
   answers: CreateQuestionAnswerRequest[]
+}
+
+/** Manual creation uses a different field vocabulary from later quiz fetches. */
+export interface CreatedAnswer {
+  id: PublicId
+  answer: string
+  isCorrect: boolean
+}
+
+export interface CreatedQuestion {
+  id: PublicId
+  question: string
+  questionType: QuestionType
+  answers: CreatedAnswer[]
+  createdAt: LocalDateTimeString
 }
 
 export interface UpdateDifficultyRequest {

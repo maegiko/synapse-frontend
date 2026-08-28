@@ -20,6 +20,7 @@ export const API_PATHS = {
   },
   user: {
     details: '/api/user/details',
+    streak: '/api/user/streak',
   },
   notes: {
     list: '/api/notes/list',
@@ -30,6 +31,7 @@ export const API_PATHS = {
     list: '/api/flashcards/list',
     generate: '/api/flashcards/generate',
     detail: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}`,
+    complete: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}/complete`,
     card: (deckId: string, cardId: string) =>
       `/api/flashcards/${encodeURIComponent(deckId)}/cards/${encodeURIComponent(cardId)}`,
   },

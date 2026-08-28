@@ -1,6 +1,7 @@
 import { apiRequest } from './client'
 import { API_PATHS } from './config'
 import type {
+  CreatedQuestion,
   CreateQuestionRequest,
   PublicId,
   Quiz,
@@ -47,8 +48,11 @@ export async function remove(quizId: PublicId): Promise<void> {
  * Appends one hand-written question. The backend enforces four answers for
  * multiple choice, two for boolean, and exactly one correct answer either way.
  */
-export async function addQuestion(quizId: PublicId, question: CreateQuestionRequest): Promise<void> {
-  await apiRequest<void>(API_PATHS.quiz.questions(quizId), {
+export async function addQuestion(
+  quizId: PublicId,
+  question: CreateQuestionRequest,
+): Promise<CreatedQuestion> {
+  return apiRequest<CreatedQuestion>(API_PATHS.quiz.questions(quizId), {
     method: 'POST',
     json: question,
     authenticated: true,
