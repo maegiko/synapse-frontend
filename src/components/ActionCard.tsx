@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { IconArrowRight } from './icons'
-import { iconChip, surfaceCard } from './ui'
+import { surfaceCard } from './ui'
 
 interface ActionCardProps {
   to: string
-  icon: ReactNode
   /** Decorative artwork, bled off the card's bottom-right corner. */
   art: ReactNode
   title: string
@@ -15,7 +14,7 @@ interface ActionCardProps {
   blockedReason?: string
 }
 
-export function ActionCard({ to, icon, art, title, body, cta, blockedReason }: ActionCardProps) {
+export function ActionCard({ to, art, title, body, cta, blockedReason }: ActionCardProps) {
   const inner = (
     <>
       <span
@@ -24,8 +23,7 @@ export function ActionCard({ to, icon, art, title, body, cta, blockedReason }: A
       >
         {art}
       </span>
-      <span className={`${iconChip} relative`}>{icon}</span>
-      <h3 className="relative mt-4 mb-2 text-base font-bold">{title}</h3>
+      <h3 className="relative mb-2 text-base font-bold">{title}</h3>
       <p className="relative max-w-[22ch] text-sm text-text-muted">{body}</p>
     </>
   )

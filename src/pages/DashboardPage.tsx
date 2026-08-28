@@ -3,7 +3,7 @@ import { AppHeader } from '../components/AppHeader'
 import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
-import { IconArrowRight, IconDeck, IconNote, IconQuiz, IconUpload } from '../components/icons'
+import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { ArtDeck, ArtNote, ArtQuiz } from '../components/illustrations'
 import dashboardHero from '../assets/dashboard_hero.png'
 import { btnPrimaryMd, shell, viewAllPill } from '../components/ui'
@@ -79,7 +79,6 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <ActionCard
             to="/notes/new"
-            icon={<IconUpload />}
             art={<ArtNote />}
             title="Summarize a note"
             body="Upload a PDF, DOCX, TXT, or Markdown file, up to 10 MB, and get an overview, key points, and terms."
@@ -87,7 +86,6 @@ export function DashboardPage() {
           />
           <ActionCard
             to="/flashcards/new"
-            icon={<IconDeck />}
             art={<ArtDeck />}
             title="Generate a deck"
             body="Turn one of your notes into a flashcard deck, built from its concepts and key points."
@@ -96,7 +94,6 @@ export function DashboardPage() {
           />
           <ActionCard
             to="/quiz/new"
-            icon={<IconQuiz />}
             art={<ArtQuiz />}
             title="Generate a quiz"
             body="Turn one of your notes into a 10-question quiz, then save a score for every attempt."
