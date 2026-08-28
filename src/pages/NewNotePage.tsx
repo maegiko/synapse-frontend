@@ -1,20 +1,16 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import type { ChangeEvent, DragEvent, FormEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { FileDropzone } from '../components/FileDropzone'
 import { FormAlert } from '../components/FormAlert'
-import { IconArrowRight, IconNote, IconSpinner, IconUpload } from '../components/icons'
-import { btnGhostSm, btnSubmit, cardLink, iconChip, shell, surfaceCard } from '../components/ui'
+import { GenerationStatus } from '../components/GenerationStatus'
+import { IconArrowRight, IconSpinner } from '../components/icons'
+import { btnSubmit, cardLink, shell, surfaceCard } from '../components/ui'
 import { api } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
-import {
-  FILE_ACCEPT,
-  MAX_FILE_BYTES,
-  formatFileSize,
-  validateNoteFile,
-  withDeclaredType,
-} from '../lib/noteFiles'
+import { MAX_FILE_BYTES, formatFileSize, validateNoteFile, withDeclaredType } from '../lib/noteFiles'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
 
@@ -57,14 +53,10 @@ function messageForFailure(error: unknown): string {
 
 export function NewNotePage() {
   const navigate = useNavigate()
-  const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
-  // Drag events fire for every child, so nested enters/leaves are counted.
-  const dragDepth = useRef(0)
 
   const [file, setFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState('')
-  const [dragging, setDragging] = useState(false)
   const [step, setStep] = useState(0)
 
   const generate = useMutation({
@@ -89,45 +81,22 @@ export function NewNotePage() {
     return () => timers.forEach(clearTimeout)
   }, [isGenerating])
 
-  function chooseFile(chosen: File | undefined) {
-    if (!chosen) return
+  function handleSelect(chosen: File) {
     generate.reset()
-
-    const problem = validateNoteFile(chosen)
-    if (problem) {
-      setFile(null)
-      setFileError(problem)
-      return
-    }
     setFile(chosen)
     setFileError('')
   }
 
-  function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
-    chooseFile(event.target.files?.[0])
-    // Reset, so picking the same file again still fires a change event.
-    event.target.value = ''
+  function handleReject(reason: string) {
+    generate.reset()
+    setFile(null)
+    setFileError(reason)
   }
 
-  function handleDragEnter(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    if (isGenerating) return
-    dragDepth.current += 1
-    setDragging(true)
-  }
-
-  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    dragDepth.current -= 1
-    if (dragDepth.current <= 0) setDragging(false)
-  }
-
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    dragDepth.current = 0
-    setDragging(false)
-    if (isGenerating) return
-    chooseFile(event.dataTransfer.files?.[0])
+  function handleClear() {
+    generate.reset()
+    setFile(null)
+    setFileError('')
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -172,92 +141,21 @@ export function NewNotePage() {
             <div className="grid gap-5">
               {alertMessage && <FormAlert message={alertMessage} />}
 
-              <input
-                ref={inputRef}
-                id={inputId}
-                type="file"
-                name="file"
-                accept={FILE_ACCEPT}
-                className="sr-only"
-                disabled={isGenerating}
-                onChange={handleInputChange}
-              />
-
-              {file ? (
-                <div className="flex items-start gap-3.5 rounded-md border border-border bg-surface-alt p-4">
-                  <span className={`${iconChip} shrink-0`} aria-hidden="true">
-                    <IconNote />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-text">{file.name}</p>
-                    <p className="mt-1 text-xs text-text-muted tabular-nums">
-                      {formatFileSize(file.size)}
-                    </p>
-                  </div>
-                  {!isGenerating && (
-                    <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                      <label className={`${btnGhostSm} cursor-pointer`} htmlFor={inputId}>
-                        Replace
-                      </label>
-                      <button
-                        type="button"
-                        className="px-2 text-sm font-bold text-text-muted hover:text-error-solid"
-                        onClick={() => {
-                          setFile(null)
-                          setFileError('')
-                          generate.reset()
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div
-                  onDragEnter={handleDragEnter}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <label
-                    htmlFor={inputId}
-                    className={`flex cursor-pointer flex-col items-center gap-3 rounded-md border-2 border-dashed px-6 py-12 text-center transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
-                      dragging
-                        ? 'border-accent-solid bg-accent-soft'
-                        : 'border-border bg-surface-alt hover:border-accent-solid'
-                    }`}
-                  >
-                    <span className={iconChip} aria-hidden="true">
-                      <IconUpload />
-                    </span>
-                    <span className="text-base font-bold text-text">
-                      Drop a file here, or browse
-                    </span>
-                    <span className="text-sm text-text-muted">
-                      PDF, DOCX, TXT, or Markdown · up to {formatFileSize(MAX_FILE_BYTES)}
-                    </span>
-                  </label>
-                </div>
-              )}
-
               {isGenerating && (
-                <div
-                  className="flex items-center gap-3.5 rounded-md border border-accent-soft bg-accent-soft px-4 py-3.5"
-                  role="status"
-                  aria-live="polite"
-                >
-                  <IconSpinner className="h-5.5 w-5.5 shrink-0 text-accent-strong" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-accent-strong">
-                      {GENERATION_STEPS[step].label}
-                    </p>
-                    <p className="mt-0.5 text-xs text-text-muted">
-                      This usually takes under a minute. Keep this tab open.
-                    </p>
-                  </div>
-                </div>
+                <GenerationStatus
+                  label={GENERATION_STEPS[step].label}
+                  hint="This usually takes under a minute. Keep this tab open."
+                />
               )}
+
+              <FileDropzone
+                file={file}
+                inputRef={inputRef}
+                disabled={isGenerating}
+                onSelect={handleSelect}
+                onReject={handleReject}
+                onClear={handleClear}
+              />
 
               <button type="submit" className={btnSubmit} disabled={isGenerating}>
                 {isGenerating ? (
