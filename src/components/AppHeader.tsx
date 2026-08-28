@@ -23,10 +23,10 @@ export function AppHeader() {
       <div className={`${shell} flex items-center gap-7 py-4`}>
         <Link
           to="/dashboard"
-          className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-semibold text-text no-underline"
+          className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline"
         >
-          <img src={synapseLogo} alt="" width="44" height="44" />
-          <span>Synapse</span>
+          <img src={synapseLogo} alt="" width="48" height="48" />
+          <span className="translate-y-0.5">Synapse</span>
         </Link>
         <span className="hidden text-sm font-semibold text-text-muted sm:inline">{user?.email}</span>
         <button type="button" className={btnGhostSm} onClick={handleLogout} disabled={loggingOut}>

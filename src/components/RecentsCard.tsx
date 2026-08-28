@@ -49,7 +49,7 @@ export function RecentsCard({
   return (
     <section className={`${surfaceCard} flex flex-col`}>
       <div className="flex items-center gap-3 border-b border-border px-5.5 py-4">
-        <h3 className="mr-auto text-sm font-bold">{title}</h3>
+        <h3 className="mr-auto text-sm font-medium">{title}</h3>
         {count !== undefined && <span className={countPill}>{count}</span>}
       </div>
 

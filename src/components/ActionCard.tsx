@@ -23,7 +23,7 @@ export function ActionCard({ to, art, title, body, cta, blockedReason }: ActionC
       >
         {art}
       </span>
-      <h3 className="relative mb-2 text-base font-bold">{title}</h3>
+      <h3 className="relative mb-2 text-base font-medium">{title}</h3>
       <p className="relative max-w-[22ch] text-sm text-text-muted">{body}</p>
     </>
   )

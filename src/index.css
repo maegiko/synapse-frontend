@@ -8,6 +8,14 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Satoshi';
+  src: url('./assets/fonts/Satoshi-Light.woff') format('woff');
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
 @theme {
   --color-background: #faf9fc;
   --color-surface: #ffffff;
@@ -29,8 +37,8 @@
   --color-info-solid: #1d4ed8;
   --color-info-soft: #e8eefd;
 
-  --font-display: 'Projekt Blackbird', 'Source Sans 3', 'Segoe UI', sans-serif;
-  --font-body: 'Source Sans 3', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-display: 'Projekt Blackbird', 'Satoshi', 'Segoe UI', sans-serif;
+  --font-body: 'Satoshi', 'Segoe UI', Helvetica, Arial, sans-serif;
 
   --text-xs: 0.8125rem;
   --text-sm: 0.9375rem;
@@ -66,13 +74,14 @@ body {
   margin: 0;
   background: var(--color-background);
   color: var(--color-text);
+  font-weight: 300;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
