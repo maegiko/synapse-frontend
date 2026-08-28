@@ -151,6 +151,7 @@ export function DashboardPage() {
                 key={deck.deckId}
                 icon={<IconDeck className={ROW_ICON} />}
                 title={deck.title}
+                to={`/flashcards/${deck.deckId}`}
                 // `title` on a saved flashcard is the question, not a heading.
                 preview={deck.flashcards[0]?.title}
                 metadata={[plural(deck.flashcards.length, 'card')]}

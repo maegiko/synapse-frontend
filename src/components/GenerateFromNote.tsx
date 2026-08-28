@@ -26,6 +26,14 @@ export interface GenerationStep {
   label: string
 }
 
+export interface GenerationResult {
+  /** Sentence describing what was made. */
+  message: string
+  /** Where the finished thing lives, for the types that have a page of their own. */
+  to?: string
+  linkLabel?: string
+}
+
 interface GenerateFromNoteProps {
   heading: string
   intro: string
@@ -39,9 +47,9 @@ interface GenerateFromNoteProps {
   tips: string[]
   /**
    * Generates from a saved note, invalidates whatever list it added to, and
-   * returns the sentence describing what was made.
+   * describes what was made.
    */
-  onGenerate: (note: NoteSummary) => Promise<string>
+  onGenerate: (note: NoteSummary) => Promise<GenerationResult>
 }
 
 const SEARCH_THRESHOLD = 5
@@ -93,7 +101,7 @@ export function GenerateFromNote({
   const [search, setSearch] = useState('')
   const [formError, setFormError] = useState('')
   const [step, setStep] = useState(0)
-  const [result, setResult] = useState<string | null>(null)
+  const [result, setResult] = useState<GenerationResult | null>(null)
 
   const hasNoNotes = notes.isSuccess && notes.data.length === 0
 
@@ -113,7 +121,7 @@ export function GenerateFromNote({
 
   const generate = useMutation({
     mutationFn: (note: NoteSummary) => onGenerate(note),
-    onSuccess: (summary) => setResult(summary),
+    onSuccess: (generated) => setResult(generated),
     onError: (error) => {
       setFormError(messageForFailure(error))
       // A note that vanished underneath us: reload the list so it stops showing.
@@ -236,10 +244,16 @@ export function GenerateFromNote({
               </span>
               <h2 className="mt-4 text-xl">{successHeading}</h2>
               <p className="mt-2.5 max-w-[52ch] text-base text-text-muted">
-                {result} You will find it in your library.
+                {result.message} You will find it in your library.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/dashboard" className={btnPrimaryLg}>
+                {result.to && (
+                  <Link to={result.to} className={btnPrimaryLg}>
+                    {result.linkLabel ?? `Open the ${noun}`}
+                    <IconArrowRight />
+                  </Link>
+                )}
+                <Link to="/dashboard" className={result.to ? btnGhostLg : btnPrimaryLg}>
                   <IconArrowLeft />
                   Back to dashboard
                 </Link>

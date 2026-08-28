@@ -264,6 +264,7 @@ export function LibraryPage() {
                     key={deck.deckId}
                     icon={<IconDeck />}
                     title={deck.title}
+                    to={`/flashcards/${deck.deckId}`}
                     // `title` on a saved flashcard is the question, not a heading.
                     preview={deck.flashcards[0]?.title}
                     facts={[plural(deck.flashcards.length, 'card')]}

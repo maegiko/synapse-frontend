@@ -10,8 +10,16 @@ export const btnPrimaryLgInverted = `${btnBase} bg-on-accent text-accent-strong 
 export const btnGhostSm = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-4.5 py-2.25 text-sm hover:bg-stone-300`
 export const btnGhostLg = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-6 py-3.25 text-base hover:bg-stone-300`
 
+/** Greys an accent button out, for a request in flight or an action not yet built. */
+export const btnPrimaryDisabled =
+  'disabled:cursor-not-allowed disabled:bg-accent-soft disabled:text-accent-strong disabled:shadow-none disabled:translate-y-0'
+
 /** Full-width submit button that greys out while a request is in flight. */
-export const btnSubmit = `${btnPrimaryLg} w-full disabled:cursor-not-allowed disabled:bg-accent-soft disabled:text-accent-strong disabled:shadow-none disabled:translate-y-0`
+export const btnSubmit = `${btnPrimaryLg} w-full ${btnPrimaryDisabled}`
+
+/** Destructive actions: quiet in a toolbar, solid only on the confirm step. */
+export const btnDangerSm = `${btnBase} bg-error-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-error-solid hover:shadow-md hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none disabled:translate-y-0`
+export const btnDangerGhostSm = `${btnBase} border-border bg-surface text-error-solid px-4.5 py-2.25 text-sm hover:border-error-solid hover:bg-error-soft disabled:cursor-not-allowed disabled:opacity-60`
 
 export const fieldLabel = 'mb-1.5 block text-sm font-bold text-text'
 export const fieldInput =

@@ -5,6 +5,7 @@ import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { ScrollToTop } from './components/ScrollToTop'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
+import { DeckPage } from './pages/DeckPage'
 import { LandingPage } from './pages/LandingPage'
 import { LibraryPage } from './pages/LibraryPage'
 import { LoginPage } from './pages/LoginPage'
@@ -75,6 +76,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <NewDeckPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flashcards/:deckId"
+              element={
+                <ProtectedRoute>
+                  <DeckPage />
                 </ProtectedRoute>
               }
             />

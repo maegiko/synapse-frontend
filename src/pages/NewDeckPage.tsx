@@ -28,12 +28,15 @@ export function NewDeckPage() {
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
-        // `deck.deckId` is where a redirect will point once the deck page exists.
         const deck = await api.flashcards.generate(note.id)
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
         const count = deck.flashcards.length
-        // The backend copies the deck title from the source note.
-        return `${count} ${count === 1 ? 'card' : 'cards'} generated from “${note.title}”.`
+        return {
+          // The backend copies the deck title from the source note.
+          message: `${count} ${count === 1 ? 'card' : 'cards'} generated from “${note.title}”.`,
+          to: `/flashcards/${deck.deckId}`,
+          linkLabel: 'Open the deck',
+        }
       }}
     />
   )

@@ -91,3 +91,29 @@ export function IconNote({ className = 'h-5.5 w-5.5' }: IconProps) {
     </svg>
   )
 }
+
+export function IconPlay({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden="true">
+      <path d="M7.5 5.2v13.6L19 12 7.5 5.2Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconPlus({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className} aria-hidden="true">
+      <path d="M12 5.5v13M5.5 12h13" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconTrash({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={className} aria-hidden="true">
+      <path d="M4.5 7h15M9.5 7V5.6A1.6 1.6 0 0 1 11.1 4h1.8a1.6 1.6 0 0 1 1.6 1.6V7" strokeLinecap="round" />
+      <path d="m6.7 7 .8 12.1a1.6 1.6 0 0 0 1.6 1.4h5.8a1.6 1.6 0 0 0 1.6-1.4L17.3 7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.4 10.8v6M13.6 10.8v6" strokeLinecap="round" />
+    </svg>
+  )
+}
