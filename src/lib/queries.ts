@@ -5,6 +5,7 @@ export const queryKeys = {
   notes: ['notes'] as const,
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
+  flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
   quizzes: ['quizzes'] as const,
 }
 
@@ -23,6 +24,15 @@ export function useNote(noteId: string | undefined) {
 
 export function useFlashcardDecks() {
   return useQuery({ queryKey: queryKeys.flashcardDecks, queryFn: api.flashcards.list })
+}
+
+/** One saved deck with its cards, in the backend's saved position order. */
+export function useFlashcardDeck(deckId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.flashcardDeck(deckId ?? ''),
+    queryFn: () => api.flashcards.get(deckId ?? ''),
+    enabled: Boolean(deckId),
+  })
 }
 
 export function useQuizzes() {

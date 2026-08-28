@@ -29,6 +29,9 @@ export const API_PATHS = {
   flashcards: {
     list: '/api/flashcards/list',
     generate: '/api/flashcards/generate',
+    detail: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}`,
+    card: (deckId: string, cardId: string) =>
+      `/api/flashcards/${encodeURIComponent(deckId)}/cards/${encodeURIComponent(cardId)}`,
   },
   quiz: {
     list: '/api/quiz/list',

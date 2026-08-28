@@ -91,6 +91,19 @@ export interface FlashcardListResponse {
   flashcardDecks: FlashcardDeck[]
 }
 
+export interface AddFlashcardRequest {
+  question: string
+  answer: string
+}
+
+/** Manual creation answers with `question`, unlike list and generation responses. */
+export interface AddFlashcardResponse {
+  id: PublicId
+  question: string
+  answer: string
+  createdAt: LocalDateTimeString
+}
+
 export type QuestionType = 'MULTIPLE_CHOICE' | 'BOOLEAN'
 
 export interface QuizAnswer {
