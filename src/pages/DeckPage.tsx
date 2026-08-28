@@ -30,6 +30,7 @@ import {
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck, queryKeys } from '../lib/queries'
+import { SHUFFLE_PARAM } from './PlayDeckPage'
 import { queryClient } from '../lib/queryClient'
 import { api } from '../api'
 import type { FlashcardDeck, SavedFlashcard } from '../api'
@@ -37,8 +38,42 @@ import type { FlashcardDeck, SavedFlashcard } from '../api'
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
 
-/** Studying a deck is not built yet, so the button says why it does nothing. */
-const PLAY_BLOCKED_REASON = 'Studying a deck card by card lands here next.'
+/** An empty deck is the one case where playing is not possible. */
+const PLAY_EMPTY_REASON = 'Add a card before you can play this deck.'
+
+/** Whether the run is dealt at random. Sent to the player as a query parameter. */
+function ShuffleSwitch({
+  isOn,
+  onToggle,
+}: {
+  isOn: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isOn}
+      onClick={onToggle}
+      className={`inline-flex items-center gap-2.5 rounded-sm py-1 text-sm font-bold transition-colors duration-150 ${
+        isOn ? 'text-text' : 'text-text-muted hover:text-text'
+      }`}
+    >
+      <span
+        className={`inline-flex h-5.5 w-10 shrink-0 items-center rounded-full border transition-colors duration-150 ${
+          isOn ? 'border-accent-solid bg-accent-solid' : 'border-border bg-surface-alt'
+        }`}
+      >
+        <span
+          className={`h-4 w-4 rounded-full bg-surface shadow-sm transition-transform duration-150 ease-out ${
+            isOn ? 'translate-x-5' : 'translate-x-0.5'
+          }`}
+        />
+      </span>
+      Shuffle
+    </button>
+  )
+}
 
 /** Matches the note skeleton, so a cold load reads the same on either page. */
 function DeckSkeleton() {
@@ -90,9 +125,11 @@ function CardRow({
           {position}
         </span>
         <div className="min-w-0 flex-1">
-          {/* `title` on a saved flashcard is the question, not a heading. */}
+          {/*
+           * Only the question side is shown. Answers stay hidden here so the
+           * deck is not spoiled before it is studied; `title` is the question.
+           */}
           <p className="max-w-[72ch] text-sm font-bold text-text">{card.title}</p>
-          <p className="mt-1.5 max-w-[72ch] text-sm text-text-muted">{card.answer}</p>
         </div>
         <button
           type="button"
@@ -145,6 +182,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   const [actionError, setActionError] = useState('')
   const [confirmingCardId, setConfirmingCardId] = useState<string | null>(null)
   const [isConfirmingDeck, setIsConfirmingDeck] = useState(false)
+  const [isShuffled, setIsShuffled] = useState(false)
 
   const cards = deck.flashcards ?? []
 
@@ -228,22 +266,32 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
 
   return (
     <>
-      <p className="text-xs font-bold tracking-wide text-text-muted uppercase">Flashcard deck</p>
-      <h1 className="mt-1.5 text-2xl">{deck.title}</h1>
+      <h1 className="text-2xl">{deck.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={countPill}>{plural(cards.length, 'card')}</span>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
-          disabled
-          title={PLAY_BLOCKED_REASON}
-        >
-          <IconPlay />
-          Play deck
-        </button>
+        {cards.length > 0 ? (
+          <Link
+            to={`/flashcards/${deck.deckId}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
+            className={btnPrimarySm}
+          >
+            <IconPlay />
+            Play deck
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+            disabled
+            title={PLAY_EMPTY_REASON}
+          >
+            <IconPlay />
+            Play deck
+          </button>
+        )}
+        <ShuffleSwitch isOn={isShuffled} onToggle={() => setIsShuffled((on) => !on)} />
         <button type="button" className={btnGhostSm} onClick={toggleAddForm} aria-expanded={isAdding}>
           <IconPlus />
           {isAdding ? 'Close card form' : 'Add a card'}
@@ -261,7 +309,13 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
           Delete deck
         </button>
       </div>
-      <p className="mt-2.5 text-xs text-text-muted">{PLAY_BLOCKED_REASON}</p>
+      <p className="mt-2.5 text-xs text-text-muted">
+        {cards.length === 0
+          ? PLAY_EMPTY_REASON
+          : isShuffled
+            ? 'Cards will be dealt in a random order.'
+            : 'Cards will be played in their saved order.'}
+      </p>
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}

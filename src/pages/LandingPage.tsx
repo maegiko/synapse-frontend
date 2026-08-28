@@ -263,7 +263,7 @@ function FlashcardMock() {
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
       <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Flashcard deck</p>
-      <div className="flashcard relative h-42 cursor-pointer" tabIndex={0}>
+      <div className="flashcard flashcard--hover-flip relative h-42 cursor-pointer" tabIndex={0}>
         <div className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-md border border-border bg-surface-alt p-4.5 text-center font-semibold text-text transition-transform duration-500">
           <p>What does a state machine model?</p>
         </div>

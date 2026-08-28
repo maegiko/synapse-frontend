@@ -13,6 +13,7 @@ import { NewDeckPage } from './pages/NewDeckPage'
 import { NewNotePage } from './pages/NewNotePage'
 import { NewQuizPage } from './pages/NewQuizPage'
 import { NotePage } from './pages/NotePage'
+import { PlayDeckPage } from './pages/PlayDeckPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { queryClient } from './lib/queryClient'
 
@@ -84,6 +85,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DeckPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/flashcards/:deckId/play"
+              element={
+                <ProtectedRoute>
+                  <PlayDeckPage />
                 </ProtectedRoute>
               }
             />

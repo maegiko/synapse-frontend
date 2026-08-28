@@ -107,11 +107,39 @@ h3 {
 .flashcard-face--back {
   transform: rotateY(180deg);
 }
-.flashcard:hover .flashcard-face--front,
-.flashcard:focus-visible .flashcard-face--front {
+/* Two ways to flip: on hover for the landing mock, on state while playing. */
+.flashcard--hover-flip:hover .flashcard-face--front,
+.flashcard--hover-flip:focus-visible .flashcard-face--front,
+.flashcard--revealed .flashcard-face--front {
   transform: rotateY(-180deg);
 }
-.flashcard:hover .flashcard-face--back,
-.flashcard:focus-visible .flashcard-face--back {
+.flashcard--hover-flip:hover .flashcard-face--back,
+.flashcard--hover-flip:focus-visible .flashcard-face--back,
+.flashcard--revealed .flashcard-face--back {
   transform: rotateY(0deg);
+}
+
+/* Dialog entrance — Tailwind ships no enter-animation utilities. */
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes dialog-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+.dialog-overlay {
+  animation: dialog-overlay-in 160ms ease-out;
+}
+.dialog-panel {
+  animation: dialog-panel-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog-panel {
+    animation: none;
+  }
 }
