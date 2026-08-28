@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { ScoreRow } from '../components/ScoreRow'
 import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
 import { FormAlert } from '../components/FormAlert'
 import {
@@ -38,6 +39,9 @@ import type { QuestionType, Quiz, QuizQuestion } from '../api'
 
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
+
+/** The tile shows only the newest few; the rest live on their own page. */
+const RECENT_SCORE_LIMIT = 3
 
 /** An empty quiz is the one case where playing is not possible. */
 const PLAY_EMPTY_REASON = 'Add a question before you can play this quiz.'
@@ -165,6 +169,12 @@ function ScoreHistory({ quizId }: { quizId: string }) {
       <div className="flex items-center gap-3 border-b border-border px-6 py-4">
         <h2 className="mr-auto text-base font-medium">Past attempts</h2>
         {scores.isSuccess && <span className={countPill}>{scores.data.length}</span>}
+        {scores.isSuccess && scores.data.length > RECENT_SCORE_LIMIT && (
+          <Link to={`/quiz/${quizId}/scores`} className={cardLink}>
+            View all
+            <IconArrowRight />
+          </Link>
+        )}
       </div>
       <div className="px-6 py-5">
         {scores.isPending && (
@@ -194,22 +204,13 @@ function ScoreHistory({ quizId }: { quizId: string }) {
             <p className={placeholderPanel}>Scores you save will show up here.</p>
           ) : (
             <ol className="m-0 grid list-none gap-3.5 p-0">
-              {scores.data.map((score) => (
-                <li
+              {/* The API returns every attempt, so the newest few are taken here. */}
+              {scores.data.slice(0, RECENT_SCORE_LIMIT).map((score) => (
+                <ScoreRow
                   key={score.publicId}
-                  className="flex items-center gap-3 border-b border-dashed border-border pb-3.5 last:border-b-0 last:pb-0"
-                >
-                  {/* `totalQuestions` is that attempt's own snapshot, not today's count. */}
-                  <span className="text-sm font-bold text-text tabular-nums">
-                    {score.score} / {score.totalQuestions}
-                  </span>
-                  <span className={countPill}>
-                    {Math.round((score.score / Math.max(score.totalQuestions, 1)) * 100)}%
-                  </span>
-                  <span className="ml-auto text-xs text-text-muted tabular-nums">
-                    {formatRelative(score.createdAt)}
-                  </span>
-                </li>
+                  score={score}
+                  when={formatRelative(score.createdAt)}
+                />
               ))}
             </ol>
           ))}

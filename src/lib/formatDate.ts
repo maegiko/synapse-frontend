@@ -31,3 +31,20 @@ export function formatRelative(value: string | null | undefined): string {
 
   return formatDate(value)
 }
+
+/**
+ * Date and time together, for lists where several entries can share a day.
+ * Like the others here, this is a display value: `createdAt` carries no offset.
+ */
+export function formatDateTime(value: string | null | undefined): string {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
