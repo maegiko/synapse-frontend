@@ -81,7 +81,7 @@ export function DashboardPage() {
           <ActionCard
             to="/notes/new"
             art={<img src={noteSplash} alt="" />}
-            title="Summarize a note"
+            title="Summarise a note"
             body="Upload a PDF, DOCX, TXT, or Markdown file (up to 10 MB) and get an overview, key points, and terms."
             cta="Upload a file"
           />

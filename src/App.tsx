@@ -6,6 +6,8 @@ import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewNotePage } from './pages/NewNotePage'
+import { NotePage } from './pages/NotePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { queryClient } from './lib/queryClient'
 
@@ -51,10 +53,15 @@ function App() {
               path="/notes/new"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Summarize a note"
-                    body="File upload and AI summarization land here next. The dashboard already links to it, so the route is in place."
-                  />
+                  <NewNotePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notes/:noteId"
+              element={
+                <ProtectedRoute>
+                  <NotePage />
                 </ProtectedRoute>
               }
             />
