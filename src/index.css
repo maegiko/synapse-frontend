@@ -58,6 +58,10 @@
   text-rendering: optimizeLegibility;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   background: var(--color-background);
