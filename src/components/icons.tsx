@@ -49,6 +49,14 @@ export function IconQuiz({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
+export function IconCheck({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={className} aria-hidden="true">
+      <path d="m5 12.5 4.5 4.5L19 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 /** Indeterminate progress ring. Decorative, so pair it with a text status. */
 export function IconSpinner({ className = 'h-5 w-5' }: IconProps) {
   return (

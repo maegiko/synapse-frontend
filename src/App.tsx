@@ -6,7 +6,9 @@ import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
 import { LoginPage } from './pages/LoginPage'
+import { NewDeckPage } from './pages/NewDeckPage'
 import { NewNotePage } from './pages/NewNotePage'
+import { NewQuizPage } from './pages/NewQuizPage'
 import { NotePage } from './pages/NotePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { queryClient } from './lib/queryClient'
@@ -69,10 +71,7 @@ function App() {
               path="/flashcards/new"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Generate a flashcard deck"
-                    body="Picking one of your notes and generating a deck from it lands here next."
-                  />
+                  <NewDeckPage />
                 </ProtectedRoute>
               }
             />
@@ -80,10 +79,7 @@ function App() {
               path="/quiz/new"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Generate a quiz"
-                    body="Picking one of your notes and generating a ten-question quiz from it lands here next."
-                  />
+                  <NewQuizPage />
                 </ProtectedRoute>
               }
             />

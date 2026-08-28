@@ -91,7 +91,7 @@ export function DashboardPage() {
             title="Generate a deck"
             body="Turn one of your notes into a flashcard deck, built from its concepts and key points."
             cta="Pick a note"
-            blockedReason={needsFirstNote ? 'Summarize a note first' : undefined}
+            blockedReason={needsFirstNote ? 'Summarise a note first' : undefined}
           />
           <ActionCard
             to="/quiz/new"
@@ -99,7 +99,7 @@ export function DashboardPage() {
             title="Generate a quiz"
             body="Turn one of your notes into a 10-question quiz, then save a score for every attempt."
             cta="Pick a note"
-            blockedReason={needsFirstNote ? 'Summarize a note first' : undefined}
+            blockedReason={needsFirstNote ? 'Summarise a note first' : undefined}
           />
         </div>
 
