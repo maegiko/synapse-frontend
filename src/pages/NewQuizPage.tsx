@@ -28,12 +28,13 @@ export function NewQuizPage() {
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
-        // `quiz.id` is where a redirect will point once the quiz page exists.
         const quiz = await api.quiz.generate(note.id)
         void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
         const count = quiz.questions.length
         return {
           message: `${count} ${count === 1 ? 'question' : 'questions'} generated from “${note.title}”.`,
+          to: `/quiz/${quiz.id}`,
+          linkLabel: 'Open the quiz',
         }
       }}
     />

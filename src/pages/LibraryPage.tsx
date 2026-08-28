@@ -289,6 +289,7 @@ export function LibraryPage() {
                     key={quiz.id}
                     icon={<IconQuiz />}
                     title={quiz.title}
+                    to={`/quiz/${quiz.id}`}
                     preview={quiz.description}
                     facts={[
                       plural(quiz.questions.length, 'question'),

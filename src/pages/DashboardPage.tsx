@@ -175,6 +175,7 @@ export function DashboardPage() {
                 key={quiz.id}
                 icon={<IconQuiz className={ROW_ICON} />}
                 title={quiz.title}
+                to={`/quiz/${quiz.id}`}
                 preview={quiz.description}
                 metadata={[
                   plural(quiz.questions.length, 'question'),
