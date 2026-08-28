@@ -4,8 +4,9 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { IconArrowLeft, IconArrowRight, IconCheck, IconStar } from '../components/icons'
+import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
 import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
+import { StarRating } from '../components/StarRating'
 import {
   btnGhostLg,
   btnGhostSm,
@@ -37,7 +38,6 @@ function drawClosingNote(): string {
   return CLOSING_NOTES[Math.floor(Math.random() * CLOSING_NOTES.length)]
 }
 
-const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5]
 const LEAVE_TITLE = 'Leave this quiz?'
 const LEAVE_BODY =
   'The quiz is still in progress. Your answers so far will be lost and no score will be saved.'
@@ -49,49 +49,6 @@ function PlaySkeleton() {
     <div className="mx-auto grid max-w-200 gap-6" aria-hidden="true">
       <span className="block h-4 w-40 animate-pulse rounded-full bg-surface-alt" />
       <span className="block h-96 w-full animate-pulse rounded-lg bg-surface-alt" />
-    </div>
-  )
-}
-
-/** Whole stars only: each button sets the rating outright. */
-function StarRating({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: number
-  onChange: (next: number) => void
-  disabled: boolean
-}) {
-  const [hovered, setHovered] = useState(0)
-  // Hovering previews a rating without committing it.
-  const shown = hovered || value
-
-  return (
-    <div
-      className="flex justify-center gap-1.5"
-      role="group"
-      aria-label="Difficulty, from 1 to 5 stars"
-      onMouseLeave={() => setHovered(0)}
-    >
-      {DIFFICULTY_LEVELS.map((level) => (
-        <button
-          key={level}
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange(level)}
-          onMouseEnter={() => setHovered(level)}
-          onFocus={() => setHovered(level)}
-          onBlur={() => setHovered(0)}
-          aria-pressed={value === level}
-          aria-label={`${level} out of 5`}
-          className={`rounded-sm p-1 transition-transform duration-150 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60 ${
-            level <= shown ? 'text-accent-solid' : 'text-border'
-          }`}
-        >
-          <IconStar className="h-9 w-9" filled={level <= shown} />
-        </button>
-      ))}
     </div>
   )
 }

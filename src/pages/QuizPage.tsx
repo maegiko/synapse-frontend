@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { ScoreRow } from '../components/ScoreRow'
 import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
+import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import {
   IconArrowLeft,
@@ -46,7 +47,6 @@ const RECENT_SCORE_LIMIT = 3
 /** An empty quiz is the one case where playing is not possible. */
 const PLAY_EMPTY_REASON = 'Add a question before you can play this quiz.'
 
-const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5]
 const QUESTION_MAX_LENGTH = 1000
 const ANSWER_MAX_LENGTH = 500
 /** The backend requires four answers for multiple choice and two for boolean. */
@@ -607,30 +607,16 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
               )}
             </div>
             <div className="px-6 py-5">
-              <div className="flex flex-wrap gap-2.5">
-                {DIFFICULTY_LEVELS.map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    className={`h-10.5 w-10.5 rounded-sm border text-sm font-bold tabular-nums transition-colors duration-150 ${
-                      quiz.difficulty === level
-                        ? // The level in force is disabled, but it is the one that
-                          // should read strongest, so it keeps its full weight.
-                          'border-accent-solid bg-accent-solid text-on-accent disabled:cursor-default'
-                        : 'border-border bg-surface text-text-muted hover:border-accent-solid hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-60'
-                    }`}
-                    onClick={() => {
-                      setActionError('')
-                      setDifficulty.mutate(level)
-                    }}
-                    disabled={isBusy || isConfirmingQuiz || quiz.difficulty === level}
-                    aria-pressed={quiz.difficulty === level}
-                  >
-                    {level}
-                    <span className="sr-only"> out of 5</span>
-                  </button>
-                ))}
-              </div>
+              <StarRating
+                value={quiz.difficulty ?? 0}
+                className="justify-start"
+                disabled={isBusy || isConfirmingQuiz}
+                onChange={(level) => {
+                  if (level === quiz.difficulty) return
+                  setActionError('')
+                  setDifficulty.mutate(level)
+                }}
+              />
               <p className="mt-3.5 text-xs text-text-muted">
                 {quiz.difficulty === null
                   ? 'Generated quizzes start with no difficulty. Once set, it can be changed but not cleared.'
