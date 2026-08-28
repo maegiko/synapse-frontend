@@ -7,6 +7,8 @@ export const queryKeys = {
   flashcardDecks: ['flashcard-decks'] as const,
   flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
   quizzes: ['quizzes'] as const,
+  quiz: (quizId: string) => ['quizzes', quizId] as const,
+  quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
 }
 
 export function useNotes() {
@@ -37,4 +39,22 @@ export function useFlashcardDeck(deckId: string | undefined) {
 
 export function useQuizzes() {
   return useQuery({ queryKey: queryKeys.quizzes, queryFn: api.quiz.list })
+}
+
+/** One saved quiz with its questions and answers, in saved position order. */
+export function useQuiz(quizId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.quiz(quizId ?? ''),
+    queryFn: () => api.quiz.get(quizId ?? ''),
+    enabled: Boolean(quizId),
+  })
+}
+
+/** Past attempts, newest first. Only quizzes keep a history. */
+export function useQuizScores(quizId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.quizScores(quizId ?? ''),
+    queryFn: () => api.quiz.scores(quizId ?? ''),
+    enabled: Boolean(quizId),
+  })
 }

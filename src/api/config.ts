@@ -36,5 +36,11 @@ export const API_PATHS = {
   quiz: {
     list: '/api/quiz/list',
     generate: '/api/quiz/generate',
+    detail: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}`,
+    questions: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/questions`,
+    question: (quizId: string, questionId: string) =>
+      `/api/quiz/${encodeURIComponent(quizId)}/questions/${encodeURIComponent(questionId)}`,
+    difficulty: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/difficulty`,
+    scores: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/score/list`,
   },
 } as const

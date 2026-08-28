@@ -152,3 +152,34 @@ export interface QuizListItem {
 export interface QuizListResponse {
   quizzes: QuizListItem[]
 }
+
+/** Creation uses `answer`/`isCorrect`; a later quiz fetch calls them `text`/`correct`. */
+export interface CreateQuestionAnswerRequest {
+  answer: string
+  isCorrect: boolean
+}
+
+export interface CreateQuestionRequest {
+  question: string
+  questionType: QuestionType
+  answers: CreateQuestionAnswerRequest[]
+}
+
+export interface UpdateDifficultyRequest {
+  /** An integer from 1 through 5. There is no endpoint for clearing it again. */
+  difficulty: number
+}
+
+/** The only resource whose identifier is named `publicId` rather than `id`. */
+export interface QuizScore {
+  publicId: PublicId
+  quizId: PublicId
+  score: number
+  /** Snapshot taken when the attempt was saved; use it as that attempt's denominator. */
+  totalQuestions: number
+  createdAt: LocalDateTimeString
+}
+
+export interface QuizScoreListResponse {
+  scores: QuizScore[]
+}
