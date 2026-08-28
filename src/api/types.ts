@@ -63,6 +63,17 @@ export interface NoteListResponse {
   notes: NoteSummary[]
 }
 
+/** Generation responses carry no card IDs; fetch the deck when IDs are needed. */
+export interface GeneratedFlashcard {
+  title: string
+  answer: string
+}
+
+export interface FlashcardGenerateResponse {
+  deckId: PublicId
+  flashcards: GeneratedFlashcard[]
+}
+
 /** `title` is the flashcard *question*, both here and in generation responses. */
 export interface SavedFlashcard {
   id: PublicId
@@ -78,6 +89,34 @@ export interface FlashcardDeck {
 
 export interface FlashcardListResponse {
   flashcardDecks: FlashcardDeck[]
+}
+
+export type QuestionType = 'MULTIPLE_CHOICE' | 'BOOLEAN'
+
+export interface QuizAnswer {
+  id: PublicId
+  text: string
+  /** The backend discloses correctness; hide it until the UX should reveal it. */
+  correct: boolean
+  createdAt: LocalDateTimeString
+}
+
+export interface QuizQuestion {
+  id: PublicId
+  text: string
+  questionType: QuestionType
+  answers: QuizAnswer[]
+  createdAt: LocalDateTimeString
+}
+
+export interface Quiz {
+  id: PublicId
+  title: string
+  description: string | null
+  questions: QuizQuestion[]
+  /** 1 through 5, or null until it is set. Generated quizzes start null. */
+  difficulty: number | null
+  createdAt: LocalDateTimeString
 }
 
 /** List items carry question previews only: no answers and no questionType. */
