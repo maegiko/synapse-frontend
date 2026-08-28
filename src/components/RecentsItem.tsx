@@ -14,7 +14,7 @@ interface RecentsItemProps {
 /** One row in a quick-view card. Read-only until the detail screens exist. */
 export function RecentsItem({ icon, title, preview, metadata, timestamp }: RecentsItemProps) {
   return (
-    <li className="flex gap-3 border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0">
+    <li className="flex min-w-0 gap-3 border-b border-dashed border-border pb-4 last:border-b-0 last:pb-0">
       <span
         className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong"
         aria-hidden="true"

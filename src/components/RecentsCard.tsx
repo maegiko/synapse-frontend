@@ -47,13 +47,13 @@ export function RecentsCard({
   viewAllLabel,
 }: RecentsCardProps) {
   return (
-    <section className={`${surfaceCard} flex flex-col`}>
+    <section className={`${surfaceCard} min-w-0 flex flex-col`}>
       <div className="flex items-center gap-3 border-b border-border px-5.5 py-4">
         <h3 className="mr-auto text-sm font-medium">{title}</h3>
         {count !== undefined && <span className={countPill}>{count}</span>}
       </div>
 
-      <div className="flex-1 px-5.5 py-5">
+      <div className="min-w-0 flex-1 px-5.5 py-5">
         {isLoading && <Skeleton />}
 
         {isError && (
@@ -73,7 +73,9 @@ export function RecentsCard({
           <p className="text-sm text-text-muted">{emptyMessage}</p>
         )}
 
-        {!isLoading && !isError && !isEmpty && <ul className="grid gap-4 p-0">{children}</ul>}
+        {!isLoading && !isError && !isEmpty && (
+          <ul className="grid min-w-0 gap-4 p-0">{children}</ul>
+        )}
       </div>
 
       <div className="mt-auto px-5.5 pb-5">
