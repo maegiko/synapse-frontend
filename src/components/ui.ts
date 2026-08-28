@@ -3,7 +3,7 @@
 export const shell = 'mx-auto w-full max-w-280 px-6'
 
 export const btnBase =
-  'inline-flex items-center justify-center gap-2 rounded-full font-bold no-underline border border-transparent transition-[transform,box-shadow,background-color] duration-150 ease-out'
+  'inline-flex items-center justify-center gap-2 rounded-sm font-bold no-underline border border-transparent transition-[transform,box-shadow,background-color] duration-150 ease-out'
 export const btnPrimarySm = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
 export const btnPrimaryLg = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-6 py-3.5 text-base hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
 export const btnPrimaryLgInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-6 py-3.5 text-base hover:bg-surface-alt`
@@ -33,7 +33,7 @@ export const countPill =
 export const metaText = 'text-xs text-text-muted'
 
 export const btnPrimaryMd = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-5.5 py-3 text-base hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
-export const viewAllPill =
-  'inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 text-sm font-bold text-accent-solid no-underline shadow-sm transition-[box-shadow,border-color] duration-150 hover:border-accent-solid hover:shadow-md'
+export const viewAllButton =
+  'inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface px-4 py-2 text-sm font-bold text-accent-solid no-underline shadow-sm transition-[box-shadow,border-color] duration-150 hover:border-accent-solid hover:shadow-md'
 export const cardLink =
   'inline-flex items-center gap-1.5 text-sm font-bold text-accent-solid no-underline hover:underline'

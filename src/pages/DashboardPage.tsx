@@ -8,7 +8,7 @@ import dashboardHero from '../assets/dashboard_hero.png'
 import deckSplash from '../assets/deck_splash.png'
 import noteSplash from '../assets/note_splash.png'
 import quizSplash from '../assets/quiz_splash.png'
-import { btnPrimaryMd, shell, viewAllPill } from '../components/ui'
+import { btnPrimaryMd, shell, viewAllButton } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
@@ -106,7 +106,7 @@ export function DashboardPage() {
 
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
           <h2 className="text-lg">Your library</h2>
-          <Link to="/library" className={viewAllPill}>
+          <Link to="/library" className={viewAllButton}>
             View all
             <IconArrowRight />
           </Link>
