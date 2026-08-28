@@ -30,6 +30,7 @@ export function NewDeckPage() {
       onGenerate={async (note) => {
         const deck = await api.flashcards.generate(note.id)
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         const count = deck.flashcards.length
         return {
           // The backend copies the deck title from the source note.

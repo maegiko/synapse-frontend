@@ -302,6 +302,7 @@ function Runner({
     mutationFn: (finalScore: number) => api.quiz.saveScore(quiz.id, finalScore),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizScores(quiz.id) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
     },
     onError: (error) =>
       setSaveError(`Your score could not be saved. ${toFormMessage(error)}`),

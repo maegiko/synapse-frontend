@@ -15,7 +15,8 @@ import {
 import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
-import { useFlashcardDeck } from '../lib/queries'
+import { queryKeys, useFlashcardDeck } from '../lib/queries'
+import { queryClient } from '../lib/queryClient'
 import { newSeed, shuffled } from '../lib/shuffle'
 import { api } from '../api'
 import type { FlashcardDeck } from '../api'
@@ -90,7 +91,10 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setIsFinished(true)
     // Records the session for the streak. Only reaching the end counts, and the
     // result is not shown anywhere here, so a failure must not block the screen.
-    void api.flashcards.complete(deck.deckId).catch(() => {})
+    void api.flashcards
+      .complete(deck.deckId)
+      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.streak }))
+      .catch(() => {})
   }
 
   function restart() {

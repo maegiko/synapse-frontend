@@ -30,6 +30,7 @@ export function NewQuizPage() {
       onGenerate={async (note) => {
         const quiz = await api.quiz.generate(note.id)
         void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         const count = quiz.questions.length
         return {
           message: `${count} ${count === 1 ? 'question' : 'questions'} generated from “${note.title}”.`,

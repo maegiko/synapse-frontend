@@ -66,6 +66,7 @@ export function NewNotePage() {
       // immediately instead of refetching what we already hold.
       queryClient.setQueryData(queryKeys.note(note.id), note)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
       navigate(`/notes/${note.id}`, { replace: true })
     },
   })
