@@ -117,7 +117,7 @@ export function DashboardPage() {
             onRetry={() => void notes.refetch()}
             isEmpty={notes.data?.length === 0}
             emptyMessage="Your summarized notes will show up here."
-            viewAllTo="/notes"
+            viewAllTo="/library?type=notes"
             viewAllLabel="View all notes"
           >
             {notes.data?.slice(0, RECENT_LIMIT).map((note) => (
@@ -143,7 +143,7 @@ export function DashboardPage() {
             onRetry={() => void decks.refetch()}
             isEmpty={decks.data?.length === 0}
             emptyMessage="Decks you generate from a note will show up here."
-            viewAllTo="/flashcards"
+            viewAllTo="/library?type=decks"
             viewAllLabel="View all decks"
           >
             {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
@@ -166,7 +166,7 @@ export function DashboardPage() {
             onRetry={() => void quizzes.refetch()}
             isEmpty={quizzes.data?.length === 0}
             emptyMessage="Quizzes you generate from a note will show up here."
-            viewAllTo="/quiz"
+            viewAllTo="/library?type=quizzes"
             viewAllLabel="View all quizzes"
           >
             {quizzes.data?.slice(0, RECENT_LIMIT).map((quiz) => (

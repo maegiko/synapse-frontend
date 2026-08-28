@@ -1,0 +1,69 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { IconArrowRight } from './icons'
+import { iconChip, surfaceCard } from './ui'
+
+interface LibraryCardProps {
+  icon: ReactNode
+  title: string
+  /** Only set for types that have a detail page; the card is static without it. */
+  to?: string
+  /** Second line: a note's overview, a deck's first question, a quiz's blurb. */
+  preview?: string | null
+  /** Compact counts, shown as pills. */
+  facts: string[]
+  /** Only shown for resources the API timestamps. */
+  timestamp?: string
+}
+
+/** One item in the library grid. Linked only where a detail view exists. */
+export function LibraryCard({ icon, title, to, preview, facts, timestamp }: LibraryCardProps) {
+  const content = (
+    <>
+      <div className="flex items-start gap-3.5">
+        <span className={`${iconChip} shrink-0`} aria-hidden="true">
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-sm font-bold text-text ${
+              to ? 'transition-colors group-hover:text-accent-solid' : ''
+            }`}
+          >
+            {title}
+          </p>
+          {timestamp && <p className="mt-1 text-xs text-text-muted tabular-nums">{timestamp}</p>}
+        </div>
+        {to && (
+          <IconArrowRight className="mt-3 h-4 w-4 shrink-0 text-accent-solid transition-transform duration-150 group-hover:translate-x-0.5" />
+        )}
+      </div>
+
+      {preview && <p className="mt-3 line-clamp-3 text-xs text-text-muted">{preview}</p>}
+
+      <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
+        {facts.map((fact) => (
+          <span
+            key={fact}
+            className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
+          >
+            {fact}
+          </span>
+        ))}
+      </div>
+    </>
+  )
+
+  if (!to) {
+    return <div className={`${surfaceCard} flex min-w-0 flex-col p-5`}>{content}</div>
+  }
+
+  return (
+    <Link
+      to={to}
+      className={`${surfaceCard} group flex min-w-0 flex-col p-5 no-underline transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent-solid hover:shadow-md`}
+    >
+      {content}
+    </Link>
+  )
+}

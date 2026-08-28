@@ -6,6 +6,7 @@ import { ScrollToTop } from './components/ScrollToTop'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LandingPage } from './pages/LandingPage'
+import { LibraryPage } from './pages/LibraryPage'
 import { LoginPage } from './pages/LoginPage'
 import { NewDeckPage } from './pages/NewDeckPage'
 import { NewNotePage } from './pages/NewNotePage'
@@ -89,10 +90,7 @@ function App() {
               path="/library"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Your library"
-                    body="One place for every note, deck, and quiz you have made. The dashboard already links here."
-                  />
+                  <LibraryPage />
                 </ProtectedRoute>
               }
             />
