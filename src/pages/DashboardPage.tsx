@@ -119,6 +119,31 @@ export function DashboardPage() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <RecentsCard
+            title="Recent decks"
+            count={decks.data?.length}
+            isLoading={decks.isPending}
+            isError={decks.isError}
+            onRetry={() => void decks.refetch()}
+            isEmpty={decks.data?.length === 0}
+            emptyMessage="Decks you generate from a note will show up here."
+            viewAllTo="/library?type=decks"
+            viewAllLabel="View all decks"
+            variant="strip"
+            className="md:col-span-2"
+          >
+            {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
+              <RecentsItem
+                key={deck.deckId}
+                icon={<IconDeck className={ROW_ICON} />}
+                title={deck.title}
+                to={`/flashcards/${deck.deckId}`}
+                metadata={[plural(deck.flashcards.length, 'card')]}
+                compact
+              />
+            ))}
+          </RecentsCard>
+          
+          <RecentsCard
             title="Recent notes"
             count={notes.data?.length}
             isLoading={notes.isPending}
@@ -168,31 +193,6 @@ export function DashboardPage() {
                 ]}
                 // Quizzes are the only listed resource the API timestamps.
                 timestamp={formatRelative(quiz.createdAt)}
-              />
-            ))}
-          </RecentsCard>
-
-          <RecentsCard
-            title="Recent decks"
-            count={decks.data?.length}
-            isLoading={decks.isPending}
-            isError={decks.isError}
-            onRetry={() => void decks.refetch()}
-            isEmpty={decks.data?.length === 0}
-            emptyMessage="Decks you generate from a note will show up here."
-            viewAllTo="/library?type=decks"
-            viewAllLabel="View all decks"
-            variant="strip"
-            className="md:col-span-2"
-          >
-            {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
-              <RecentsItem
-                key={deck.deckId}
-                icon={<IconDeck className={ROW_ICON} />}
-                title={deck.title}
-                to={`/flashcards/${deck.deckId}`}
-                metadata={[plural(deck.flashcards.length, 'card')]}
-                compact
               />
             ))}
           </RecentsCard>
