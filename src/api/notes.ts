@@ -19,6 +19,17 @@ export async function get(noteId: PublicId): Promise<NoteSummary> {
 }
 
 /**
+ * Deletes the note and its summary. Answers 204, so there is nothing to read.
+ * Decks and quizzes generated from it stay; only their link to the note is lost.
+ */
+export async function remove(noteId: PublicId): Promise<void> {
+  await apiRequest<void>(API_PATHS.notes.detail(noteId), {
+    method: 'DELETE',
+    authenticated: true,
+  })
+}
+
+/**
  * The only multipart endpoint. It extracts the text, calls the LLM
  * synchronously, and saves the note before answering, so it takes far longer
  * than ordinary requests: always call it behind a loading state.

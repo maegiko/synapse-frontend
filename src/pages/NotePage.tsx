@@ -1,14 +1,68 @@
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
-import { IconArrowLeft, IconArrowRight } from '../components/icons'
-import { btnGhostSm, cardLink, countPill, shell, surfaceCard } from '../components/ui'
+import { FormAlert } from '../components/FormAlert'
+import { GenerationStatus } from '../components/GenerationStatus'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconDeck,
+  IconQuiz,
+  IconSpinner,
+  IconTrash,
+} from '../components/icons'
+import {
+  btnDangerGhostSm,
+  btnDangerSm,
+  btnGhostSm,
+  btnPrimaryDisabled,
+  btnPrimarySm,
+  cardLink,
+  countPill,
+  shell,
+  surfaceCard,
+} from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
-import { useNote } from '../lib/queries'
+import { queryClient } from '../lib/queryClient'
+import { queryKeys, useNote } from '../lib/queries'
+import { api } from '../api'
 import type { NoteSummary } from '../api'
+
+const ICON = 'h-4 w-4'
+
+/** Narration for the one long synchronous generation call, per resource type. */
+const STEPS = {
+  deck: [
+    'Reading your note…',
+    'Writing flashcards…',
+    'Still working. Bigger notes make bigger decks…',
+  ],
+  quiz: [
+    'Reading your note…',
+    'Writing ten questions…',
+    'Still working. Writing good answers takes a moment…',
+  ],
+} as const
 
 function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : pluralForm}`
+}
+
+/** Failures of a generate call started from this note. */
+function messageForGenerateFailure(error: unknown, noun: 'deck' | 'quiz'): string {
+  if (isStatus(error, 404)) {
+    return 'This note no longer exists. It may have just been deleted.'
+  }
+  if (isStatus(error, 400)) {
+    return `We could not build a ${noun} from this note.`
+  }
+  if (isStatus(error, 502)) {
+    return `The AI service could not build a ${noun} just now. Nothing was saved, so you can try again in a moment.`
+  }
+  return toFormMessage(error)
 }
 
 /** Matches the recents-card skeleton, so a cold load reads the same everywhere. */
@@ -48,7 +102,92 @@ function Section({
   )
 }
 
+type Confirming = 'deck' | 'quiz' | 'delete' | null
+
 function NoteContent({ note }: { note: NoteSummary }) {
+  const navigate = useNavigate()
+  const { recordQualifyingAction } = useStreakCelebration()
+
+  const [confirming, setConfirming] = useState<Confirming>(null)
+  const [actionError, setActionError] = useState('')
+  const [step, setStep] = useState(0)
+
+  const makeDeck = useMutation({
+    mutationFn: () => recordQualifyingAction(() => api.flashcards.generate(note.id)),
+    onSuccess: (deck) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
+      // The generation response has no card IDs, so the deck page fetches the
+      // saved deck itself; we only hand it the destination.
+      navigate(`/flashcards/${deck.deckId}`, { replace: true })
+    },
+    onError: (error) => {
+      setConfirming(null)
+      setActionError(messageForGenerateFailure(error, 'deck'))
+    },
+  })
+
+  const makeQuiz = useMutation({
+    mutationFn: () => recordQualifyingAction(() => api.quiz.generate(note.id)),
+    onSuccess: (quiz) => {
+      // The generate response is the whole quiz, so the detail view needs no refetch.
+      queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
+      navigate(`/quiz/${quiz.id}`, { replace: true })
+    },
+    onError: (error) => {
+      setConfirming(null)
+      setActionError(messageForGenerateFailure(error, 'quiz'))
+    },
+  })
+
+  const deleteNote = useMutation({
+    mutationFn: () => api.notes.remove(note.id),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: queryKeys.note(note.id) })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
+      navigate('/library?type=notes', { replace: true })
+    },
+    onError: (error) => {
+      setConfirming(null)
+      setActionError(
+        isStatus(error, 404)
+          ? 'That note has already been deleted.'
+          : `We could not delete this note. ${toFormMessage(error)}`,
+      )
+    },
+  })
+
+  const generatingNoun = makeDeck.isPending ? 'deck' : makeQuiz.isPending ? 'quiz' : null
+  const isBusy = generatingNoun !== null || deleteNote.isPending
+
+  // The narration step only advances while a generate call is in flight; it is
+  // reset when a run is started (below), like the other generate flows.
+  useEffect(() => {
+    if (!generatingNoun) return
+    const timers = [
+      window.setTimeout(() => setStep(1), 8_000),
+      window.setTimeout(() => setStep(2), 30_000),
+    ]
+    return () => timers.forEach(clearTimeout)
+  }, [generatingNoun])
+
+  function ask(next: Exclude<Confirming, null>) {
+    setActionError('')
+    setConfirming(next)
+  }
+
+  function startMakeDeck() {
+    setStep(0)
+    makeDeck.mutate()
+  }
+
+  function startMakeQuiz() {
+    setStep(0)
+    makeQuiz.mutate()
+  }
+
+  const showFeedback = Boolean(actionError) || generatingNoun !== null || confirming !== null
+
   return (
     <>
       <h1 className="text-3xl">{note.title}</h1>
@@ -57,6 +196,116 @@ function NoteContent({ note }: { note: NoteSummary }) {
         <span className={countPill}>{plural(note.concepts.length, 'concept')}</span>
         <span className={countPill}>{plural(note.importantTerms.length, 'term')}</span>
       </div>
+
+      {/* Turn this note into study material on the left; remove it on the right. */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+            onClick={() => ask('deck')}
+            disabled={isBusy || confirming !== null}
+          >
+            <IconDeck className={ICON} />
+            Make deck
+          </button>
+          <button
+            type="button"
+            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+            onClick={() => ask('quiz')}
+            disabled={isBusy || confirming !== null}
+          >
+            <IconQuiz className={ICON} />
+            Make quiz
+          </button>
+        </div>
+        <button
+          type="button"
+          className={btnDangerGhostSm}
+          onClick={() => ask('delete')}
+          disabled={isBusy || confirming !== null}
+        >
+          <IconTrash />
+          Delete note
+        </button>
+      </div>
+
+      {showFeedback && (
+        <div className="mt-6 grid gap-6">
+          {actionError && <FormAlert message={actionError} />}
+
+          {generatingNoun && (
+            <GenerationStatus
+              label={STEPS[generatingNoun][step] ?? STEPS[generatingNoun][0]}
+              hint="This usually takes under a minute. Keep this tab open."
+            />
+          )}
+
+          {confirming === 'deck' && !makeDeck.isPending && (
+            <section className={`${surfaceCard} p-6`}>
+              <h2 className="text-base font-medium">Generate a flashcard deck from this note?</h2>
+              <p className="mt-2 max-w-[60ch] text-sm text-text-muted">
+                Synapse turns this note's concepts and key points into a deck. It takes about a
+                minute.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" className={btnPrimarySm} onClick={startMakeDeck}>
+                  Generate deck
+                </button>
+                <button type="button" className={btnGhostSm} onClick={() => setConfirming(null)}>
+                  Cancel
+                </button>
+              </div>
+            </section>
+          )}
+
+          {confirming === 'quiz' && !makeQuiz.isPending && (
+            <section className={`${surfaceCard} p-6`}>
+              <h2 className="text-base font-medium">Generate a quiz from this note?</h2>
+              <p className="mt-2 max-w-[60ch] text-sm text-text-muted">
+                Synapse writes a ten-question quiz from this note. It takes about a minute.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" className={btnPrimarySm} onClick={startMakeQuiz}>
+                  Generate quiz
+                </button>
+                <button type="button" className={btnGhostSm} onClick={() => setConfirming(null)}>
+                  Cancel
+                </button>
+              </div>
+            </section>
+          )}
+
+          {confirming === 'delete' && (
+            <section className="rounded-md border border-error-solid bg-error-soft p-6">
+              <h2 className="text-base font-medium text-error-solid">Delete this note?</h2>
+              <p className="mt-2 max-w-[60ch] text-sm text-text">
+                “{note.title}” and its summary will be removed. This cannot be undone. Decks and
+                quizzes you already made from it are kept.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className={btnDangerSm}
+                  onClick={() => deleteNote.mutate()}
+                  disabled={deleteNote.isPending}
+                >
+                  {deleteNote.isPending && <IconSpinner className="h-4 w-4" />}
+                  {deleteNote.isPending ? 'Deleting…' : 'Delete note'}
+                </button>
+                <button
+                  type="button"
+                  className={btnGhostSm}
+                  onClick={() => setConfirming(null)}
+                  disabled={deleteNote.isPending}
+                >
+                  Cancel
+                </button>
+              </div>
+            </section>
+          )}
+        </div>
+      )}
 
       <div className="mt-8 grid gap-6">
         <Section title="Overview">
