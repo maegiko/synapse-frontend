@@ -5,7 +5,7 @@ import { AppHeader } from '../components/AppHeader'
 import { LibraryCard } from '../components/LibraryCard'
 import { DifficultyStars } from '../components/DifficultyStars'
 import { IconArrowLeft, IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
-import { btnPrimaryLg, cardLink, countPill, fieldInput, shell, surfaceCard } from '../components/ui'
+import { btnPrimaryLg, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
 import { toFormMessage } from '../lib/apiErrors'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
@@ -63,10 +63,8 @@ interface SectionProps {
 function Section({ title, query, total, shown, filteredOut, emptyMessage, children }: SectionProps) {
   return (
     <section className="mt-12 first:mt-10">
-      <div className="mb-5 flex items-center gap-3">
-        <h2 className="text-xl">{title}</h2>
-        {total !== undefined && <span className={countPill}>{total}</span>}
-      </div>
+      {/* No count here — the filter tabs above already carry it. */}
+      <h2 className="mb-5 text-xl">{title}</h2>
 
       {query.isPending && (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -213,8 +211,8 @@ export function LibraryPage() {
                       onClick={() => selectKind(option.value)}
                       className={`inline-flex items-center justify-center gap-1.5 rounded-sm px-3.5 py-2 text-sm font-bold transition-colors duration-150 ${
                         active
-                          ? 'bg-surface text-accent-strong shadow-sm'
-                          : 'text-text-muted hover:text-text'
+                          ? 'cursor-default bg-surface text-accent-strong shadow-sm'
+                          : 'cursor-pointer text-text-muted hover:text-text'
                       }`}
                     >
                       {option.label}

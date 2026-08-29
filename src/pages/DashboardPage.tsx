@@ -198,7 +198,6 @@ export function DashboardPage() {
         <div className="overflow-hidden rounded-md border border-border bg-surface shadow-sm">
           <RecentsCard
             title="Recent decks"
-            count={decks.data?.length}
             isLoading={decks.isPending}
             isError={decks.isError}
             onRetry={() => void decks.refetch()}
@@ -225,7 +224,6 @@ export function DashboardPage() {
           <div className="grid grid-cols-1 border-t border-border/60 md:grid-cols-2">
             <RecentsCard
               title="Recent notes"
-              count={notes.data?.length}
               isLoading={notes.isPending}
               isError={notes.isError}
               onRetry={() => void notes.refetch()}
@@ -251,7 +249,6 @@ export function DashboardPage() {
 
             <RecentsCard
               title="Recent quizzes"
-              count={quizzes.data?.length}
               isLoading={quizzes.isPending}
               isError={quizzes.isError}
               onRetry={() => void quizzes.refetch()}

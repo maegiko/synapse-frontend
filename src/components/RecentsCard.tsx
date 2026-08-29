@@ -5,15 +5,8 @@ import { cardLink } from './ui'
 
 type RecentsVariant = 'strip' | 'flat'
 
-// The shared count pill, tuned for the Library headers: a touch more lavender
-// and a readable medium-purple numeral, kept at regular weight so the badge
-// stays secondary to the section heading.
-const countBadge =
-  'rounded-full bg-accent-soft px-2.5 py-1 text-xs font-normal text-accent-solid tabular-nums'
-
 interface RecentsCardProps {
   title: string
-  count: number | undefined
   isLoading: boolean
   isError: boolean
   onRetry: () => void
@@ -46,13 +39,12 @@ function Skeleton({ variant }: { variant: RecentsVariant }) {
 }
 
 /**
- * One resource's recent items: a header with a count, the newest few, and a way
- * in. Rendered without chrome of its own — the dashboard's Library surface is
- * the frame, and this is one section inside it.
+ * One resource's recent items: a header, the newest few, and a way in. Rendered
+ * without chrome of its own — the dashboard's Library surface is the frame, and
+ * this is one section inside it.
  */
 export function RecentsCard({
   title,
-  count,
   isLoading,
   isError,
   onRetry,
@@ -70,7 +62,6 @@ export function RecentsCard({
     <section className={`flex min-w-0 flex-col ${className}`}>
       <div className="flex items-center gap-3 pb-4">
         <h3 className="text-base font-medium">{title}</h3>
-        {count !== undefined && <span className={countBadge}>{count}</span>}
         <Link to={viewAllTo} className={`${cardLink} ml-auto`}>
           {viewAllLabel}
           <IconArrowRight />
