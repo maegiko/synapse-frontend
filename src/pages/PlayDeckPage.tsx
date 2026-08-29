@@ -201,8 +201,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
                 Play again
               </button>
               <Link to={deckHref} className={btnGhostLg}>
-                <IconArrowLeft />
-                Back to the deck
+                Back to deck overview
               </Link>
             </div>
           </section>
@@ -231,7 +230,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               }}
             >
               <IconArrowLeft />
-              Back to the deck
+              Back to deck overview
             </Link>
           </div>
 
@@ -384,7 +383,7 @@ export function PlayDeckPage() {
             </p>
             <Link to={`/flashcards/${deck.data.deckId}`} className={`${cardLink} mt-6`}>
               <IconArrowLeft />
-              Back to the deck
+              Back to deck overview
             </Link>
           </div>
         )}
