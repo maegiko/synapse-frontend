@@ -80,9 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // The access token still carries the old `name`/`email` claims after a
+  // profile edit, so React state is updated from the PATCH response instead.
+  const setUserDetails = useCallback((details: UserDetails) => setUser(details), [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, register, logout }),
-    [status, user, login, register, logout],
+    () => ({ status, user, login, register, logout, setUserDetails }),
+    [status, user, login, register, logout, setUserDetails],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

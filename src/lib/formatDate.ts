@@ -48,3 +48,22 @@ export function formatDateTime(value: string | null | undefined): string {
     minute: '2-digit',
   })
 }
+
+/**
+ * A backend calendar date (`YYYY-MM-DD`), formatted in UTC. Streak days are
+ * decided by the server in UTC, so reading one as a local instant would shift
+ * it a day for anyone west of Greenwich.
+ */
+export function formatCalendarDate(value: string | null | undefined): string {
+  if (!value) return ''
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return ''
+  const date = new Date(Date.UTC(year, month - 1, day))
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}

@@ -31,6 +31,9 @@ export const fieldError = 'mt-1.5 text-xs font-bold text-error-solid'
 export const formAlert =
   'flex items-start gap-2.5 rounded-sm border border-error-solid bg-error-soft px-4 py-3 text-sm font-semibold text-error-solid'
 
+export const successAlert =
+  'flex items-start gap-2.5 rounded-sm border border-success-solid bg-success-soft px-4 py-3 text-sm font-semibold text-success-solid'
+
 export const authCard = 'rounded-lg border border-border bg-surface p-8 shadow-md sm:p-9'
 
 export const surfaceCard = 'rounded-md border border-border bg-surface shadow-sm'

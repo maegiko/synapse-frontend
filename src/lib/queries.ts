@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
-import { api } from '../api'
+import { useQueries, useQuery } from '@tanstack/react-query'
+import { api, type UserDetails } from '../api'
 
 export const queryKeys = {
+  userDetails: ['user-details'] as const,
   streak: ['streak'] as const,
   notes: ['notes'] as const,
   note: (noteId: string) => ['notes', noteId] as const,
@@ -10,6 +11,20 @@ export const queryKeys = {
   quizzes: ['quizzes'] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
+}
+
+/**
+ * The profile source of truth. JWT display claims go stale after an edit, so
+ * this is fetched rather than decoded. `fallback` is what auth state already
+ * holds, shown while the request runs; `0` marks it stale so it always refetches.
+ */
+export function useUserDetails(fallback?: UserDetails | null) {
+  return useQuery({
+    queryKey: queryKeys.userDetails,
+    queryFn: api.user.getDetails,
+    initialData: fallback ?? undefined,
+    initialDataUpdatedAt: 0,
+  })
 }
 
 export function useStreak() {
@@ -61,5 +76,32 @@ export function useQuizScores(quizId: string | undefined) {
     queryKey: queryKeys.quizScores(quizId ?? ''),
     queryFn: () => api.quiz.scores(quizId ?? ''),
     enabled: Boolean(quizId),
+  })
+}
+
+/**
+ * Attempt history for every quiz at once. The API has no cross-quiz score
+ * endpoint, so profile analytics fan out over the quiz list. Each request shares
+ * its cache entry with that quiz's own scores page, and one failure only costs
+ * the attempts of the quiz it belongs to.
+ */
+export function useAllQuizScores(quizIds: string[] | undefined) {
+  return useQueries({
+    queries: (quizIds ?? []).map((quizId) => ({
+      queryKey: queryKeys.quizScores(quizId),
+      queryFn: () => api.quiz.scores(quizId),
+    })),
+    combine: (results) => ({
+      scores: results.flatMap((result) => result.data ?? []),
+      /** Quizzes with at least one saved attempt, for "across N quizzes". */
+      quizzesAttempted: results.filter((result) => (result.data?.length ?? 0) > 0).length,
+      isPending: results.some((result) => result.isPending),
+      failedCount: results.filter((result) => result.isError).length,
+      retryFailed: () => {
+        for (const result of results) {
+          if (result.isError) void result.refetch()
+        }
+      },
+    }),
   })
 }

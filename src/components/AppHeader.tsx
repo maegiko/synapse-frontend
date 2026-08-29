@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import synapseLogo from '../assets/synapse_logo.png'
 import { useAuth } from '../auth/useAuth'
+import { Avatar } from './Avatar'
 import { btnGhostSm, shell } from './ui'
 
 interface AppHeaderProps {
@@ -40,7 +41,22 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           <img src={synapseLogo} alt="" width="48" height="48" />
           <span className="translate-y-0.5">Synapse</span>
         </Link>
-        <span className="hidden text-sm font-semibold text-text-muted sm:inline">{user?.email}</span>
+        {user && (
+          <Link
+            to="/profile"
+            onClick={(event) => {
+              if (onLeave && !onLeave()) event.preventDefault()
+            }}
+            className="no-underline"
+            aria-label="Your profile"
+            title="Your profile"
+          >
+            <Avatar
+              fullName={user.fullName}
+              className="transition-colors duration-150 hover:bg-accent-solid hover:text-on-accent"
+            />
+          </Link>
+        )}
         <button type="button" className={btnGhostSm} onClick={handleLogout} disabled={loggingOut}>
           {loggingOut ? 'Logging out…' : 'Log out'}
         </button>

@@ -16,6 +16,7 @@ import { NewQuizPage } from './pages/NewQuizPage'
 import { NotePage } from './pages/NotePage'
 import { PlayDeckPage } from './pages/PlayDeckPage'
 import { PlayQuizPage } from './pages/PlayQuizPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -58,6 +59,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />
