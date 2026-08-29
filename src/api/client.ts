@@ -17,7 +17,7 @@ export class ApiError extends Error {
   }
 }
 
-export interface RequestConfig {
+interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   /** Serialized as a JSON body with the matching Content-Type. */
   json?: unknown

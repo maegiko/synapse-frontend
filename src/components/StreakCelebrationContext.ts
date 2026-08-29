@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 
-export interface StreakCelebrationContextValue {
+interface StreakCelebrationContextValue {
   recordQualifyingAction: <T>(action: () => Promise<T>) => Promise<T>
 }
 

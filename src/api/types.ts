@@ -188,16 +188,6 @@ export interface CreatedQuestion {
   createdAt: LocalDateTimeString
 }
 
-export interface UpdateDifficultyRequest {
-  /** An integer from 1 through 5. There is no endpoint for clearing it again. */
-  difficulty: number
-}
-
-export interface SaveScoreRequest {
-  /** At least zero, and no more than the quiz's current question count. */
-  score: number
-}
-
 /** The only resource whose identifier is named `publicId` rather than `id`. */
 export interface QuizScore {
   publicId: PublicId

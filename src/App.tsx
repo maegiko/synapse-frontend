@@ -4,7 +4,6 @@ import { AuthProvider } from './auth/AuthProvider'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { ScrollToTop } from './components/ScrollToTop'
 import { StreakCelebrationProvider } from './components/StreakCelebration'
-import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
 import { LandingPage } from './pages/LandingPage'
@@ -154,10 +153,7 @@ function App() {
               path="/notes"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Your notes"
-                    body="The full list of summarized notes, with search and detail views, lands here next."
-                  />
+                  <Navigate to="/library?type=notes" replace />
                 </ProtectedRoute>
               }
             />
@@ -165,10 +161,7 @@ function App() {
               path="/flashcards"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Your flashcard decks"
-                    body="The full list of decks, plus studying a deck card by card, lands here next."
-                  />
+                  <Navigate to="/library?type=decks" replace />
                 </ProtectedRoute>
               }
             />
@@ -176,10 +169,7 @@ function App() {
               path="/quiz"
               element={
                 <ProtectedRoute>
-                  <ComingSoonPage
-                    title="Your quizzes"
-                    body="The full list of quizzes, plus running one and saving a score, lands here next."
-                  />
+                  <Navigate to="/library?type=quizzes" replace />
                 </ProtectedRoute>
               }
             />

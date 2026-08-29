@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-export type PlaybackMode = 'saved' | 'shuffle'
+type PlaybackMode = 'saved' | 'shuffle'
 
 const MODES: { value: PlaybackMode; label: string }[] = [
   { value: 'saved', label: 'Saved order' },

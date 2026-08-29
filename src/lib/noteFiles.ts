@@ -24,8 +24,6 @@ const FORMATS: NoteFileFormat[] = [
 
 export const MAX_FILE_BYTES = 10 * 1024 * 1024
 
-export const SUPPORTED_LABELS = FORMATS.map((format) => format.label)
-
 /** `accept` for the file input: extensions and types, so both pickers filter. */
 export const FILE_ACCEPT = FORMATS.flatMap((format) => [format.extension, format.mimeType]).join(
   ',',
