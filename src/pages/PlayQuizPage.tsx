@@ -88,6 +88,10 @@ interface QuestionCardProps {
   /** Advances the run. `wasCorrect` feeds the running score. */
   onAnswered: (wasCorrect: boolean) => void
   isLastQuestion: boolean
+  /** The quiz overview, for the back link. */
+  quizHref: string
+  /** Returns false to hold the visitor here until they confirm leaving. */
+  guardLeaving: (destination: string) => boolean
 }
 
 function QuestionCard({
@@ -97,6 +101,8 @@ function QuestionCard({
   isShuffled,
   onAnswered,
   isLastQuestion,
+  quizHref,
+  guardLeaving,
 }: QuestionCardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -129,6 +135,16 @@ function QuestionCard({
           Question {position} of {total}
         </p>
         {isShuffled && <span className={countPill}>Shuffled</span>}
+        <Link
+          to={quizHref}
+          className={`${cardLink} ml-auto`}
+          onClick={(event) => {
+            if (!guardLeaving(quizHref)) event.preventDefault()
+          }}
+        >
+          <IconArrowLeft />
+          Back to quiz overview
+        </Link>
       </div>
 
       <div
@@ -378,6 +394,8 @@ function Runner({
             isShuffled={isShuffled}
             isLastQuestion={index === total - 1}
             onAnswered={handleAnswered}
+            quizHref={quizHref}
+            guardLeaving={guardLeaving}
           />
         )}
 
@@ -459,8 +477,7 @@ function Runner({
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link to={quizHref} className={btnPrimaryLg}>
-                <IconArrowLeft />
-                Back to the quiz
+                Back to quiz overview
               </Link>
               <button type="button" className={btnGhostLg} onClick={onRetake}>
                 Take it again
@@ -547,7 +564,7 @@ export function PlayQuizPage() {
             </p>
             <Link to={`/quiz/${quiz.data.id}`} className={`${cardLink} mt-6`}>
               <IconArrowLeft />
-              Back to the quiz
+              Back to quiz overview
             </Link>
           </div>
         )}
