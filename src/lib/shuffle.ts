@@ -1,3 +1,6 @@
+/** Query parameter that asks a player to deal its run at random. */
+export const SHUFFLE_PARAM = 'shuffle'
+
 /** mulberry32: a seeded generator, so one seed always deals the same order. */
 function randomFrom(seed: number): () => number {
   let state = seed >>> 0

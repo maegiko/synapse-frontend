@@ -30,7 +30,8 @@ import {
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck, queryKeys } from '../lib/queries'
-import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
+import { PlaybackModeControl } from '../components/PlaybackModeControl'
+import { SHUFFLE_PARAM } from '../lib/shuffle'
 import { queryClient } from '../lib/queryClient'
 import { api } from '../api'
 import type { FlashcardDeck, SavedFlashcard } from '../api'
@@ -237,51 +238,62 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
         <span className={countPill}>{plural(cards.length, 'card')}</span>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        {cards.length > 0 ? (
-          <Link
-            to={`/flashcards/${deck.deckId}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
-            className={btnPrimarySm}
-          >
-            <IconPlay />
-            Play deck
-          </Link>
-        ) : (
+      {/* Playback mode and Play deck on the left; card management pushed to the
+          right. Bottom-aligned so the "Playback mode" label sits above. */}
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <PlaybackModeControl
+            value={isShuffled ? 'shuffle' : 'saved'}
+            onChange={(mode) => setIsShuffled(mode === 'shuffle')}
+          />
+          {cards.length > 0 ? (
+            <Link
+              to={`/flashcards/${deck.deckId}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
+              className={btnPrimarySm}
+            >
+              <IconPlay />
+              Play deck
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+              disabled
+              title={PLAY_EMPTY_REASON}
+            >
+              <IconPlay />
+              Play deck
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"
-            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
-            disabled
-            title={PLAY_EMPTY_REASON}
+            className={btnGhostSm}
+            onClick={toggleAddForm}
+            aria-expanded={isAdding}
           >
-            <IconPlay />
-            Play deck
+            <IconPlus />
+            {isAdding ? 'Close card form' : 'Add a card'}
           </button>
-        )}
-        <ShuffleSwitch isOn={isShuffled} onToggle={() => setIsShuffled((on) => !on)} />
-        <button type="button" className={btnGhostSm} onClick={toggleAddForm} aria-expanded={isAdding}>
-          <IconPlus />
-          {isAdding ? 'Close card form' : 'Add a card'}
-        </button>
-        <button
-          type="button"
-          className={btnDangerGhostSm}
-          onClick={() => {
-            setActionError('')
-            setIsConfirmingDeck(true)
-          }}
-          disabled={isBusy || isConfirmingDeck}
-        >
-          <IconTrash />
-          Delete deck
-        </button>
+          <button
+            type="button"
+            className={btnDangerGhostSm}
+            onClick={() => {
+              setActionError('')
+              setIsConfirmingDeck(true)
+            }}
+            disabled={isBusy || isConfirmingDeck}
+          >
+            <IconTrash />
+            Delete deck
+          </button>
+        </div>
       </div>
-      <p className="mt-2.5 text-xs text-text-muted">
-        {cards.length === 0
-          ? PLAY_EMPTY_REASON
-          : isShuffled
-            ? 'Cards will be dealt in a random order.'
-            : 'Cards will be played in their saved order.'}
-      </p>
+      {cards.length === 0 && (
+        <p className="mt-2.5 text-xs text-text-muted">{PLAY_EMPTY_REASON}</p>
+      )}
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}

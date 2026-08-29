@@ -13,11 +13,10 @@ import {
   shell,
   surfaceCard,
 } from '../components/ui'
-import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck } from '../lib/queries'
-import { newSeed, shuffled } from '../lib/shuffle'
+import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
 import type { FlashcardDeck } from '../api'
 

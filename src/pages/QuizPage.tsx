@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { ScoreRow } from '../components/ScoreRow'
-import { SHUFFLE_PARAM, ShuffleSwitch } from '../components/ShuffleSwitch'
+import { PlaybackModeControl } from '../components/PlaybackModeControl'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import {
@@ -35,6 +35,7 @@ import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz, useQuizScores } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
+import { SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
 import type { QuestionType, Quiz, QuizQuestion } from '../api'
 
@@ -372,56 +373,62 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
         <span className={countPill}>Created {formatRelative(quiz.createdAt)}</span>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        {questions.length > 0 ? (
-          <Link
-            to={`/quiz/${quiz.id}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
-            className={btnPrimarySm}
-          >
-            <IconPlay />
-            Play quiz
-          </Link>
-        ) : (
+      {/* Playback mode and Play quiz on the left; quiz management pushed to the
+          right. Bottom-aligned so the "Playback mode" label sits above. */}
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <PlaybackModeControl
+            value={isShuffled ? 'shuffle' : 'saved'}
+            onChange={(mode) => setIsShuffled(mode === 'shuffle')}
+          />
+          {questions.length > 0 ? (
+            <Link
+              to={`/quiz/${quiz.id}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
+              className={btnPrimarySm}
+            >
+              <IconPlay />
+              Play quiz
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+              disabled
+              title={PLAY_EMPTY_REASON}
+            >
+              <IconPlay />
+              Play quiz
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-end gap-3">
           <button
             type="button"
-            className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
-            disabled
-            title={PLAY_EMPTY_REASON}
+            className={btnGhostSm}
+            onClick={toggleAddForm}
+            aria-expanded={isAdding}
           >
-            <IconPlay />
-            Play quiz
+            <IconPlus />
+            {isAdding ? 'Close question form' : 'Add a question'}
           </button>
-        )}
-        <ShuffleSwitch isOn={isShuffled} onToggle={() => setIsShuffled((on) => !on)} />
-        <button
-          type="button"
-          className={btnGhostSm}
-          onClick={toggleAddForm}
-          aria-expanded={isAdding}
-        >
-          <IconPlus />
-          {isAdding ? 'Close question form' : 'Add a question'}
-        </button>
-        <button
-          type="button"
-          className={btnDangerGhostSm}
-          onClick={() => {
-            setActionError('')
-            setIsConfirmingQuiz(true)
-          }}
-          disabled={isBusy || isConfirmingQuiz}
-        >
-          <IconTrash />
-          Delete quiz
-        </button>
+          <button
+            type="button"
+            className={btnDangerGhostSm}
+            onClick={() => {
+              setActionError('')
+              setIsConfirmingQuiz(true)
+            }}
+            disabled={isBusy || isConfirmingQuiz}
+          >
+            <IconTrash />
+            Delete quiz
+          </button>
+        </div>
       </div>
-      <p className="mt-2.5 text-xs text-text-muted">
-        {questions.length === 0
-          ? PLAY_EMPTY_REASON
-          : isShuffled
-            ? 'Questions will be asked in a random order.'
-            : 'Questions will be asked in their saved order.'}
-      </p>
+      {questions.length === 0 && (
+        <p className="mt-2.5 text-xs text-text-muted">{PLAY_EMPTY_REASON}</p>
+      )}
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}
