@@ -2,6 +2,17 @@
 
 export const shell = 'mx-auto w-full max-w-280 px-6'
 
+/**
+ * The note / deck / quiz creation pages: a primary task card beside a supporting
+ * aside. The aside carries no surface of its own, so it reads as guidance rather
+ * than a second card competing with the task area, and its column is a little
+ * narrower to keep the task area dominant.
+ */
+export const creationLayout =
+  'mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,16rem)] lg:gap-10'
+/** Sits the aside's first heading level with the task card's first field. */
+export const creationAside = 'lg:pt-8'
+
 export const btnBase =
   'inline-flex items-center justify-center gap-2 rounded-sm font-bold no-underline border border-transparent transition-[transform,box-shadow,background-color] duration-150 ease-out'
 export const btnPrimarySm = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`

@@ -8,7 +8,7 @@ import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { IconArrowLeft, IconSpinner } from '../components/icons'
-import { btnSubmit, cardLink, shell, surfaceCard } from '../components/ui'
+import { btnSubmit, cardLink, creationAside, creationLayout, shell, surfaceCard } from '../components/ui'
 import { api } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { MAX_FILE_BYTES, formatFileSize, validateNoteFile, withDeclaredType } from '../lib/noteFiles'
@@ -139,7 +139,7 @@ export function NewNotePage() {
           concepts explained, and the terms worth remembering.
         </p>
 
-        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
+        <div className={creationLayout}>
           <form className={`${surfaceCard} p-6 sm:p-8`} onSubmit={handleSubmit} noValidate>
             <div className="grid gap-5">
               {alertMessage && <FormAlert message={alertMessage} />}
@@ -173,7 +173,7 @@ export function NewNotePage() {
             </div>
           </form>
 
-          <aside className={`${surfaceCard} p-6`}>
+          <aside className={creationAside}>
             <h2 className="text-sm font-medium">Before you upload</h2>
             <ul className="mt-3.5 grid gap-2.5 p-0">
               {PREPARE_TIPS.map((tip) => (

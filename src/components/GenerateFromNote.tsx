@@ -6,7 +6,17 @@ import { AppHeader } from './AppHeader'
 import { FormAlert } from './FormAlert'
 import { GenerationStatus } from './GenerationStatus'
 import { IconArrowLeft, IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
-import { btnPrimaryLg, btnSubmit, cardLink, fieldInput, iconChip, shell, surfaceCard } from './ui'
+import {
+  btnPrimaryLg,
+  btnSubmit,
+  cardLink,
+  creationAside,
+  creationLayout,
+  fieldInput,
+  iconChip,
+  shell,
+  surfaceCard,
+} from './ui'
 import type { NoteSummary } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
@@ -209,7 +219,7 @@ export function GenerateFromNote({
         <h1 className="mt-5 text-3xl">{heading}</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{intro}</p>
 
-        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
+        <div className={creationLayout}>
           <form className={`${surfaceCard} p-6 sm:p-8`} onSubmit={handleSubmit} noValidate>
             <div className="grid gap-5">
               {formError && <FormAlert message={formError} />}
@@ -362,7 +372,7 @@ export function GenerateFromNote({
             </div>
           </form>
 
-          <aside className={`${surfaceCard} p-6`}>
+          <aside className={creationAside}>
             <h2 className="text-sm font-medium">How this works</h2>
             <ul className="mt-3.5 grid gap-2.5 p-0">
               {tips.map((tip) => (
