@@ -1,5 +1,6 @@
 import { GenerateFromNote } from '../components/GenerateFromNote'
 import type { GenerationStep } from '../components/GenerateFromNote'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { api } from '../api'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
@@ -17,6 +18,8 @@ const TIPS = [
 ]
 
 export function NewDeckPage() {
+  const { recordQualifyingAction } = useStreakCelebration()
+
   return (
     <GenerateFromNote
       heading="Generate a flashcard deck"
@@ -28,9 +31,8 @@ export function NewDeckPage() {
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
-        const deck = await api.flashcards.generate(note.id)
+        const deck = await recordQualifyingAction(() => api.flashcards.generate(note.id))
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
-        void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         const count = deck.flashcards.length
         return {
           // The backend copies the deck title from the source note.

@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { ScrollToTop } from './components/ScrollToTop'
+import { StreakCelebrationProvider } from './components/StreakCelebration'
 import { ComingSoonPage } from './pages/ComingSoonPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
@@ -26,7 +27,8 @@ function App() {
       <BrowserRouter>
         <ScrollToTop />
         <AuthProvider>
-          <Routes>
+          <StreakCelebrationProvider>
+            <Routes>
             <Route
               path="/"
               element={
@@ -173,7 +175,8 @@ function App() {
               }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </StreakCelebrationProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

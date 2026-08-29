@@ -1,5 +1,6 @@
 import { GenerateFromNote } from '../components/GenerateFromNote'
 import type { GenerationStep } from '../components/GenerateFromNote'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { api } from '../api'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
@@ -17,6 +18,8 @@ const TIPS = [
 ]
 
 export function NewQuizPage() {
+  const { recordQualifyingAction } = useStreakCelebration()
+
   return (
     <GenerateFromNote
       heading="Generate a quiz"
@@ -28,9 +31,8 @@ export function NewQuizPage() {
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
-        const quiz = await api.quiz.generate(note.id)
+        const quiz = await recordQualifyingAction(() => api.quiz.generate(note.id))
         void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
-        void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         const count = quiz.questions.length
         return {
           message: `${count} ${count === 1 ? 'question' : 'questions'} generated from “${note.title}”.`,

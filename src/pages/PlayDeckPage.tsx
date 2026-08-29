@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
 import {
   btnGhostLg,
@@ -15,8 +16,7 @@ import {
 import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
-import { queryKeys, useFlashcardDeck } from '../lib/queries'
-import { queryClient } from '../lib/queryClient'
+import { useFlashcardDeck } from '../lib/queries'
 import { newSeed, shuffled } from '../lib/shuffle'
 import { api } from '../api'
 import type { FlashcardDeck } from '../api'
@@ -50,6 +50,7 @@ function PlaySkeleton() {
 
 function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean }) {
   const navigate = useNavigate()
+  const { recordQualifyingAction } = useStreakCelebration()
   // The page only mounts this once it knows the deck holds cards, so no fallback
   // array is built here — a fresh one each render would defeat the memo below.
   const cards = deck.flashcards
@@ -104,10 +105,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setIsFinished(true)
     // Records the session for the streak. Only reaching the end counts, and the
     // result is not shown anywhere here, so a failure must not block the screen.
-    void api.flashcards
-      .complete(deck.deckId)
-      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.streak }))
-      .catch(() => {})
+    void recordQualifyingAction(() => api.flashcards.complete(deck.deckId)).catch(() => {})
   }
 
   function restart() {

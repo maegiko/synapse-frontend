@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
 import { SHUFFLE_PARAM } from '../components/ShuffleSwitch'
 import { StarRating } from '../components/StarRating'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
   btnGhostLg,
   btnGhostSm,
@@ -248,6 +249,7 @@ function Runner({
   onRetake: () => void
 }) {
   const navigate = useNavigate()
+  const { recordQualifyingAction } = useStreakCelebration()
   const questions = quiz.questions
 
   const [seed] = useState(newSeed)
@@ -283,10 +285,10 @@ function Runner({
   const quizHref = `/quiz/${quiz.id}`
 
   const saveScore = useMutation({
-    mutationFn: (finalScore: number) => api.quiz.saveScore(quiz.id, finalScore),
+    mutationFn: (finalScore: number) =>
+      recordQualifyingAction(() => api.quiz.saveScore(quiz.id, finalScore)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizScores(quiz.id) })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
     },
     onError: (error) =>
       setSaveError(`Your score could not be saved. ${toFormMessage(error)}`),

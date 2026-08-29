@@ -137,9 +137,66 @@ h3 {
 .dialog-panel {
   animation: dialog-panel-in 180ms ease-out;
 }
+
+/* Streak celebration: the existing muted flame gives way to the lit asset. */
+@keyframes streak-flame-muted-out {
+  0%,
+  38% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes streak-flame-light-up {
+  0%,
+  32% {
+    opacity: 0;
+    transform: scale(0.78) rotate(-5deg);
+  }
+  72% {
+    opacity: 1;
+    transform: scale(1.12) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+@keyframes streak-day-tick {
+  0% {
+    opacity: 0;
+    transform: translateY(0.35em) scale(0.82);
+  }
+  70% {
+    transform: translateY(-0.08em) scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.streak-flame-celebration__muted {
+  animation: streak-flame-muted-out 900ms ease-in forwards;
+}
+.streak-flame-celebration__lit {
+  animation: streak-flame-light-up 900ms ease-out forwards;
+}
+.streak-day-count {
+  animation: streak-day-tick 320ms ease-out;
+}
 @media (prefers-reduced-motion: reduce) {
   .dialog-overlay,
-  .dialog-panel {
+  .dialog-panel,
+  .streak-flame-celebration__muted,
+  .streak-flame-celebration__lit,
+  .streak-day-count {
     animation: none;
+  }
+
+  .streak-flame-celebration__muted {
+    opacity: 0;
   }
 }

@@ -6,6 +6,7 @@ import { AppHeader } from '../components/AppHeader'
 import { FileDropzone } from '../components/FileDropzone'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
+import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { IconArrowLeft, IconSpinner } from '../components/icons'
 import { btnSubmit, cardLink, shell, surfaceCard } from '../components/ui'
 import { api } from '../api'
@@ -53,6 +54,7 @@ function messageForFailure(error: unknown): string {
 
 export function NewNotePage() {
   const navigate = useNavigate()
+  const { recordQualifyingAction } = useStreakCelebration()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [file, setFile] = useState<File | null>(null)
@@ -60,13 +62,13 @@ export function NewNotePage() {
   const [step, setStep] = useState(0)
 
   const generate = useMutation({
-    mutationFn: (chosen: File) => api.notes.summarise(withDeclaredType(chosen)),
+    mutationFn: (chosen: File) =>
+      recordQualifyingAction(() => api.notes.summarise(withDeclaredType(chosen))),
     onSuccess: (note) => {
       // The response is the complete summary, so the detail view can render
       // immediately instead of refetching what we already hold.
       queryClient.setQueryData(queryKeys.note(note.id), note)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
       navigate(`/notes/${note.id}`, { replace: true })
     },
   })
