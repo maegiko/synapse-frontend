@@ -27,19 +27,14 @@ export function NewDeckPage() {
       noun="deck"
       submitLabel="Generate deck"
       busyLabel="Generating deck…"
-      successHeading="Your deck is ready"
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
         const deck = await recordQualifyingAction(() => api.flashcards.generate(note.id))
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
-        const count = deck.flashcards.length
-        return {
-          // The backend copies the deck title from the source note.
-          message: `${count} ${count === 1 ? 'card' : 'cards'} generated from “${note.title}”.`,
-          to: `/flashcards/${deck.deckId}`,
-          linkLabel: 'Open the deck',
-        }
+        // The generation response has no card IDs, so the deck page fetches the
+        // saved deck itself; we only hand it the destination.
+        return `/flashcards/${deck.deckId}`
       }}
     />
   )

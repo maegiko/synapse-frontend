@@ -1,21 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from './AppHeader'
 import { FormAlert } from './FormAlert'
 import { GenerationStatus } from './GenerationStatus'
 import { IconArrowLeft, IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
-import {
-  btnGhostLg,
-  btnPrimaryLg,
-  btnSubmit,
-  cardLink,
-  fieldInput,
-  iconChip,
-  shell,
-  surfaceCard,
-} from './ui'
+import { btnPrimaryLg, btnSubmit, cardLink, fieldInput, iconChip, shell, surfaceCard } from './ui'
 import type { NoteSummary } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
@@ -26,14 +17,6 @@ export interface GenerationStep {
   label: string
 }
 
-export interface GenerationResult {
-  /** Sentence describing what was made. */
-  message: string
-  /** Where the finished thing lives, for the types that have a page of their own. */
-  to?: string
-  linkLabel?: string
-}
-
 interface GenerateFromNoteProps {
   heading: string
   intro: string
@@ -41,15 +24,14 @@ interface GenerateFromNoteProps {
   noun: string
   submitLabel: string
   busyLabel: string
-  successHeading: string
   /** Narration for the wait, which is one opaque call. */
   steps: GenerationStep[]
   tips: string[]
   /**
    * Generates from a saved note, invalidates whatever list it added to, and
-   * describes what was made.
+   * returns the path of the resource's own page to send the user to.
    */
-  onGenerate: (note: NoteSummary) => Promise<GenerationResult>
+  onGenerate: (note: NoteSummary) => Promise<string>
 }
 
 const SEARCH_THRESHOLD = 5
@@ -80,7 +62,8 @@ function NoteListSkeleton() {
 /**
  * Both AI generators work the same way: pick one saved note and generate from
  * it. Only the copy and the one generate call differ, so the flow, its error
- * handling, and its states live here.
+ * handling, and its states live here. On success the user is sent straight to
+ * the new deck or quiz.
  */
 export function GenerateFromNote({
   heading,
@@ -88,11 +71,11 @@ export function GenerateFromNote({
   noun,
   submitLabel,
   busyLabel,
-  successHeading,
   steps,
   tips,
   onGenerate,
 }: GenerateFromNoteProps) {
+  const navigate = useNavigate()
   const notes = useNotes()
   const fieldsetRef = useRef<HTMLFieldSetElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -101,7 +84,6 @@ export function GenerateFromNote({
   const [search, setSearch] = useState('')
   const [formError, setFormError] = useState('')
   const [step, setStep] = useState(0)
-  const [result, setResult] = useState<GenerationResult | null>(null)
 
   const hasNoNotes = notes.isSuccess && notes.data.length === 0
 
@@ -121,7 +103,7 @@ export function GenerateFromNote({
 
   const generate = useMutation({
     mutationFn: (note: NoteSummary) => onGenerate(note),
-    onSuccess: (generated) => setResult(generated),
+    onSuccess: (to) => navigate(to, { replace: true }),
     onError: (error) => {
       setFormError(messageForFailure(error))
       // A note that vanished underneath us: reload the list so it stops showing.
@@ -214,12 +196,6 @@ export function GenerateFromNote({
     generate.mutate(note)
   }
 
-  function startAnother() {
-    setResult(null)
-    setSelectedNoteId(null)
-    setFormError('')
-  }
-
   return (
     <>
       <AppHeader />
@@ -234,187 +210,157 @@ export function GenerateFromNote({
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{intro}</p>
 
         <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)]">
-          {result ? (
-            <section className={`${surfaceCard} p-6 sm:p-8`}>
-              <span
-                className="inline-flex h-11 w-11 items-center justify-center rounded-sm bg-success-soft text-success-solid"
-                aria-hidden="true"
-              >
-                <IconCheck className="h-5.5 w-5.5" />
-              </span>
-              <h2 className="mt-4 text-xl">{successHeading}</h2>
-              <p className="mt-2.5 max-w-[52ch] text-base text-text-muted">
-                {result.message} You will find it in your library.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                {result.to && (
-                  <Link to={result.to} className={btnPrimaryLg}>
-                    {result.linkLabel ?? `Open the ${noun}`}
+          <form className={`${surfaceCard} p-6 sm:p-8`} onSubmit={handleSubmit} noValidate>
+            <div className="grid gap-5">
+              {formError && <FormAlert message={formError} />}
+
+              {isBusy && (
+                <GenerationStatus
+                  label={(steps[step] ?? steps[0]).label}
+                  hint="This usually takes under a minute. Keep this tab open."
+                />
+              )}
+
+              {notes.isPending && <NoteListSkeleton />}
+
+              {notes.isError && (
+                <div className="grid justify-items-start gap-2.5 rounded-md border border-border bg-surface-alt p-5">
+                  <p className="text-sm text-text-muted">
+                    We could not load your notes. {toFormMessage(notes.error)}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void notes.refetch()}
+                    className="text-sm font-bold text-accent-solid hover:underline"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {hasNoNotes && (
+                <div className="rounded-md border border-dashed border-border bg-surface-alt px-6 py-10 text-center">
+                  <span className={`${iconChip} mx-auto`} aria-hidden="true">
+                    <IconNote />
+                  </span>
+                  <p className="mt-3 text-base font-bold text-text">
+                    You have not summarised a note yet
+                  </p>
+                  <p className="mx-auto mt-2 max-w-[42ch] text-sm text-text-muted">
+                    Every {noun} is built from one of your notes. Summarise a file first and it will
+                    show up here to pick from.
+                  </p>
+                  <Link to="/notes/new" className={`${btnPrimaryLg} mt-6`}>
+                    Summarise your first note
                     <IconArrowRight />
                   </Link>
-                )}
-                <Link to="/dashboard" className={result.to ? btnGhostLg : btnPrimaryLg}>
-                  <IconArrowLeft />
-                  Back to dashboard
-                </Link>
-                <button type="button" className={btnGhostLg} onClick={startAnother}>
-                  Start another
-                </button>
-              </div>
-            </section>
-          ) : (
-            <form className={`${surfaceCard} p-6 sm:p-8`} onSubmit={handleSubmit} noValidate>
-              <div className="grid gap-5">
-                {formError && <FormAlert message={formError} />}
+                </div>
+              )}
 
-                {isBusy && (
-                  <GenerationStatus
-                    label={(steps[step] ?? steps[0]).label}
-                    hint="This usually takes under a minute. Keep this tab open."
-                  />
-                )}
+              {notes.isSuccess && notes.data.length > 0 && (
+                <fieldset ref={fieldsetRef} className="m-0 min-w-0 border-0 p-0" disabled={isBusy}>
+                  <legend className="sr-only">Choose a note</legend>
 
-                {notes.isPending && <NoteListSkeleton />}
+                  {notes.data.length > SEARCH_THRESHOLD && (
+                    <input
+                      type="search"
+                      className={`${fieldInput} mb-4`}
+                      placeholder="Search your notes"
+                      value={search}
+                      aria-label="Search your notes"
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                  )}
 
-                {notes.isError && (
-                  <div className="grid justify-items-start gap-2.5 rounded-md border border-border bg-surface-alt p-5">
-                    <p className="text-sm text-text-muted">
-                      We could not load your notes. {toFormMessage(notes.error)}
+                  {filteredNotes.length === 0 ? (
+                    <p className="rounded-md border border-border bg-surface-alt px-4 py-6 text-center text-sm text-text-muted">
+                      No note matches “{search.trim()}”.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => void notes.refetch()}
-                      className="text-sm font-bold text-accent-solid hover:underline"
-                    >
-                      Try again
-                    </button>
-                  </div>
-                )}
-
-                {hasNoNotes && (
-                  <div className="rounded-md border border-dashed border-border bg-surface-alt px-6 py-10 text-center">
-                    <span className={`${iconChip} mx-auto`} aria-hidden="true">
-                      <IconNote />
-                    </span>
-                    <p className="mt-3 text-base font-bold text-text">
-                      You have not summarised a note yet
-                    </p>
-                    <p className="mx-auto mt-2 max-w-[42ch] text-sm text-text-muted">
-                      Every {noun} is built from one of your notes. Summarise a file first and it
-                      will show up here to pick from.
-                    </p>
-                    <Link to="/notes/new" className={`${btnPrimaryLg} mt-6`}>
-                      Summarise your first note
-                      <IconArrowRight />
-                    </Link>
-                  </div>
-                )}
-
-                {notes.isSuccess && notes.data.length > 0 && (
-                  <fieldset ref={fieldsetRef} className="m-0 min-w-0 border-0 p-0" disabled={isBusy}>
-                    <legend className="sr-only">Choose a note</legend>
-
-                    {notes.data.length > SEARCH_THRESHOLD && (
-                      <input
-                        type="search"
-                        className={`${fieldInput} mb-4`}
-                        placeholder="Search your notes"
-                        value={search}
-                        aria-label="Search your notes"
-                        onChange={(event) => setSearch(event.target.value)}
-                      />
-                    )}
-
-                    {filteredNotes.length === 0 ? (
-                      <p className="rounded-md border border-border bg-surface-alt px-4 py-6 text-center text-sm text-text-muted">
-                        No note matches “{search.trim()}”.
-                      </p>
-                    ) : (
-                      <ul ref={listRef} className="grid max-h-125 gap-3 overflow-y-auto p-0">
-                        {filteredNotes.map((note) => {
-                          const selected = note.id === selectedNoteId
-                          return (
-                            <li key={note.id} className="list-none">
-                              <label
-                                // `relative` matters: the sr-only radio is absolutely
-                                // positioned, so without a positioned ancestor its
-                                // containing block is the page itself and it stretches
-                                // the document past the scrolling list.
-                                className={`relative flex cursor-pointer items-start gap-3.5 rounded-md border p-4 transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
+                  ) : (
+                    <ul ref={listRef} className="grid max-h-125 gap-3 overflow-y-auto p-0">
+                      {filteredNotes.map((note) => {
+                        const selected = note.id === selectedNoteId
+                        return (
+                          <li key={note.id} className="list-none">
+                            <label
+                              // `relative` matters: the sr-only radio is absolutely
+                              // positioned, so without a positioned ancestor its
+                              // containing block is the page itself and it stretches
+                              // the document past the scrolling list.
+                              className={`relative flex cursor-pointer items-start gap-3.5 rounded-md border p-4 transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
+                                selected
+                                  ? 'border-accent-solid bg-accent-soft'
+                                  : 'border-border bg-surface hover:border-accent-solid'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="note"
+                                className="sr-only"
+                                value={note.id}
+                                checked={selected}
+                                onChange={() => {
+                                  setSelectedNoteId(note.id)
+                                  setFormError('')
+                                }}
+                              />
+                              <span className={`${iconChip} shrink-0`} aria-hidden="true">
+                                <IconNote />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-bold text-text">
+                                  {note.title}
+                                </span>
+                                <span className="mt-1 line-clamp-2 block text-xs text-text-muted">
+                                  {note.overview}
+                                </span>
+                                <span className="mt-2 flex flex-wrap gap-1.5">
+                                  {[
+                                    plural(note.concepts.length, 'concept'),
+                                    plural(note.keypoints.length, 'key point'),
+                                  ].map((fact) => (
+                                    <span
+                                      key={fact}
+                                      className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
+                                    >
+                                      {fact}
+                                    </span>
+                                  ))}
+                                </span>
+                              </span>
+                              <span
+                                className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
                                   selected
-                                    ? 'border-accent-solid bg-accent-soft'
-                                    : 'border-border bg-surface hover:border-accent-solid'
+                                    ? 'border-accent-solid bg-accent-solid text-on-accent'
+                                    : 'border-border bg-surface text-transparent'
                                 }`}
+                                aria-hidden="true"
                               >
-                                <input
-                                  type="radio"
-                                  name="note"
-                                  className="sr-only"
-                                  value={note.id}
-                                  checked={selected}
-                                  onChange={() => {
-                                    setSelectedNoteId(note.id)
-                                    setFormError('')
-                                  }}
-                                />
-                                <span className={`${iconChip} shrink-0`} aria-hidden="true">
-                                  <IconNote />
-                                </span>
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-sm font-bold text-text">
-                                    {note.title}
-                                  </span>
-                                  <span className="mt-1 line-clamp-2 block text-xs text-text-muted">
-                                    {note.overview}
-                                  </span>
-                                  <span className="mt-2 flex flex-wrap gap-1.5">
-                                    {[
-                                      plural(note.concepts.length, 'concept'),
-                                      plural(note.keypoints.length, 'key point'),
-                                    ].map((fact) => (
-                                      <span
-                                        key={fact}
-                                        className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
-                                      >
-                                        {fact}
-                                      </span>
-                                    ))}
-                                  </span>
-                                </span>
-                                <span
-                                  className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                                    selected
-                                      ? 'border-accent-solid bg-accent-solid text-on-accent'
-                                      : 'border-border bg-surface text-transparent'
-                                  }`}
-                                  aria-hidden="true"
-                                >
-                                  <IconCheck className="h-3 w-3" />
-                                </span>
-                              </label>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    )}
-                  </fieldset>
-                )}
+                                <IconCheck className="h-3 w-3" />
+                              </span>
+                            </label>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </fieldset>
+              )}
 
-                {!hasNoNotes && (
-                  <button type="submit" className={btnSubmit} disabled={isBusy}>
-                    {isBusy ? (
-                      <>
-                        <IconSpinner className="h-4.5 w-4.5" />
-                        {busyLabel}
-                      </>
-                    ) : (
-                      submitLabel
-                    )}
-                  </button>
-                )}
-              </div>
-            </form>
-          )}
+              {!hasNoNotes && (
+                <button type="submit" className={btnSubmit} disabled={isBusy}>
+                  {isBusy ? (
+                    <>
+                      <IconSpinner className="h-4.5 w-4.5" />
+                      {busyLabel}
+                    </>
+                  ) : (
+                    submitLabel
+                  )}
+                </button>
+              )}
+            </div>
+          </form>
 
           <aside className={`${surfaceCard} p-6`}>
             <h2 className="text-sm font-medium">How this works</h2>

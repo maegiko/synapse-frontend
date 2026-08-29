@@ -61,7 +61,10 @@ export function useQuizzes() {
   return useQuery({ queryKey: queryKeys.quizzes, queryFn: api.quiz.list })
 }
 
-/** One saved quiz with its questions and answers, in saved position order. */
+/**
+ * One saved quiz with its questions and answers, in saved position order.
+ * Seeded by the generation flow, so a freshly generated quiz needs no refetch.
+ */
 export function useQuiz(quizId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.quiz(quizId ?? ''),

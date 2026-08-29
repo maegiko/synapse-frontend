@@ -27,18 +27,15 @@ export function NewQuizPage() {
       noun="quiz"
       submitLabel="Generate quiz"
       busyLabel="Generating quiz…"
-      successHeading="Your quiz is ready"
       steps={STEPS}
       tips={TIPS}
       onGenerate={async (note) => {
         const quiz = await recordQualifyingAction(() => api.quiz.generate(note.id))
+        // The generation response is the whole quiz, so the detail view can
+        // render it without a refetch.
+        queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)
         void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
-        const count = quiz.questions.length
-        return {
-          message: `${count} ${count === 1 ? 'question' : 'questions'} generated from “${note.title}”.`,
-          to: `/quiz/${quiz.id}`,
-          linkLabel: 'Open the quiz',
-        }
+        return `/quiz/${quiz.id}`
       }}
     />
   )
