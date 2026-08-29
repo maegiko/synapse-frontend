@@ -24,18 +24,45 @@ import { newSeed, shuffled } from '../lib/shuffle'
 import { api } from '../api'
 import type { Quiz, QuizQuestion } from '../api'
 
-/** One is drawn per attempt, so finishing twice does not read identically. */
-const CLOSING_NOTES = [
-  'Testing yourself is the part that actually moves knowledge into memory. Nice work.',
-  'Getting one wrong now is far better than getting it wrong when it counts.',
-  'You just found out exactly what you know and what needs another look. That is the whole point.',
-  'Every attempt sharpens the picture. Come back to this one and watch the score move.',
-  'Answering under your own steam is harder than rereading, and it works far better.',
-  'That is a solid, honest run. Studying like this is how it sticks.',
-]
+/** Each band stays encouraging without claiming a result that the score contradicts. */
+const CLOSING_NOTES = {
+  perfect: [
+    'A perfect run. You knew every answer and backed it up under pressure.',
+    'Every question, exactly right. That consistency is paying off.',
+    'Full marks—clear recall from start to finish. Brilliant work.',
+    'Nothing slipped past you this time. That is mastery in motion.',
+  ],
+  strong: [
+    'That was a strong run. A quick look at the few misses will make it even sharper.',
+    'You have a firm grip on this material. The last details are within reach.',
+    'Excellent recall. Review the small gaps and you will be hard to catch next time.',
+    'Most of this is already sticking. One focused pass can close the rest.',
+  ],
+  developing: [
+    'You have built a solid base. The questions you missed point straight to the next win.',
+    'Good progress. There is plenty here you already know, and a clear path forward.',
+    'This attempt moved you forward. Review the gaps, then come back stronger.',
+    'You are getting there. Each revisit will make these answers easier to reach.',
+  ],
+  starting: [
+    'This was a useful first pass. Every missed question now guides what to study next.',
+    'Starting is progress. Review a few key ideas and watch the next score climb.',
+    'You did the brave part, testing what you know. Now you have a clear place to begin.',
+    'One honest attempt gives you more direction than another passive read. Keep going.',
+  ],
+} as const
 
-function drawClosingNote(): string {
-  return CLOSING_NOTES[Math.floor(Math.random() * CLOSING_NOTES.length)]
+function drawClosingNote(score: number, total: number): string {
+  const percent = (score / Math.max(total, 1)) * 100
+  const notes =
+    percent === 100
+      ? CLOSING_NOTES.perfect
+      : percent >= 80
+        ? CLOSING_NOTES.strong
+        : percent >= 50
+          ? CLOSING_NOTES.developing
+          : CLOSING_NOTES.starting
+  return notes[Math.floor(Math.random() * notes.length)]
 }
 
 const LEAVE_TITLE = 'Leave this quiz?'
@@ -231,7 +258,7 @@ function Runner({
   const [rating, setRating] = useState(quiz.difficulty ?? 0)
   /** Only what was rated in this attempt, which is what the summary may claim. */
   const [savedRating, setSavedRating] = useState<number | null>(null)
-  const [closingNote] = useState(drawClosingNote)
+  const [closingNote, setClosingNote] = useState('')
   const [saveError, setSaveError] = useState('')
 
   /** Where a confirmed exit goes. Null means no exit is pending. */
@@ -282,6 +309,7 @@ function Runner({
     }
     // The run is over, so nothing is left to lose and the guard comes off.
     isGuarding.current = false
+    setClosingNote(drawClosingNote(nextScore, order.length))
     setPhase('rating')
     saveScore.mutate(nextScore)
   }
