@@ -88,7 +88,8 @@ function CardRow({
       }`}
     >
       <div className="flex items-start gap-4">
-        <span className="mt-0.5 shrink-0 text-xs font-bold text-text-muted tabular-nums">
+        {/* Fixed width so a two-digit number never shifts the content column. */}
+        <span className="mt-0.5 w-6 shrink-0 text-right text-xs font-bold text-text-muted tabular-nums">
           {position}
         </span>
         <div className="min-w-0 flex-1">
