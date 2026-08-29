@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import synapseLogo from '../assets/synapse_logo.png'
+import synapseLogo from '../assets/synapse_logo.webp'
 import {
   btnGhostLg,
   btnGhostSm,
@@ -66,7 +66,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
         <div className={`${shell} flex items-center gap-7 py-4`}>
           <Link to="/" className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline">
-            <img src={synapseLogo} alt="" width="48" height="48" />
+            <img src={synapseLogo} alt="" width="48" height="48" decoding="async" />
             <span className="translate-y-0.5">Synapse</span>
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-semibold" aria-label="Primary">
@@ -205,7 +205,14 @@ export function LandingPage() {
       <footer className="border-t border-border py-7">
         <div className={`${shell} flex flex-wrap items-center justify-between gap-4`}>
           <Link to="/" className="inline-flex items-center gap-2.5 text-base text-text-muted no-underline">
-            <img src={synapseLogo} alt="" width="34" height="34" />
+            <img
+              src={synapseLogo}
+              alt=""
+              width="34"
+              height="34"
+              loading="lazy"
+              decoding="async"
+            />
             <span>Synapse</span>
           </Link>
           <div className="flex gap-5 text-sm font-semibold">

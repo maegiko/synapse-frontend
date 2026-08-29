@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import synapseLogo from '../assets/synapse_logo.png'
+import synapseLogo from '../assets/synapse_logo.webp'
 import { useAuth } from '../auth/useAuth'
 import { Avatar } from './Avatar'
 import { btnGhostSm, shell } from './ui'
@@ -38,7 +38,7 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           }}
           className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline"
         >
-          <img src={synapseLogo} alt="" width="48" height="48" />
+          <img src={synapseLogo} alt="" width="48" height="48" decoding="async" />
           <span className="translate-y-0.5">Synapse</span>
         </Link>
         {user && (

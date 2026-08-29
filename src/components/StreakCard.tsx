@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { btnGhostSm } from './ui'
 import type { StreakResponse } from '../api'
-import streakFlame from '../assets/streak_flame.png'
-import streakFlameMuted from '../assets/streak_flame_muted.png'
+import streakFlame from '../assets/streak_flame.webp'
+import streakFlameMuted from '../assets/streak_flame_muted.webp'
 
 const KEEP_STREAK_MESSAGE =
   'Generate something or finish a deck or quiz to keep your streak going.'
@@ -80,6 +80,9 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
         <img
           src={streak.activeToday ? streakFlame : streakFlameMuted}
           alt=""
+          width="128"
+          height="128"
+          decoding="async"
           className="h-6 w-6 object-contain sm:h-7 sm:w-7"
         />
       </span>

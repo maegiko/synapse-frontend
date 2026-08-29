@@ -20,8 +20,8 @@ import {
   IconNote,
   IconQuiz,
 } from '../components/icons'
-import streakFlame from '../assets/streak_flame.png'
-import streakFlameMuted from '../assets/streak_flame_muted.png'
+import streakFlame from '../assets/streak_flame.webp'
+import streakFlameMuted from '../assets/streak_flame_muted.webp'
 import {
   btnGhostSm,
   btnPrimaryDisabled,
@@ -572,7 +572,14 @@ export function ProfilePage() {
                   <Bar />
                 ) : (
                   <>
-                    <img src={flameSrc} alt="" className="h-5 w-5 shrink-0 object-contain" />
+                    <img
+                      src={flameSrc}
+                      alt=""
+                      width="128"
+                      height="128"
+                      decoding="async"
+                      className="h-5 w-5 shrink-0 object-contain"
+                    />
                     {plural(streak.data?.currentStreak ?? 0, 'day')}
                   </>
                 )}

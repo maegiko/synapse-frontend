@@ -2,8 +2,8 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from '../api'
 import type { StreakResponse } from '../api'
-import streakFlame from '../assets/streak_flame.png'
-import streakFlameMuted from '../assets/streak_flame_muted.png'
+import streakFlame from '../assets/streak_flame.webp'
+import streakFlameMuted from '../assets/streak_flame_muted.webp'
 import { queryKeys } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
 import { btnPrimaryLg, surfaceCard } from './ui'
@@ -72,11 +72,17 @@ function StreakCelebrationModal({
           <img
             src={streakFlameMuted}
             alt=""
+            width="128"
+            height="128"
+            decoding="async"
             className="streak-flame-celebration__muted absolute inset-4 h-20 w-20 object-contain"
           />
           <img
             src={streakFlame}
             alt=""
+            width="128"
+            height="128"
+            decoding="async"
             className="streak-flame-celebration__lit absolute inset-4 h-20 w-20 object-contain"
           />
         </div>

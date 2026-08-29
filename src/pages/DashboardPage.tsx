@@ -7,10 +7,10 @@ import { RecentsItem } from '../components/RecentsItem'
 import { StreakCard } from '../components/StreakCard'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { DifficultyStars } from '../components/DifficultyStars'
-import dashboardHero from '../assets/dashboard_hero.png'
-import deckSplash from '../assets/deck_splash.png'
-import noteSplash from '../assets/note_splash.png'
-import quizSplash from '../assets/quiz_splash.png'
+import dashboardHero from '../assets/dashboard_hero.webp'
+import deckSplash from '../assets/deck_splash.webp'
+import noteSplash from '../assets/note_splash.webp'
+import quizSplash from '../assets/quiz_splash.webp'
 import { btnPrimaryMdInverted, cardLink, shell } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes, useStreak } from '../lib/queries'
@@ -168,6 +168,9 @@ export function DashboardPage() {
           <img
             src={dashboardHero}
             alt=""
+            width="960"
+            height="640"
+            decoding="async"
             className="pointer-events-none absolute top-1/2 -right-3 hidden h-[112%] w-auto -translate-y-1/2 drop-shadow-[0_18px_22px_rgba(15,5,30,0.45)] lg:block"
           />
           <div className="relative max-w-[54ch]">
@@ -193,14 +196,32 @@ export function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <ActionCard
             to="/notes/new"
-            art={<img src={noteSplash} alt="" />}
+            art={
+              <img
+                src={noteSplash}
+                alt=""
+                width="384"
+                height="384"
+                loading="lazy"
+                decoding="async"
+              />
+            }
             title="Summarise a note"
             body="Upload a PDF, DOCX, TXT or Markdown file (up to 10 MB) and get a concise summary of the important bits."
             cta="Upload a file"
           />
           <ActionCard
             to="/flashcards/new"
-            art={<img src={deckSplash} alt="" />}
+            art={
+              <img
+                src={deckSplash}
+                alt=""
+                width="384"
+                height="384"
+                loading="lazy"
+                decoding="async"
+              />
+            }
             title="Generate a deck"
             body="Turn one of your notes into a flashcard deck, built from its concepts and key points."
             cta="Pick a note"
@@ -208,7 +229,17 @@ export function DashboardPage() {
           />
           <ActionCard
             to="/quiz/new"
-            art={<img src={quizSplash} alt="" className="translate-x-2" />}
+            art={
+              <img
+                src={quizSplash}
+                alt=""
+                width="384"
+                height="384"
+                loading="lazy"
+                decoding="async"
+                className="translate-x-2"
+              />
+            }
             title="Generate a quiz"
             body="Turn one of your notes into a 10-question quiz, then save a score for every attempt."
             cta="Pick a note"
