@@ -74,8 +74,8 @@ export function RecentsItem({
     <li
       className={`min-w-0 ${
         compact
-          ? 'border-b border-dashed border-border/50 pb-4 last:border-b-0 last:pb-0 sm:border-r sm:border-b-0 sm:px-5 sm:pb-0 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0'
-          : 'border-b border-dashed border-border/50 pb-4 last:border-b-0 last:pb-0'
+          ? 'border-b border-border/85 pb-4 last:border-b-0 last:pb-0 sm:border-r sm:border-b-0 sm:px-5 sm:pb-0 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0'
+          : 'border-b border-border/85 pb-4 last:border-b-0 last:pb-0'
       }`}
     >
       {to ? (

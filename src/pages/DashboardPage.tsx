@@ -24,7 +24,7 @@ const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-solid'
 /** Row hairline is lighter than the section dividers; most of the separation is
  *  the generous vertical padding on the link, not the line. */
 const FLAT_ROW =
-  'group border-b border-border/40 transition-colors last:border-b-0 hover:bg-surface-alt/60'
+  'group border-b border-border/85 transition-colors last:border-b-0 hover:bg-surface-alt/60'
 const FLAT_ROW_LINK = 'block py-4 no-underline'
 
 /** A recent note: document-shaped — title, overview, then quiet inline facts. */
@@ -193,8 +193,8 @@ export function DashboardPage() {
 
         {/* One Library surface holding three sections: the deck strip, then
             notes and quizzes as two columns. No nested cards — a gently
-            elevated frame, with dividers tiered by weight (outer border >
-            section dividers > row separators) and spacing doing the rest. */}
+            elevated frame with a subtle outer border and consistent 1px
+            dividers between every section and entry. */}
         <div className="overflow-hidden rounded-md border border-border bg-surface shadow-sm">
           <RecentsCard
             title="Recent decks"
@@ -221,7 +221,7 @@ export function DashboardPage() {
             ))}
           </RecentsCard>
 
-          <div className="grid grid-cols-1 border-t border-border/60 md:grid-cols-2">
+          <div className="grid grid-cols-1 border-t border-border/85 md:grid-cols-2">
             <RecentsCard
               title="Recent notes"
               isLoading={notes.isPending}
@@ -231,7 +231,7 @@ export function DashboardPage() {
               emptyMessage="Your summarized notes will show up here."
               viewAllTo="/library?type=notes"
               viewAllLabel="View all notes"
-              className="border-b border-border/60 p-6 md:border-r md:border-b-0"
+              className="border-b border-border/85 p-6 md:border-r md:border-b-0"
             >
               {notes.data?.slice(0, RECENT_LIMIT).map((note) => (
                 <RecentNoteRow
