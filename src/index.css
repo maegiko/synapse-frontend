@@ -104,6 +104,11 @@ h3 {
 .dashboard-typography :where(button, a) {
   font-weight: 500;
 }
+/* Library: section labels stay at the capped h3 weight; the content titles
+   below them carry the scanning weight, a clear step heavier than the labels. */
+.dashboard-typography .recents-title {
+  font-weight: 600;
+}
 
 @layer base {
   a {

@@ -44,7 +44,5 @@ export const countPill =
 export const metaText = 'text-xs text-text-muted'
 
 export const btnPrimaryMdInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-5.5 py-3 text-base hover:bg-surface-alt hover:shadow-md hover:-translate-y-px`
-export const viewAllButton =
-  'inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface px-4 py-2 text-sm font-bold text-accent-solid no-underline shadow-sm transition-[box-shadow,border-color] duration-150 hover:border-accent-solid hover:shadow-md'
 export const cardLink =
   'inline-flex items-center gap-1.5 text-sm font-bold text-accent-solid no-underline hover:underline'

@@ -4,19 +4,105 @@ import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
 import { StreakCard } from '../components/StreakCard'
-import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
+import { IconArrowRight, IconDeck, IconNote, IconQuiz, IconStar } from '../components/icons'
 import dashboardHero from '../assets/dashboard_hero.png'
 import deckSplash from '../assets/deck_splash.png'
 import noteSplash from '../assets/note_splash.png'
 import quizSplash from '../assets/quiz_splash.png'
-import { btnPrimaryMdInverted, shell, viewAllButton } from '../components/ui'
+import { btnPrimaryMdInverted, cardLink, shell } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { useFlashcardDecks, useNotes, useQuizzes, useStreak } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
 const RECENT_LIMIT = 3
-const ROW_ICON = 'h-4 w-4'
+// Quizzes are terser rows, so one more fits without unbalancing the column.
+const RECENT_QUIZ_LIMIT = 4
+// One icon treatment for every Library item: small, standalone, accent, no tile.
+const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-solid'
+/** Row hairline is lighter than the section dividers; most of the separation is
+ *  the generous vertical padding on the link, not the line. */
+const FLAT_ROW =
+  'group border-b border-border/40 transition-colors last:border-b-0 hover:bg-surface-alt/60'
+const FLAT_ROW_LINK = 'block py-4 no-underline'
+
+/** A recent note: document-shaped — title, overview, then quiet inline facts. */
+function RecentNoteRow({
+  to,
+  title,
+  description,
+  meta,
+}: {
+  to: string
+  title: string
+  description?: string | null
+  meta: string
+}) {
+  return (
+    <li className={FLAT_ROW}>
+      <Link to={to} className={FLAT_ROW_LINK}>
+        <span className="flex min-w-0 items-center gap-3">
+          <IconNote className={ROW_ICON} />
+          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
+            {title}
+          </span>
+        </span>
+        {description && (
+          <span className="mt-1 line-clamp-2 text-xs text-text-muted">{description}</span>
+        )}
+        <span className="mt-1.5 block text-xs text-text-muted tabular-nums">{meta}</span>
+      </Link>
+    </li>
+  )
+}
+
+/** A recent quiz: activity-shaped — title, when it landed, then question count and difficulty. */
+function RecentQuizRow({
+  to,
+  title,
+  questionCount,
+  difficulty,
+  timestamp,
+}: {
+  to: string
+  title: string
+  questionCount: number
+  difficulty: number | null
+  timestamp: string
+}) {
+  return (
+    <li className={FLAT_ROW}>
+      <Link to={to} className={FLAT_ROW_LINK}>
+        <span className="flex min-w-0 items-center gap-3">
+          <IconQuiz className={ROW_ICON} />
+          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
+            {title}
+          </span>
+          {timestamp && (
+            <span className="shrink-0 text-xs text-text-muted tabular-nums">{timestamp}</span>
+          )}
+        </span>
+        <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted tabular-nums">
+          {plural(questionCount, 'question')}
+          {difficulty !== null && (
+            <span
+              className="flex items-center gap-0.5"
+              aria-label={`Difficulty ${difficulty} out of 5`}
+            >
+              {[1, 2, 3, 4, 5].map((level) => (
+                <IconStar
+                  key={level}
+                  className={`h-3 w-3 ${level <= difficulty ? 'text-text-muted/60' : 'text-border'}`}
+                  filled={level <= difficulty}
+                />
+              ))}
+            </span>
+          )}
+        </span>
+      </Link>
+    </li>
+  )
+}
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -111,13 +197,17 @@ export function DashboardPage() {
 
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
           <h2 className="text-xl">Your library</h2>
-          <Link to="/library" className={viewAllButton}>
+          <Link to="/library" className={cardLink}>
             Browse library
             <IconArrowRight />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* One Library surface holding three sections: the deck strip, then
+            notes and quizzes as two columns. No nested cards — a gently
+            elevated frame, with dividers tiered by weight (outer border >
+            section dividers > row separators) and spacing doing the rest. */}
+        <div className="overflow-hidden rounded-md border border-border bg-surface shadow-sm">
           <RecentsCard
             title="Recent decks"
             count={decks.data?.length}
@@ -129,7 +219,7 @@ export function DashboardPage() {
             viewAllTo="/library?type=decks"
             viewAllLabel="View all decks"
             variant="strip"
-            className="md:col-span-2"
+            className="p-6"
           >
             {decks.data?.slice(0, RECENT_LIMIT).map((deck) => (
               <RecentsItem
@@ -138,64 +228,64 @@ export function DashboardPage() {
                 title={deck.title}
                 to={`/flashcards/${deck.deckId}`}
                 metadata={[plural(deck.flashcards.length, 'card')]}
+                quietMeta
                 compact
               />
             ))}
           </RecentsCard>
-          
-          <RecentsCard
-            title="Recent notes"
-            count={notes.data?.length}
-            isLoading={notes.isPending}
-            isError={notes.isError}
-            onRetry={() => void notes.refetch()}
-            isEmpty={notes.data?.length === 0}
-            emptyMessage="Your summarized notes will show up here."
-            viewAllTo="/library?type=notes"
-            viewAllLabel="View all notes"
-          >
-            {notes.data?.slice(0, RECENT_LIMIT).map((note) => (
-              <RecentsItem
-                key={note.id}
-                to={`/notes/${note.id}`}
-                icon={<IconNote className={ROW_ICON} />}
-                title={note.title}
-                preview={note.overview}
-                metadata={[
-                  plural(note.keypoints.length, 'key point'),
-                  plural(note.importantTerms.length, 'term'),
-                ]}
-              />
-            ))}
-          </RecentsCard>
 
-          <RecentsCard
-            title="Recent quizzes"
-            count={quizzes.data?.length}
-            isLoading={quizzes.isPending}
-            isError={quizzes.isError}
-            onRetry={() => void quizzes.refetch()}
-            isEmpty={quizzes.data?.length === 0}
-            emptyMessage="Quizzes you generate from a note will show up here."
-            viewAllTo="/library?type=quizzes"
-            viewAllLabel="View all quizzes"
-          >
-            {quizzes.data?.slice(0, RECENT_LIMIT).map((quiz) => (
-              <RecentsItem
-                key={quiz.id}
-                icon={<IconQuiz className={ROW_ICON} />}
-                title={quiz.title}
-                to={`/quiz/${quiz.id}`}
-                preview={quiz.description}
-                metadata={[
-                  plural(quiz.questions.length, 'question'),
-                  quiz.difficulty === null ? 'No difficulty set' : `Difficulty ${quiz.difficulty}/5`,
-                ]}
-                // Quizzes are the only listed resource the API timestamps.
-                timestamp={formatRelative(quiz.createdAt)}
-              />
-            ))}
-          </RecentsCard>
+          <div className="grid grid-cols-1 border-t border-border/60 md:grid-cols-2">
+            <RecentsCard
+              title="Recent notes"
+              count={notes.data?.length}
+              isLoading={notes.isPending}
+              isError={notes.isError}
+              onRetry={() => void notes.refetch()}
+              isEmpty={notes.data?.length === 0}
+              emptyMessage="Your summarized notes will show up here."
+              viewAllTo="/library?type=notes"
+              viewAllLabel="View all notes"
+              className="border-b border-border/60 p-6 md:border-r md:border-b-0"
+            >
+              {notes.data?.slice(0, RECENT_LIMIT).map((note) => (
+                <RecentNoteRow
+                  key={note.id}
+                  to={`/notes/${note.id}`}
+                  title={note.title}
+                  description={note.overview}
+                  meta={[
+                    plural(note.keypoints.length, 'key point'),
+                    plural(note.importantTerms.length, 'term'),
+                  ].join(' · ')}
+                />
+              ))}
+            </RecentsCard>
+
+            <RecentsCard
+              title="Recent quizzes"
+              count={quizzes.data?.length}
+              isLoading={quizzes.isPending}
+              isError={quizzes.isError}
+              onRetry={() => void quizzes.refetch()}
+              isEmpty={quizzes.data?.length === 0}
+              emptyMessage="Quizzes you generate from a note will show up here."
+              viewAllTo="/library?type=quizzes"
+              viewAllLabel="View all quizzes"
+              className="p-6"
+            >
+              {quizzes.data?.slice(0, RECENT_QUIZ_LIMIT).map((quiz) => (
+                <RecentQuizRow
+                  key={quiz.id}
+                  to={`/quiz/${quiz.id}`}
+                  title={quiz.title}
+                  questionCount={quiz.questions.length}
+                  difficulty={quiz.difficulty}
+                  // Quizzes are the only listed resource the API timestamps.
+                  timestamp={formatRelative(quiz.createdAt)}
+                />
+              ))}
+            </RecentsCard>
+          </div>
         </div>
       </main>
     </>
