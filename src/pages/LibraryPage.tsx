@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { LibraryCard } from '../components/LibraryCard'
+import { DifficultyStars } from '../components/DifficultyStars'
 import { IconArrowLeft, IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { btnPrimaryLg, cardLink, countPill, fieldInput, shell, surfaceCard } from '../components/ui'
 import { toFormMessage } from '../lib/apiErrors'
@@ -293,7 +294,11 @@ export function LibraryPage() {
                     preview={quiz.description}
                     facts={[
                       plural(quiz.questions.length, 'question'),
-                      quiz.difficulty === null ? 'No difficulty set' : `Difficulty ${quiz.difficulty}/5`,
+                      quiz.difficulty === null ? (
+                        'No difficulty set'
+                      ) : (
+                        <DifficultyStars value={quiz.difficulty} />
+                      ),
                     ]}
                     // Quizzes are the only listed resource the API timestamps.
                     timestamp={formatRelative(quiz.createdAt)}

@@ -10,8 +10,8 @@ interface LibraryCardProps {
   to?: string
   /** Second line: a note's overview, a deck's first question, a quiz's blurb. */
   preview?: string | null
-  /** Compact counts, shown as pills. */
-  facts: string[]
+  /** Compact facts, each shown as a pill (a count string, or e.g. difficulty stars). */
+  facts: ReactNode[]
   /** Only shown for resources the API timestamps. */
   timestamp?: string
 }
@@ -42,9 +42,9 @@ export function LibraryCard({ icon, title, to, preview, facts, timestamp }: Libr
       {preview && <p className="mt-3 line-clamp-3 text-xs text-text-muted">{preview}</p>}
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
-        {facts.map((fact) => (
+        {facts.map((fact, i) => (
           <span
-            key={fact}
+            key={i}
             className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
           >
             {fact}

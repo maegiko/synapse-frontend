@@ -4,7 +4,8 @@ import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
 import { StreakCard } from '../components/StreakCard'
-import { IconArrowRight, IconDeck, IconNote, IconQuiz, IconStar } from '../components/icons'
+import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
+import { DifficultyStars } from '../components/DifficultyStars'
 import dashboardHero from '../assets/dashboard_hero.png'
 import deckSplash from '../assets/deck_splash.png'
 import noteSplash from '../assets/note_splash.png'
@@ -84,20 +85,7 @@ function RecentQuizRow({
         </span>
         <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-muted tabular-nums">
           {plural(questionCount, 'question')}
-          {difficulty !== null && (
-            <span
-              className="flex items-center gap-0.5"
-              aria-label={`Difficulty ${difficulty} out of 5`}
-            >
-              {[1, 2, 3, 4, 5].map((level) => (
-                <IconStar
-                  key={level}
-                  className={`h-3 w-3 ${level <= difficulty ? 'text-text-muted/60' : 'text-border'}`}
-                  filled={level <= difficulty}
-                />
-              ))}
-            </span>
-          )}
+          {difficulty !== null && <DifficultyStars value={difficulty} />}
         </span>
       </Link>
     </li>
