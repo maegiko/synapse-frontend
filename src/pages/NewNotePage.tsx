@@ -28,7 +28,7 @@ const GENERATION_STEPS = [
 
 const PREPARE_TIPS = [
   'PDF, DOCX, TXT, and Markdown, up to 10 MB.',
-  'The file needs real text. A scan or a photo of a page has nothing to read.'
+  'The file needs real text.'
 ]
 
 const OUTPUT_TIPS = [
