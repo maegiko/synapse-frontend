@@ -202,26 +202,30 @@ export function LibraryPage() {
                 role="group"
                 aria-label="Filter by type"
               >
-                {KINDS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={kind === option.value}
-                    onClick={() => selectKind(option.value)}
-                    className={`inline-flex items-center gap-1.5 rounded-sm px-3.5 py-2 text-sm font-bold transition-colors duration-150 ${
-                      kind === option.value
-                        ? 'bg-surface text-accent-strong shadow-sm'
-                        : 'text-text-muted hover:text-text'
-                    }`}
-                  >
-                    {option.label}
-                    {counts[option.value] !== undefined && (
-                      <span className="text-xs text-text-muted tabular-nums">
-                        {counts[option.value]}
-                      </span>
-                    )}
-                  </button>
-                ))}
+                {KINDS.map((option) => {
+                  const active = kind === option.value
+                  const count = counts[option.value]
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => selectKind(option.value)}
+                      className={`inline-flex items-center justify-center gap-1.5 rounded-sm px-3.5 py-2 text-sm font-bold transition-colors duration-150 ${
+                        active
+                          ? 'bg-surface text-accent-strong shadow-sm'
+                          : 'text-text-muted hover:text-text'
+                      }`}
+                    >
+                      {option.label}
+                      {count !== undefined && (
+                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-solid tabular-nums">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
