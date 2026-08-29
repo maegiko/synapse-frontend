@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
 import { ActionCard } from '../components/ActionCard'
@@ -19,6 +20,36 @@ import { plural } from '../lib/plural'
 const RECENT_LIMIT = 3
 // Quizzes are terser rows, so one more fits without unbalancing the column.
 const RECENT_QUIZ_LIMIT = 4
+
+/**
+ * Hero heading: a fresh nudge to study each time the dashboard loads. Each one
+ * looks forward to the day, feels encouraging, and names the user.
+ * One is drawn at random per visit.
+ */
+const HERO_GREETINGS: ((name: string) => string)[] = [
+  (name) => `Ready to learn, ${name}?`,
+  (name) => `What are we learning today, ${name}?`,
+  (name) => `Let's make it stick, ${name}.`,
+  (name) => `Ready to get sharper, ${name}?`,
+  (name) => `Let's build some momentum, ${name}.`,
+  (name) => `Let's learn something today, ${name}.`,
+  (name) => `Ready to dive in, ${name}?`,
+  (name) => `Let's make some progress, ${name}.`,
+  (name) => `Time to learn, ${name}.`,
+  (name) => `Let's get into it, ${name}.`,
+  (name) => `Ready to lock it in, ${name}?`,
+  (name) => `Let's make today count, ${name}.`,
+  (name) => `Something new today, ${name}?`,
+  (name) => `Ready to get started, ${name}?`,
+  (name) => `Let's sharpen up, ${name}.`,
+  (name) => `Let's get learning, ${name}.`,
+  (name) => `Ready for a study session, ${name}?`,
+  (name) => `Let's put your brain to work, ${name}.`,
+];
+
+function drawGreeting(name: string): string {
+  return HERO_GREETINGS[Math.floor(Math.random() * HERO_GREETINGS.length)](name)
+}
 // One icon treatment for every Library item: small, standalone, accent, no tile.
 const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-solid'
 /** Row hairline is lighter than the section dividers; most of the separation is
@@ -100,6 +131,8 @@ export function DashboardPage() {
   const streak = useStreak()
 
   const firstName = user?.fullName.trim().split(' ')[0] ?? 'there'
+  // Drawn once per dashboard visit, so it does not reshuffle on every render.
+  const [greeting] = useState(() => drawGreeting(firstName))
 
   // Decks and quizzes are both generated from an existing note.
   const needsFirstNote = notes.isSuccess && notes.data.length === 0
@@ -138,7 +171,7 @@ export function DashboardPage() {
             className="pointer-events-none absolute top-1/2 -right-3 hidden h-[112%] w-auto -translate-y-1/2 drop-shadow-[0_18px_22px_rgba(15,5,30,0.45)] lg:block"
           />
           <div className="relative max-w-[54ch]">
-            <h1 className="text-2xl text-on-accent">Welcome back, {firstName}.</h1>
+            <h1 className="text-2xl text-on-accent">{greeting}</h1>
             <p className="mt-3 text-base text-accent-soft">{summary}</p>
             <Link to={hero.to} className={`${btnPrimaryMdInverted} mt-7`}>
               {hero.label}
