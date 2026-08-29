@@ -85,6 +85,26 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* Dashboard-only hierarchy: lighter content without changing shared components. */
+.dashboard-typography {
+  font-weight: 450;
+}
+.dashboard-typography :where(h1) {
+  font-weight: 600;
+}
+.dashboard-typography :where(h2, h3, .font-medium, .font-semibold, .font-bold) {
+  font-weight: 500;
+}
+.dashboard-typography :where(.text-sm.text-text-muted, .text-base.text-text-muted) {
+  font-weight: 450;
+}
+.dashboard-typography :where(.text-xs) {
+  font-weight: 400;
+}
+.dashboard-typography :where(button, a) {
+  font-weight: 500;
+}
+
 @layer base {
   a {
     color: inherit;

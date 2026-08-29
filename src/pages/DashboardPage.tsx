@@ -53,7 +53,7 @@ export function DashboardPage() {
     <>
       <AppHeader />
 
-      <section className={`${shell} pt-6`}>
+      <section className={`${shell} dashboard-typography pt-6`}>
         <div className="relative overflow-hidden rounded-lg border border-accent-strong bg-[radial-gradient(circle_at_72%_22%,rgba(216,205,255,0.34)_0%,rgba(216,205,255,0)_36%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-6 py-14 lg:px-12 lg:py-16">
           {/* The artwork carries transparent padding of its own (~21% vertically,
               ~7.5% on the right), so it is oversized and pulled right to make the
@@ -74,7 +74,7 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <main className={`${shell} pb-20`}>
+      <main className={`${shell} dashboard-typography pb-20`}>
         <StreakCard
           streak={streak.data}
           isLoading={streak.isPending}
