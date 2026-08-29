@@ -1,7 +1,24 @@
+import { useState } from 'react'
 import { btnGhostSm } from './ui'
 import type { StreakResponse } from '../api'
 import streakFlame from '../assets/streak_flame.png'
 import streakFlameMuted from '../assets/streak_flame_muted.png'
+
+const KEEP_STREAK_MESSAGE =
+  'Generate something or finish a deck or quiz to keep your streak going.'
+
+const CONSISTENCY_MESSAGES = [
+  'You showed up today—consistency is doing its work.',
+  'Another day of progress. Keep this rhythm going.',
+  'Small efforts add up. Today’s session counts.',
+  'You kept the promise to yourself today. Nicely done.',
+  'Consistency compounds, and you added to it today.',
+  'Today’s work keeps the momentum moving.',
+]
+
+function drawConsistencyMessage(): string {
+  return CONSISTENCY_MESSAGES[Math.floor(Math.random() * CONSISTENCY_MESSAGES.length)]
+}
 
 interface StreakCardProps {
   streak?: StreakResponse
@@ -12,6 +29,7 @@ interface StreakCardProps {
 
 /** Compact dashboard status for the user's study streak. */
 export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardProps) {
+  const [consistencyMessage] = useState(drawConsistencyMessage)
   const cardClass =
     'mt-6 rounded-md border border-border bg-surface px-4 py-3 shadow-sm sm:px-6 sm:py-4'
 
@@ -47,6 +65,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
   }
 
   const hasStreak = streak.currentStreak > 0
+  const message = streak.activeToday ? consistencyMessage : KEEP_STREAK_MESSAGE
 
   return (
     <section
@@ -86,9 +105,9 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
         </div>
         <p
           className="mt-0.5 truncate text-xs text-text-muted sm:mt-1"
-          title="Generate something or finish a deck or quiz to keep your streak going."
+          title={message}
         >
-          Generate something or finish a deck or quiz to keep your streak going.
+          {message}
         </p>
       </div>
 
