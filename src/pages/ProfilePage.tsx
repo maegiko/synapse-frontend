@@ -2,7 +2,12 @@ import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { api, type UpdateUserDetailsRequest, type UserDetails } from '../api'
+import {
+  api,
+  type ChangePasswordRequest,
+  type UpdateUserDetailsRequest,
+  type UserDetails,
+} from '../api'
 import { AppHeader } from '../components/AppHeader'
 import { Avatar } from '../components/Avatar'
 import { FormAlert } from '../components/FormAlert'
@@ -39,7 +44,13 @@ import {
   useStreak,
   useUserDetails,
 } from '../lib/queries'
-import { validateEmail, validateFullName } from '../lib/validation'
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  validateEmail,
+  validateFullName,
+  validatePassword,
+} from '../lib/validation'
 
 /** Placeholder that lets a single figure keep loading while its neighbours resolve. */
 function Bar() {
@@ -113,13 +124,21 @@ interface FieldErrors {
   email?: string
 }
 
+interface PasswordErrors {
+  currentPassword?: string
+  newPassword?: string
+}
+
+/** Which editor the profile card is showing. */
+type Panel = 'summary' | 'details' | 'password'
+
 /**
  * Account details plus a read-only view of how the study is going. Every number
  * here is derived from data the backend already exposes; there is no analytics
  * endpoint.
  */
 export function ProfilePage() {
-  const { user, setUserDetails } = useAuth()
+  const { user, setUserDetails, logout } = useAuth()
   const details = useUserDetails(user)
   const streak = useStreak()
   const notes = useNotes()
@@ -127,12 +146,17 @@ export function ProfilePage() {
   const quizzes = useQuizzes()
   const attempts = useAllQuizScores(quizzes.data?.map((quiz) => quiz.id))
 
-  const [editing, setEditing] = useState(false)
+  const [panel, setPanel] = useState<Panel>('summary')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
+
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({})
+  const [passwordFormError, setPasswordFormError] = useState('')
 
   const profile = details.data
 
@@ -143,13 +167,24 @@ export function ProfilePage() {
     setFieldErrors({})
     setFormError('')
     setSavedMessage('')
-    setEditing(true)
+    setPanel('details')
   }
 
-  function stopEditing() {
-    setEditing(false)
+  function startChangingPassword() {
+    setCurrentPassword('')
+    setNewPassword('')
+    setPasswordErrors({})
+    setPasswordFormError('')
+    setSavedMessage('')
+    setPanel('password')
+  }
+
+  function closePanel() {
+    setPanel('summary')
     setFieldErrors({})
     setFormError('')
+    setPasswordErrors({})
+    setPasswordFormError('')
   }
 
   const save = useMutation({
@@ -159,7 +194,7 @@ export function ProfilePage() {
       // email. Nothing else is refetched, since no other view shows these.
       queryClient.setQueryData(queryKeys.userDetails, updated)
       setUserDetails(updated)
-      setEditing(false)
+      setPanel('summary')
       setFieldErrors({})
       setFormError('')
       setSavedMessage('Your details have been saved.')
@@ -175,6 +210,26 @@ export function ProfilePage() {
     },
   })
 
+  const changePassword = useMutation({
+    mutationFn: (payload: ChangePasswordRequest) => api.auth.changePassword(payload),
+    onSuccess: () => {
+      // The backend has revoked every session for the account, so local auth is
+      // now stale. Clearing it lets the route guard send us to the login page.
+      void logout()
+    },
+    onError: (error) => {
+      // For this endpoint a 401 is a wrong current password, not an expired
+      // access token — the request helper already retried that case.
+      if (isStatus(error, 401)) {
+        setPasswordErrors({ currentPassword: 'That password is not correct.' })
+        setPasswordFormError('')
+        return
+      }
+      setPasswordErrors({})
+      setPasswordFormError(toFormMessage(error))
+    },
+  })
+
   // Compared against the saved values so an unchanged form cannot be submitted:
   // the API rejects a PATCH with no properties in it.
   const trimmedName = fullName.trim()
@@ -182,6 +237,10 @@ export function ProfilePage() {
   const nameChanged = Boolean(profile) && trimmedName !== profile?.fullName
   const emailChanged = Boolean(profile) && normalizedEmail !== profile?.email.toLowerCase()
   const hasChanges = nameChanged || emailChanged
+
+  // Like the details form's `hasChanges`: the submit stays disabled until there
+  // is something to send.
+  const passwordFilled = currentPassword.length > 0 && newPassword.length > 0
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -202,6 +261,21 @@ export function ProfilePage() {
     } as UpdateUserDetailsRequest
 
     save.mutate(payload)
+  }
+
+  function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (changePassword.isPending) return
+
+    const errors: PasswordErrors = {
+      currentPassword: currentPassword ? undefined : 'Enter your current password.',
+      newPassword: validatePassword(newPassword) ?? undefined,
+    }
+    setPasswordErrors(errors)
+    setPasswordFormError('')
+    if (Object.values(errors).some(Boolean)) return
+
+    changePassword.mutate({ currentPassword, newPassword })
   }
 
   const cardTotal = decks.data?.reduce((sum, deck) => sum + deck.flashcards.length, 0) ?? 0
@@ -250,7 +324,7 @@ export function ProfilePage() {
           </p>
         </div>
 
-        {savedMessage && !editing && (
+        {savedMessage && panel === 'summary' && (
           <p className={`${successAlert} mt-8`} role="status">
             <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
             <span>{savedMessage}</span>
@@ -293,7 +367,7 @@ export function ProfilePage() {
             </div>
           )}
 
-          {profile && !editing && (
+          {profile && panel === 'summary' && (
             <>
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-4 sm:gap-5">
@@ -303,9 +377,14 @@ export function ProfilePage() {
                     <p className="truncate text-sm text-text-muted">{profile.email}</p>
                   </div>
                 </div>
-                <button type="button" className={btnGhostSm} onClick={startEditing}>
-                  Edit profile
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button type="button" className={btnGhostSm} onClick={startEditing}>
+                    Edit profile
+                  </button>
+                  <button type="button" className={btnGhostSm} onClick={startChangingPassword}>
+                    Change password
+                  </button>
+                </div>
               </div>
 
               <dl className="mt-7 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-border pt-6 sm:mt-8 sm:grid-cols-4 sm:gap-0 sm:divide-x sm:divide-border">
@@ -337,7 +416,7 @@ export function ProfilePage() {
             </>
           )}
 
-          {profile && editing && (
+          {profile && panel === 'details' && (
             <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
               {formError && <FormAlert message={formError} />}
 
@@ -374,7 +453,7 @@ export function ProfilePage() {
                 <button
                   type="button"
                   className={btnGhostSm}
-                  onClick={stopEditing}
+                  onClick={closePanel}
                   disabled={save.isPending}
                 >
                   Cancel
@@ -386,6 +465,75 @@ export function ProfilePage() {
                 )}
               </div>
             </form>
+          )}
+
+          {profile && panel === 'password' && (
+            changePassword.isSuccess ? (
+              <div className="grid gap-2" role="status">
+                <h2 className="text-base font-medium">Password changed</h2>
+                <p className="text-sm text-text-muted">
+                  Signing you out. Log in again with your new password.
+                </p>
+              </div>
+            ) : (
+              <form className="grid gap-5" onSubmit={handlePasswordSubmit} noValidate>
+                <div>
+                  <h2 className="text-base font-medium">Change your password</h2>
+                  <p className="mt-1 text-sm text-text-muted">
+                    This signs you out on every device, so you will need to log in again with the
+                    new password.
+                  </p>
+                </div>
+
+                {passwordFormError && <FormAlert message={passwordFormError} />}
+
+                <TextField
+                  label="Current password"
+                  type="password"
+                  name="currentPassword"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  error={passwordErrors.currentPassword}
+                  disabled={changePassword.isPending}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                />
+
+                <TextField
+                  label="New password"
+                  type="password"
+                  name="newPassword"
+                  autoComplete="new-password"
+                  hint={`Between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters.`}
+                  value={newPassword}
+                  error={passwordErrors.newPassword}
+                  disabled={changePassword.isPending}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                />
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="submit"
+                    className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+                    disabled={changePassword.isPending || !passwordFilled}
+                  >
+                    {changePassword.isPending ? 'Saving…' : 'Change password'}
+                  </button>
+                  <button
+                    type="button"
+                    className={btnGhostSm}
+                    onClick={closePanel}
+                    disabled={changePassword.isPending}
+                  >
+                    Cancel
+                  </button>
+                  {!passwordFilled && !changePassword.isPending && (
+                    <span className="text-xs text-text-muted">
+                      Fill in both fields to continue.
+                    </span>
+                  )}
+                </div>
+              </form>
+            )
           )}
         </section>
 
