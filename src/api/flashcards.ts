@@ -7,6 +7,10 @@ import type {
   FlashcardGenerateResponse,
   FlashcardListResponse,
   PublicId,
+  ReviewDeckResponse,
+  ReviewQueueDeck,
+  ReviewQueueResponse,
+  ReviewRating,
 } from './types'
 
 /** Newest first, unpaginated, with every card of every deck included. */
@@ -65,12 +69,30 @@ export async function removeCard(deckId: PublicId, cardId: PublicId): Promise<vo
 }
 
 /**
- * Records that a study session was finished, which feeds the streak. Safe to
- * repeat: any number of qualifying sessions still counts as one streak day.
+ * The decks due today or earlier, oldest due date first. Metadata only: load a
+ * chosen deck's cards with `get`. A deck with no cards can appear here but
+ * cannot be reviewed.
  */
-export async function complete(deckId: PublicId): Promise<void> {
-  await apiRequest<void>(API_PATHS.flashcards.complete(deckId), {
+export async function reviewQueue(): Promise<ReviewQueueDeck[]> {
+  const { decks } = await apiRequest<ReviewQueueResponse>(API_PATHS.flashcards.reviewQueue, {
+    authenticated: true,
+  })
+  return decks ?? []
+}
+
+/**
+ * Records a finished study session and reschedules the deck from the rating.
+ * This is not repeatable: every call moves the due date again and adds to the
+ * lifetime review total, so send it once per completed run and never as a blind
+ * retry. It also feeds the streak. A deck with no cards answers 400.
+ */
+export async function review(
+  deckId: PublicId,
+  rating: ReviewRating,
+): Promise<ReviewDeckResponse> {
+  return apiRequest<ReviewDeckResponse>(API_PATHS.flashcards.review(deckId), {
     method: 'POST',
+    json: { rating },
     authenticated: true,
   })
 }

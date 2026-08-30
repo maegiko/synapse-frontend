@@ -8,6 +8,7 @@ export const queryKeys = {
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
   flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
+  reviewQueue: ['flashcard-decks', 'review-queue'] as const,
   quizzes: ['quizzes'] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
@@ -55,6 +56,14 @@ export function useFlashcardDeck(deckId: string | undefined) {
     queryFn: () => api.flashcards.get(deckId ?? ''),
     enabled: Boolean(deckId),
   })
+}
+
+/**
+ * The decks due for review, in the backend's order: oldest due date first, and
+ * that order is the recommendation, so it is never re-sorted here.
+ */
+export function useReviewQueue() {
+  return useQuery({ queryKey: queryKeys.reviewQueue, queryFn: api.flashcards.reviewQueue })
 }
 
 export function useQuizzes() {

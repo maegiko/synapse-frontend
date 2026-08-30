@@ -40,6 +40,12 @@ export interface RefreshResponse {
 export interface UserDetails {
   fullName: string
   email: string
+  /**
+   * Lifetime cards reviewed. `/api/user/details` always sends it, but the login
+   * and register responses do not, so state seeded from those lacks it until the
+   * profile is fetched. A deck review answers with the updated total.
+   */
+  totalFlashcardsReviewed?: number
 }
 
 export interface StreakResponse {
@@ -97,6 +103,35 @@ export interface FlashcardDeck {
 
 export interface FlashcardListResponse {
   flashcardDecks: FlashcardDeck[]
+}
+
+/** Ordered easiest-to-recall last; the backend owns what each one does to the schedule. */
+export type ReviewRating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
+
+/** The deck's new schedule, plus the user's updated lifetime review total. */
+export interface ReviewDeckResponse {
+  deckId: PublicId
+  rating: ReviewRating
+  intervalDays: number
+  nextReviewDate: LocalDateString
+  /** The cards the deck held at review time; the whole deck counts as one review. */
+  cardsReviewed: number
+  totalFlashcardsReviewed: number
+}
+
+/** Queue entries carry deck metadata only; the cards come from `flashcards.get`. */
+export interface ReviewQueueDeck {
+  deckId: PublicId
+  title: string
+  cardCount: number
+  nextReviewDate: LocalDateString
+  intervalDays: number
+  reviewCount: number
+  lastReviewedAt: LocalDateTimeString | null
+}
+
+export interface ReviewQueueResponse {
+  decks: ReviewQueueDeck[]
 }
 
 export interface AddFlashcardRequest {

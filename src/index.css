@@ -121,6 +121,35 @@ h3 {
   outline-offset: 2px;
 }
 
+/* Horizontal rails (e.g. the review queue) hide the native scrollbar and use
+   their own chevron controls instead. No Tailwind utility covers all engines. */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* Review-queue side nav offset. These controls only render from ~1200px up (see
+   ReviewQueue.tsx), where the centred shell has opened real side margin. This
+   ramp starts them ~2.4rem outboard of the rail — already clear of the card —
+   and slides them further into the margin as the viewport widens, up to 3.5rem.
+   Pure CSS: the browser re-evaluates on resize; `clamp()` beats a stack of
+   arbitrary breakpoints. */
+.rail-nav-left {
+  left: clamp(-3.5rem, calc(33px - 6vw), -2.375rem);
+}
+.rail-nav-right {
+  right: clamp(-3.5rem, calc(33px - 6vw), -2.375rem);
+}
+
+/* The review queue's "Next up" micro-label opts out of the dashboard's
+   flattened `.text-xs` weight so it reads as a label, not body text. */
+.rail-next-label {
+  font-weight: 700;
+}
+
 /* Flashcard flip — perspective/backface-visibility have no Tailwind utility class. */
 .flashcard {
   perspective: 1200px;

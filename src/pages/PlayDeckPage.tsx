@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
@@ -14,11 +15,13 @@ import {
   surfaceCard,
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import { useFlashcardDeck } from '../lib/queries'
+import { queryKeys, useFlashcardDeck } from '../lib/queries'
+import { queryClient } from '../lib/queryClient'
 import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
-import type { FlashcardDeck } from '../api'
+import type { FlashcardDeck, ReviewDeckResponse, ReviewRating, UserDetails } from '../api'
 
 /** One is drawn at the end of every run, so finishing twice reads differently. */
 const CLOSING_NOTES = [
@@ -34,9 +37,26 @@ function drawClosingNote(): string {
   return CLOSING_NOTES[Math.floor(Math.random() * CLOSING_NOTES.length)]
 }
 
+/**
+ * The backend needs a rating to reschedule the deck, so a finished run ends by
+ * asking for one. The wording describes the run that just happened; what each
+ * answer does to the schedule is the backend's arithmetic, not ours to predict.
+ */
+const RATINGS: { value: ReviewRating; label: string; hint: string }[] = [
+  { value: 'AGAIN', label: 'Again', hint: 'Hardly any of it stuck' },
+  { value: 'HARD', label: 'Hard', hint: 'I had to work for the answers' },
+  { value: 'GOOD', label: 'Good', hint: 'I recalled most of them' },
+  { value: 'EASY', label: 'Easy', hint: 'They came straight back to me' },
+]
+
+type Phase = 'playing' | 'rating' | 'summary'
+
 const LEAVE_TITLE = 'Leave this deck?'
 const LEAVE_BODY =
   'The deck is still in progress. Your place in this session will be lost and the session will not count toward your streak.'
+/** The cards are done, but an unrated run is still an unrecorded one. */
+const LEAVE_UNRATED_BODY =
+  'This session has not been saved yet. Leaving without rating it means it will not count toward your streak, and the deck keeps its current review date.'
 
 function PlaySkeleton() {
   return (
@@ -57,9 +77,11 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const [seed, setSeed] = useState(newSeed)
   const [index, setIndex] = useState(0)
   const [isRevealed, setIsRevealed] = useState(false)
-  const [isConfirmingFinish, setIsConfirmingFinish] = useState(false)
-  const [isFinished, setIsFinished] = useState(false)
+  const [phase, setPhase] = useState<Phase>('playing')
   const [closingNote, setClosingNote] = useState(drawClosingNote)
+  /** The recorded review for this visit, kept so a replay does not send another. */
+  const [reviewResult, setReviewResult] = useState<ReviewDeckResponse | null>(null)
+  const [isRepeatRun, setIsRepeatRun] = useState(false)
 
   /** Where a confirmed exit goes. Null means no exit is pending. */
   const [pendingExit, setPendingExit] = useState<string | null>(null)
@@ -77,16 +99,27 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const isLast = index >= order.length - 1
   const deckHref = `/flashcards/${deck.deckId}`
 
-  // The last card asks before ending the run, rather than ending it underneath
-  // someone who only meant to keep paging.
+  // The last card ends the run by asking how it went, rather than ending it
+  // underneath someone who only meant to keep paging: the rating screen still
+  // offers a way back into the deck.
   const goNext = useCallback(() => {
     if (isLast) {
-      setIsConfirmingFinish(true)
+      setClosingNote(drawClosingNote())
+      // A replay within the same visit is not sent again. The review endpoint
+      // is not repeatable: a second call would push the due date out again and
+      // count every card a second time.
+      if (reviewResult) {
+        isGuarding.current = false
+        setIsRepeatRun(true)
+        setPhase('summary')
+        return
+      }
+      setPhase('rating')
       return
     }
     setIndex((current) => current + 1)
     setIsRevealed(false)
-  }, [isLast])
+  }, [isLast, reviewResult])
 
   // Stepping back re-hides the answer, so a revisited card is asked again
   // rather than handed straight over.
@@ -96,23 +129,36 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setIsRevealed(false)
   }, [isFirst])
 
-  function finishSession() {
-    // The run is over, so nothing is left to lose and the guard comes off.
-    isGuarding.current = false
-    setClosingNote(drawClosingNote())
-    setIsConfirmingFinish(false)
-    setIsFinished(true)
-    // Records the session for the streak. Only reaching the end counts, and the
-    // result is not shown anywhere here, so a failure must not block the screen.
-    void recordQualifyingAction(() => api.flashcards.complete(deck.deckId)).catch(() => {})
-  }
+  // Reaching the end and rating the run is what records it, both for the deck's
+  // schedule and for the streak. It is a one-shot call, so a failure holds the
+  // rating screen open to be retried rather than being swallowed.
+  const review = useMutation({
+    mutationFn: (rating: ReviewRating) =>
+      recordQualifyingAction(() => api.flashcards.review(deck.deckId, rating)),
+    onSuccess: (result) => {
+      // The run is recorded, so nothing is left to lose and the guard comes off.
+      isGuarding.current = false
+      setReviewResult(result)
+      // The deck has left the review queue until its new due date.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
+      // The response carries the user's new lifetime total, so the cached
+      // profile is corrected from it instead of being fetched again.
+      queryClient.setQueryData<UserDetails>(
+        queryKeys.userDetails,
+        (current) =>
+          current && { ...current, totalFlashcardsReviewed: result.totalFlashcardsReviewed },
+      )
+      setPhase('summary')
+    },
+  })
 
   function restart() {
-    isGuarding.current = true
+    // Only an unrecorded run has anything left to lose.
+    isGuarding.current = reviewResult === null
     setSeed(newSeed())
     setIndex(0)
     setIsRevealed(false)
-    setIsFinished(false)
+    setPhase('playing')
   }
 
   // Browser Back. A sentinel entry is pushed so the first Back lands here
@@ -156,8 +202,8 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   // one-handed. Keys typed into a control belong to that control, so those are
   // left alone.
   useEffect(() => {
-    // While the dialog is open it owns the keyboard.
-    if (isFinished || isConfirmingFinish) return
+    // Only the cards themselves answer to the keyboard.
+    if (phase !== 'playing') return
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null
       if (target?.closest('button, a, input, textarea, select')) return
@@ -174,9 +220,86 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [goBack, goNext, isConfirmingFinish, isFinished])
+  }, [goBack, goNext, phase])
 
-  if (isFinished) {
+  // The rating screen still guards the exit, so this dialog belongs to both the
+  // unfinished screens.
+  const leaveDialog = pendingExit !== null && (
+    <ConfirmDialog
+      title={LEAVE_TITLE}
+      body={phase === 'rating' ? LEAVE_UNRATED_BODY : LEAVE_BODY}
+      confirmLabel="Leave deck"
+      cancelLabel="Keep going"
+      tone="danger"
+      onConfirm={confirmExit}
+      onCancel={() => setPendingExit(null)}
+    />
+  )
+
+  if (phase === 'rating') {
+    return (
+      <>
+        <AppHeader onLeave={() => guardLeaving('/dashboard')} />
+        <main className={`${shell} pt-10 pb-20`}>
+          <section className={`${surfaceCard} mx-auto max-w-160 p-8 text-center sm:p-10`}>
+            <h1 className="text-3xl">How did that go?</h1>
+            <p className="mx-auto mt-3 max-w-[46ch] text-base text-text-muted">
+              You reached the end of all {plural(order.length, 'card')}. Your answer records the
+              session and decides when “{deck.title}” comes back for review.
+            </p>
+
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              {RATINGS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className="flex cursor-pointer flex-col items-center gap-1 rounded-sm border border-border bg-surface-alt px-5 py-4 transition-colors duration-150 ease-out hover:border-accent-solid hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+                  onClick={() => review.mutate(option.value)}
+                  disabled={review.isPending}
+                >
+                  <span className="text-base font-bold text-text">{option.label}</span>
+                  <span className="text-sm text-text-muted">{option.hint}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-4 h-5 text-sm font-bold text-text-muted" aria-live="polite">
+              {review.isPending ? 'Saving your session…' : ''}
+            </p>
+
+            {review.isError && (
+              <p
+                className="mx-auto max-w-[46ch] text-sm font-bold text-error-solid"
+                role="alert"
+              >
+                Your session could not be saved. {toFormMessage(review.error)}
+              </p>
+            )}
+
+            <div className="mt-6">
+              <button
+                type="button"
+                className={btnGhostLg}
+                onClick={() => {
+                  // A failed attempt is not carried back onto the next screen.
+                  review.reset()
+                  setPhase('playing')
+                }}
+                disabled={review.isPending}
+              >
+                <IconArrowLeft />
+                Keep reviewing
+              </button>
+            </div>
+          </section>
+        </main>
+
+        {leaveDialog}
+      </>
+    )
+  }
+
+  if (phase === 'summary') {
     return (
       <>
         <AppHeader onLeave={() => guardLeaving('/dashboard')} />
@@ -193,9 +316,25 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               You worked through all {plural(order.length, 'card')} in “{deck.title}”.
               {isShuffled ? ' Replay to deal them in a new order.' : ''}
             </p>
+
+            {reviewResult && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <span className={countPill}>You rated it {reviewResult.rating.toLowerCase()}</span>
+                <span className={countPill}>
+                  Back on {formatCalendarDate(reviewResult.nextReviewDate)}
+                </span>
+              </div>
+            )}
+
             <p className="mx-auto mt-6 max-w-[44ch] rounded-md bg-accent-soft px-5 py-4 text-sm font-bold text-accent-strong">
               {closingNote}
             </p>
+
+            {isRepeatRun && (
+              <p className="mx-auto mt-4 max-w-[46ch] text-sm text-text-muted">
+                Extra runs are not scheduled again, so this one kept the review you already saved.
+              </p>
+            )}
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <button type="button" className={btnPrimaryLg} onClick={restart}>
                 Play again
@@ -301,31 +440,10 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
           <p className="mt-4 text-center text-xs text-text-muted">
             Space flips the card, ← and → step between cards.
           </p>
-
-          {isConfirmingFinish && (
-            <ConfirmDialog
-              title="That was the last card"
-              body={`You have reached the end of all ${plural(order.length, 'card')}. Finish the session, or go back and keep reviewing.`}
-              confirmLabel="Finish session"
-              cancelLabel="Keep reviewing"
-              onConfirm={finishSession}
-              onCancel={() => setIsConfirmingFinish(false)}
-            />
-          )}
         </div>
       </main>
 
-      {pendingExit !== null && (
-        <ConfirmDialog
-          title={LEAVE_TITLE}
-          body={LEAVE_BODY}
-          confirmLabel="Leave deck"
-          cancelLabel="Keep going"
-          tone="danger"
-          onConfirm={confirmExit}
-          onCancel={() => setPendingExit(null)}
-        />
-      )}
+      {leaveDialog}
     </>
   )
 }

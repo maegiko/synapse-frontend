@@ -4,6 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
+import { ReviewQueue } from '../components/ReviewQueue'
 import { StreakCard } from '../components/StreakCard'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { DifficultyStars } from '../components/DifficultyStars'
@@ -13,7 +14,7 @@ import noteSplash from '../assets/note_splash.webp'
 import quizSplash from '../assets/quiz_splash.webp'
 import { btnPrimaryMdInverted, cardLink, shell } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
-import { useFlashcardDecks, useNotes, useQuizzes, useStreak } from '../lib/queries'
+import { useFlashcardDecks, useNotes, useQuizzes, useReviewQueue, useStreak } from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
@@ -129,6 +130,7 @@ export function DashboardPage() {
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
   const streak = useStreak()
+  const reviewQueue = useReviewQueue()
 
   const firstName = user?.fullName.trim().split(' ')[0] ?? 'there'
   // Drawn once per dashboard visit, so it does not reshuffle on every render.
@@ -190,6 +192,16 @@ export function DashboardPage() {
           isLoading={streak.isPending}
           isError={streak.isError}
           onRetry={() => void streak.refetch()}
+        />
+
+        <ReviewQueue
+          decks={reviewQueue.data}
+          isLoading={reviewQueue.isPending}
+          isError={reviewQueue.isError}
+          onRetry={() => void reviewQueue.refetch()}
+          // Unknown while the deck list loads, and the queue itself is the
+          // stronger signal anyway: assume there are decks until told otherwise.
+          hasDecks={decks.data ? decks.data.length > 0 : true}
         />
 
         <h2 className="mt-10 mb-5 text-xl">Start something new</h2>

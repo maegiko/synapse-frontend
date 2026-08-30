@@ -31,7 +31,9 @@ export const API_PATHS = {
     list: '/api/flashcards/list',
     generate: '/api/flashcards/generate',
     detail: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}`,
-    complete: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}/complete`,
+    /** The decks due today. A fixed path, so it never collides with a deck ID. */
+    reviewQueue: '/api/flashcards/review',
+    review: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}/review`,
     card: (deckId: string, cardId: string) =>
       `/api/flashcards/${encodeURIComponent(deckId)}/cards/${encodeURIComponent(cardId)}`,
   },

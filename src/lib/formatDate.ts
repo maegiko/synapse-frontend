@@ -67,3 +67,17 @@ export function formatCalendarDate(value: string | null | undefined): string {
     timeZone: 'UTC',
   })
 }
+
+/**
+ * Whole days from today to a backend calendar date (`YYYY-MM-DD`), counted in
+ * UTC like the dates themselves: `0` is today and `-2` is two days ago. Null
+ * when there is no usable date.
+ */
+export function calendarDaysFromToday(value: string | null | undefined): number | null {
+  if (!value) return null
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return null
+  const now = new Date()
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  return Math.round((Date.UTC(year, month - 1, day) - today) / 86_400_000)
+}
