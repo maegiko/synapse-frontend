@@ -6,6 +6,8 @@ import { ScrollToTop } from './components/ScrollToTop'
 import { StreakCelebrationProvider } from './components/StreakCelebration'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
+import { GroupDetailPage } from './pages/GroupDetailPage'
+import { GroupsPage } from './pages/GroupsPage'
 import { LandingPage } from './pages/LandingPage'
 import { LibraryPage } from './pages/LibraryPage'
 import { LoginPage } from './pages/LoginPage'
@@ -146,6 +148,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LibraryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups"
+              element={
+                <ProtectedRoute>
+                  <GroupsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/groups/:groupId"
+              element={
+                <ProtectedRoute>
+                  <GroupDetailPage />
                 </ProtectedRoute>
               }
             />
