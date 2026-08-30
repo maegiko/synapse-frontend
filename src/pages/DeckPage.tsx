@@ -6,6 +6,7 @@ import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { FormAlert } from '../components/FormAlert'
+import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import {
   IconArrowRight,
   IconPlay,
@@ -239,6 +240,15 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       <h1 className="text-3xl">{deck.title}</h1>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={countPill}>{plural(cards.length, 'card')}</span>
+      </div>
+
+      <div className="mt-3">
+        <GroupMembershipControl
+          kind="decks"
+          resourceId={deck.deckId}
+          resourceTitle={deck.title}
+          groupId={deck.groupId}
+        />
       </div>
 
       {/* Playback mode and Play deck on the left; card management pushed to the

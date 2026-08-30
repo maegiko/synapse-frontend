@@ -10,6 +10,7 @@ import { PlaybackModeControl } from '../components/PlaybackModeControl'
 import { DifficultyStars } from '../components/DifficultyStars'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
+import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import {
   IconArrowRight,
   IconPlay,
@@ -379,6 +380,15 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
           )}
         </span>
         <span className={countPill}>Created {formatRelative(quiz.createdAt)}</span>
+      </div>
+
+      <div className="mt-3">
+        <GroupMembershipControl
+          kind="quizzes"
+          resourceId={quiz.id}
+          resourceTitle={quiz.title}
+          groupId={quiz.groupId}
+        />
       </div>
 
       {/* Playback mode and Play quiz on the left; quiz management pushed to the

@@ -7,6 +7,7 @@ import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
+import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
   IconArrowRight,
@@ -201,6 +202,15 @@ function NoteContent({ note }: { note: NoteSummary }) {
         <span className={countPill}>{plural(note.keypoints.length, 'key point')}</span>
         <span className={countPill}>{plural(note.concepts.length, 'concept')}</span>
         <span className={countPill}>{plural(note.importantTerms.length, 'term')}</span>
+      </div>
+
+      <div className="mt-3">
+        <GroupMembershipControl
+          kind="notes"
+          resourceId={note.id}
+          resourceTitle={note.title}
+          groupId={note.groupId}
+        />
       </div>
 
       {/* Turn this note into study material on the left; remove it on the right. */}
