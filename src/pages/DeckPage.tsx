@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
 import { FormAlert } from '../components/FormAlert'
 import {
-  IconArrowLeft,
   IconArrowRight,
   IconPlay,
   IconPlus,
@@ -28,6 +29,7 @@ import {
   surfaceCard,
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK } from '../lib/backTrail'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck, queryKeys } from '../lib/queries'
 import { PlaybackModeControl } from '../components/PlaybackModeControl'
@@ -248,13 +250,13 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             onChange={(mode) => setIsShuffled(mode === 'shuffle')}
           />
           {cards.length > 0 ? (
-            <Link
+            <AppLink
               to={`/flashcards/${deck.deckId}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
               className={btnPrimarySm}
             >
               <IconPlay />
               Play deck
-            </Link>
+            </AppLink>
           ) : (
             <button
               type="button"
@@ -466,10 +468,7 @@ export function DeckPage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <div className="mt-5">
           {deck.isPending && <DeckSkeleton />}
@@ -490,10 +489,10 @@ export function DeckPage() {
                     Try again
                   </button>
                 )}
-                <Link to="/flashcards/new" className={cardLink}>
+                <AppLink to="/flashcards/new" className={cardLink}>
                   Generate a deck
                   <IconArrowRight />
-                </Link>
+                </AppLink>
               </div>
             </div>
           )}

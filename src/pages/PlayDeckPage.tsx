@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { BackLink } from '../components/BackLink'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
@@ -19,6 +20,8 @@ import { formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryKeys, useFlashcardDeck } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
+import { DASHBOARD_BACK, useBackLink } from '../lib/backTrail'
+import type { BackTarget } from '../lib/backTrail'
 import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
 import type { FlashcardDeck, ReviewDeckResponse, ReviewRating, UserDetails } from '../api'
@@ -50,6 +53,9 @@ const RATINGS: { value: ReviewRating; label: string; hint: string }[] = [
 ]
 
 type Phase = 'playing' | 'rating' | 'summary'
+
+/** A held-up exit: where it was headed, and the trail state that goes with it. */
+type PendingExit = { to: string; state?: Record<string, BackTarget[]> }
 
 const LEAVE_TITLE = 'Leave this deck?'
 const LEAVE_BODY =
@@ -84,7 +90,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const [isRepeatRun, setIsRepeatRun] = useState(false)
 
   /** Where a confirmed exit goes. Null means no exit is pending. */
-  const [pendingExit, setPendingExit] = useState<string | null>(null)
+  const [pendingExit, setPendingExit] = useState<PendingExit | null>(null)
   // Read by the popstate listener, which must not close over stale state.
   const isGuarding = useRef(true)
 
@@ -98,6 +104,12 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const isFirst = index === 0
   const isLast = index >= order.length - 1
   const deckHref = `/flashcards/${deck.deckId}`
+  /** The deck this run belongs to, for anyone who opened the run directly. */
+  const deckBack = useMemo(() => ({ to: deckHref, label: 'deck overview' }), [deckHref])
+  // Every way out of a guarded run — the back link, the browser's Back button,
+  // the exit dialog — has to agree on one destination, so they all read the
+  // same resolved back link.
+  const back = useBackLink(deckBack)
 
   // The last card ends the run by asking how it went, rather than ending it
   // underneath someone who only meant to keep paging: the rating screen still
@@ -161,18 +173,24 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setPhase('playing')
   }
 
-  // Browser Back. A sentinel entry is pushed so the first Back lands here
-  // instead of leaving; it is put straight back and the dialog asks instead.
+  // Browser Back. One sentinel entry is pushed for the run, so the first Back
+  // lands here instead of leaving. Pushing it is a mount-only job; the listener
+  // is separate because it has to see the current back target.
   useEffect(() => {
     window.history.pushState({ deckGuard: true }, '')
+  }, [])
+
+  useEffect(() => {
     function onPopState() {
       if (!isGuarding.current) return
+      // The sentinel that was just consumed is put straight back, and the
+      // dialog asks rather than letting the run end silently.
       window.history.pushState({ deckGuard: true }, '')
-      setPendingExit(deckHref)
+      setPendingExit(back)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [deckHref])
+  }, [back])
 
   // Reloading or closing the tab. The browser supplies its own wording here.
   useEffect(() => {
@@ -185,17 +203,17 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   }, [])
 
   /** Returns false to hold the visitor here until they confirm. */
-  const guardLeaving = useCallback((destination: string) => {
+  const guardLeaving = useCallback((to: string, state?: PendingExit['state']) => {
     if (!isGuarding.current) return true
-    setPendingExit(destination)
+    setPendingExit({ to, state })
     return false
   }, [])
 
   function confirmExit() {
     isGuarding.current = false
-    const destination = pendingExit ?? deckHref
+    const destination = pendingExit ?? back
     setPendingExit(null)
-    navigate(destination, { replace: true })
+    navigate(destination.to, { replace: true, state: destination.state })
   }
 
   // Space flips and the arrows step through the deck, so a run can be played
@@ -339,9 +357,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               <button type="button" className={btnPrimaryLg} onClick={restart}>
                 Play again
               </button>
-              <Link to={deckHref} className={btnGhostLg}>
-                Back to deck overview
-              </Link>
+              <BackLink fallback={deckBack} className={btnGhostLg} showIcon={false} />
             </div>
           </section>
         </main>
@@ -361,16 +377,11 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               Card {index + 1} of {order.length}
             </p>
             {isShuffled && <span className={countPill}>Shuffled</span>}
-            <Link
-              to={deckHref}
+            <BackLink
+              fallback={deckBack}
               className={`${cardLink} ml-auto`}
-              onClick={(event) => {
-                if (!guardLeaving(deckHref)) event.preventDefault()
-              }}
-            >
-              <IconArrowLeft />
-              Back to deck overview
-            </Link>
+              onLeave={guardLeaving}
+            />
           </div>
 
           <div
@@ -485,10 +496,7 @@ export function PlayDeckPage() {
                   Try again
                 </button>
               )}
-              <Link to="/dashboard" className={cardLink}>
-                <IconArrowLeft />
-                Back to dashboard
-              </Link>
+              <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
             </div>
           </div>
         )}
@@ -499,10 +507,10 @@ export function PlayDeckPage() {
             <p className="mt-3 text-base text-text-muted">
               “{deck.data.title}” has no cards. Add one and it will be waiting here.
             </p>
-            <Link to={`/flashcards/${deck.data.deckId}`} className={`${cardLink} mt-6`}>
-              <IconArrowLeft />
-              Back to deck overview
-            </Link>
+            <BackLink
+              fallback={{ to: `/flashcards/${deck.data.deckId}`, label: 'deck overview' }}
+              className={`${cardLink} mt-6`}
+            />
           </div>
         )}
       </main>
