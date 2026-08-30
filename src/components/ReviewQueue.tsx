@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { AppLink } from './AppLink'
 import { IconArrowLeft, IconArrowRight, IconCheck, IconDeck } from './icons'
 import { btnGhostSm, btnPrimarySm, cardLink } from './ui'
 import { calendarDaysFromToday, formatCalendarDate } from '../lib/formatDate'
@@ -220,14 +220,14 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
           >
             {timing}
           </span>
-          <Link
+          <AppLink
             to={to}
             aria-label={`${action}: ${deck.title}`}
             className={`${btnPrimarySm} rail-review-btn shrink-0 gap-1.5 px-3 py-1.5 text-xs`}
           >
             {action}
             <IconArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          </AppLink>
         </div>
       </div>
     </li>
@@ -313,10 +313,10 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
         <p className="whitespace-nowrap text-sm text-text-muted tabular-nums">
           {plural(due.length, 'deck')} due
         </p>
-        <Link to="/library?type=decks" className={`${cardLink} ml-auto shrink-0`}>
+        <AppLink to="/library?type=decks" className={`${cardLink} ml-auto shrink-0`}>
           All decks
           <IconArrowRight />
-        </Link>
+        </AppLink>
       </div>
 
       {/* The wrapper is the normal dashboard content width; the rail fills it,
