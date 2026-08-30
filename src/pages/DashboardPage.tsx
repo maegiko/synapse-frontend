@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
 import { ActionCard } from '../components/ActionCard'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
@@ -73,7 +73,7 @@ function RecentNoteRow({
 }) {
   return (
     <li className={FLAT_ROW}>
-      <Link to={to} className={FLAT_ROW_LINK}>
+      <AppLink to={to} className={FLAT_ROW_LINK}>
         <span className="flex min-w-0 items-center gap-3">
           <IconNote className={ROW_ICON} />
           <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
@@ -84,7 +84,7 @@ function RecentNoteRow({
           <span className="mt-1 line-clamp-2 text-xs text-text-muted">{description}</span>
         )}
         <span className="mt-1.5 block text-xs text-text-muted tabular-nums">{meta}</span>
-      </Link>
+      </AppLink>
     </li>
   )
 }
@@ -105,7 +105,7 @@ function RecentQuizRow({
 }) {
   return (
     <li className={FLAT_ROW}>
-      <Link to={to} className={FLAT_ROW_LINK}>
+      <AppLink to={to} className={FLAT_ROW_LINK}>
         <span className="flex min-w-0 items-center gap-3">
           <IconQuiz className={ROW_ICON} />
           <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
@@ -119,7 +119,7 @@ function RecentQuizRow({
           {plural(questionCount, 'question')}
           {difficulty !== null && <DifficultyStars value={difficulty} />}
         </span>
-      </Link>
+      </AppLink>
     </li>
   )
 }
@@ -178,10 +178,10 @@ export function DashboardPage() {
           <div className="relative max-w-[54ch]">
             <h1 className="text-2xl text-on-accent">{greeting}</h1>
             <p className="mt-3 text-base text-accent-soft">{summary}</p>
-            <Link to={hero.to} className={`${btnPrimaryMdInverted} mt-7`}>
+            <AppLink to={hero.to} className={`${btnPrimaryMdInverted} mt-7`}>
               {hero.label}
               <IconArrowRight />
-            </Link>
+            </AppLink>
           </div>
         </div>
       </section>
@@ -261,10 +261,10 @@ export function DashboardPage() {
 
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
           <h2 className="text-xl">Your library</h2>
-          <Link to="/library" className={cardLink}>
+          <AppLink to="/library" className={cardLink}>
             Browse library
             <IconArrowRight />
-          </Link>
+          </AppLink>
         </div>
 
         {/* One Library surface holding three sections: the deck strip, then
