@@ -162,12 +162,13 @@ function dueLabel(nextReviewDate: string): string {
  * first card is the next recommended review and carries a faint accent wash,
  * its position named, and a due-now cue.
  *
- * Hierarchy, top to bottom:
- *   - optional "Next up" micro-label
- *   - title row: tinted icon tile + deck title, with the card count as
- *     secondary metadata directly beneath the title
- *   - action row pinned to the bottom: review timing on the left (the fact that
- *     matters for a spaced-repetition queue), the Review control on the right
+ * Two regions, so the review status and its action read as one unit rather than
+ * as two things floating at the bottom of an open card:
+ *   - body: optional "Next up" micro-label, then the title row — tinted icon
+ *     tile + deck title, with the card count as secondary metadata directly
+ *     beneath the title
+ *   - footer: a divider and a faint tint enclose the review timing (the fact
+ *     that matters for a spaced-repetition queue) and the Review control
  */
 function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean }) {
   // An empty deck can sit in the queue but the review endpoint rejects it, so
@@ -180,39 +181,49 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
 
   return (
     <li className={RAIL_ITEM}>
+      {/* `overflow-hidden` so the footer tint is clipped to the card's own
+          corners. */}
       <div
-        className={`flex h-full flex-col rounded-md border p-4 ${
+        className={`flex h-full flex-col overflow-hidden rounded-md border ${
           isNext ? 'border-accent-solid/40 bg-accent-soft/40' : 'border-border bg-surface'
         }`}
       >
-        {/* The label line is always present so every card is the same height and
-            every title row aligns across the rail; it only carries text on the
-            next-up card. */}
-        <p
-          className="rail-next-label mb-1.5 text-xs text-accent-strong"
-          aria-hidden={isNext ? undefined : true}
-        >
-          {isNext ? 'Next up' : ' '}
-        </p>
-
-        <div className="flex min-w-0 items-start gap-2.5">
-          <span
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong"
-            aria-hidden="true"
+        <div className="flex-1 p-4">
+          {/* The label line is always present so every card is the same height
+              and every title row aligns across the rail; it only carries text
+              on the next-up card. */}
+          <p
+            className="rail-next-label mb-1.5 text-xs text-accent-strong"
+            aria-hidden={isNext ? undefined : true}
           >
-            <IconDeck className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="recents-title truncate text-sm text-text" title={deck.title}>
-              {deck.title}
-            </p>
-            <p className="mt-0.5 text-xs text-text-muted tabular-nums">
-              {plural(deck.cardCount, 'card')}
-            </p>
+            {isNext ? 'Next up' : ' '}
+          </p>
+
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong"
+              aria-hidden="true"
+            >
+              <IconDeck className="h-4.5 w-4.5" />
+            </span>
+            <div className="min-w-0">
+              <p className="recents-title truncate text-base text-text" title={deck.title}>
+                {deck.title}
+              </p>
+              <p className="mt-0.5 text-xs text-text-muted tabular-nums">
+                {plural(deck.cardCount, 'card')}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+        {/* The footer encloses the two review facts: a divider and a faint tint
+            group the timing with the control that acts on it. */}
+        <div
+          className={`flex items-center justify-between gap-2 border-t px-4 py-2.5 ${
+            isNext ? 'border-accent-solid/20 bg-accent-soft/70' : 'border-border bg-surface-alt/50'
+          }`}
+        >
           <span
             className={`min-w-0 truncate text-xs tabular-nums ${
               isNext && isDueNow ? 'rail-due-now text-accent-strong' : 'text-text-muted'
