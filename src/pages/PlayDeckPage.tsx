@@ -45,11 +45,44 @@ function drawClosingNote(): string {
  * asking for one. The wording describes the run that just happened; what each
  * answer does to the schedule is the backend's arithmetic, not ours to predict.
  */
-const RATINGS: { value: ReviewRating; label: string; hint: string }[] = [
-  { value: 'AGAIN', label: 'Again', hint: 'Hardly any of it stuck' },
-  { value: 'HARD', label: 'Hard', hint: 'I had to work for the answers' },
-  { value: 'GOOD', label: 'Good', hint: 'I recalled most of them' },
-  { value: 'EASY', label: 'Easy', hint: 'They came straight back to me' },
+const RATINGS: {
+  value: ReviewRating
+  label: string
+  hint: string
+  tone: string
+  labelTone: string
+}[] = [
+  {
+    value: 'AGAIN',
+    label: 'Again',
+    hint: 'Hardly any of it stuck',
+    tone: 'border-error-solid/25 bg-error-soft/60 hover:border-error-solid/60 hover:bg-error-soft',
+    labelTone: 'text-error-solid',
+  },
+  {
+    value: 'HARD',
+    label: 'Hard',
+    hint: 'I had to work for the answers',
+    tone:
+      'border-warning-solid/25 bg-warning-soft/60 hover:border-warning-solid/60 hover:bg-warning-soft',
+    labelTone: 'text-warning-solid',
+  },
+  {
+    value: 'GOOD',
+    label: 'Good',
+    hint: 'I recalled most of them',
+    tone:
+      'border-accent-solid/25 bg-accent-soft/60 hover:border-accent-solid/60 hover:bg-accent-soft',
+    labelTone: 'text-accent-strong',
+  },
+  {
+    value: 'EASY',
+    label: 'Easy',
+    hint: 'They came straight back to me',
+    tone:
+      'border-success-solid/25 bg-success-soft/60 hover:border-success-solid/60 hover:bg-success-soft',
+    labelTone: 'text-success-solid',
+  },
 ]
 
 type Phase = 'playing' | 'rating' | 'summary'
@@ -271,11 +304,11 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
                 <button
                   key={option.value}
                   type="button"
-                  className="flex cursor-pointer flex-col items-center gap-1 rounded-sm border border-border bg-surface-alt px-5 py-4 transition-colors duration-150 ease-out hover:border-accent-solid hover:bg-accent-soft disabled:cursor-not-allowed disabled:opacity-55"
+                  className={`flex cursor-pointer flex-col items-center gap-1 rounded-sm border px-5 py-4 transition-colors duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-55 ${option.tone}`}
                   onClick={() => review.mutate(option.value)}
                   disabled={review.isPending}
                 >
-                  <span className="text-base font-bold text-text">{option.label}</span>
+                  <span className={`text-base font-bold ${option.labelTone}`}>{option.label}</span>
                   <span className="text-sm text-text-muted">{option.hint}</span>
                 </button>
               ))}
