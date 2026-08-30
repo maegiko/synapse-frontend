@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { AppLink } from './AppLink'
 import { IconArrowRight } from './icons'
 import { iconChip, surfaceCard } from './ui'
 
@@ -59,11 +59,11 @@ export function LibraryCard({ icon, title, to, preview, facts, timestamp }: Libr
   }
 
   return (
-    <Link
+    <AppLink
       to={to}
       className={`${surfaceCard} group flex min-w-0 flex-col p-5 no-underline transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent-solid hover:shadow-md`}
     >
       {content}
-    </Link>
+    </AppLink>
   )
 }

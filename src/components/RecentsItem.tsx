@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { AppLink } from './AppLink'
 
 interface RecentsItemProps {
   icon: ReactNode
@@ -79,12 +79,12 @@ export function RecentsItem({
       }`}
     >
       {to ? (
-        <Link
+        <AppLink
           to={to}
           className="group -mx-2.5 -my-1.5 flex min-w-0 gap-3 rounded-md px-2.5 py-1.5 no-underline transition-colors hover:bg-surface-alt/60"
         >
           {content}
-        </Link>
+        </AppLink>
       ) : (
         <div className="flex min-w-0 gap-3">{content}</div>
       )}

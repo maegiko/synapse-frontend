@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import { AppLink } from './AppLink'
 import { IconArrowRight } from './icons'
 import { cardLink } from './ui'
 
@@ -62,10 +62,10 @@ export function RecentsCard({
     <section className={`flex min-w-0 flex-col ${className}`}>
       <div className="flex items-center gap-3 pb-4">
         <h3 className="text-base font-medium">{title}</h3>
-        <Link to={viewAllTo} className={`${cardLink} ml-auto`}>
+        <AppLink to={viewAllTo} className={`${cardLink} ml-auto`}>
           {viewAllLabel}
           <IconArrowRight />
-        </Link>
+        </AppLink>
       </div>
 
       <div className="min-w-0 flex-1">
