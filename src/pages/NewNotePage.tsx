@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { BackLink } from '../components/BackLink'
 import { FileDropzone } from '../components/FileDropzone'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
-import { IconArrowLeft, IconSpinner } from '../components/icons'
+import { IconSpinner } from '../components/icons'
 import { btnSubmit, cardLink, creationAside, creationLayout, shell, surfaceCard } from '../components/ui'
 import { api } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { MAX_FILE_BYTES, formatFileSize, validateNoteFile, withDeclaredType } from '../lib/noteFiles'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
@@ -53,7 +54,9 @@ function messageForFailure(error: unknown): string {
 }
 
 export function NewNotePage() {
-  const navigate = useNavigate()
+  // This page replaces itself with the note it produces, so the note inherits
+  // the trail and its back link names wherever the visitor started.
+  const navigate = useTrailNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -128,10 +131,7 @@ export function NewNotePage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <h1 className="mt-5 text-3xl">Summarise a note</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">

@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from './AppHeader'
+import { AppLink } from './AppLink'
+import { BackLink } from './BackLink'
 import { FormAlert } from './FormAlert'
 import { GenerationStatus } from './GenerationStatus'
-import { IconArrowLeft, IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
+import { IconArrowRight, IconCheck, IconNote, IconSpinner } from './icons'
 import {
   btnPrimaryLg,
   btnSubmit,
@@ -19,6 +20,7 @@ import {
 } from './ui'
 import type { NoteSummary } from '../api'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { plural } from '../lib/plural'
 import { useNotes } from '../lib/queries'
 
@@ -85,7 +87,9 @@ export function GenerateFromNote({
   tips,
   onGenerate,
 }: GenerateFromNoteProps) {
-  const navigate = useNavigate()
+  // This page replaces itself with the deck or quiz it produces, so what it
+  // made inherits the trail rather than pointing back at a page that is gone.
+  const navigate = useTrailNavigate()
   const notes = useNotes()
   const fieldsetRef = useRef<HTMLFieldSetElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
@@ -211,10 +215,7 @@ export function GenerateFromNote({
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <h1 className="mt-5 text-3xl">{heading}</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{intro}</p>
@@ -260,10 +261,10 @@ export function GenerateFromNote({
                     Every {noun} is built from one of your notes. Summarise a file first and it will
                     show up here to pick from.
                   </p>
-                  <Link to="/notes/new" className={`${btnPrimaryLg} mt-6`}>
+                  <AppLink to="/notes/new" className={`${btnPrimaryLg} mt-6`}>
                     Summarise your first note
                     <IconArrowRight />
-                  </Link>
+                  </AppLink>
                 </div>
               )}
 
@@ -392,10 +393,10 @@ export function GenerateFromNote({
                 ? `${plural(notes.data.length, 'note')} to choose from.`
                 : 'Loading your notes…'}
             </p>
-            <Link to="/notes/new" className={`${cardLink} mt-3`}>
+            <AppLink to="/notes/new" className={`${cardLink} mt-3`}>
               Summarise another note
               <IconArrowRight />
-            </Link>
+            </AppLink>
           </aside>
         </div>
       </main>

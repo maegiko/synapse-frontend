@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
-  IconArrowLeft,
   IconArrowRight,
   IconDeck,
   IconQuiz,
@@ -26,6 +27,7 @@ import {
   surfaceCard,
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys, useNote } from '../lib/queries'
 import { api } from '../api'
@@ -106,6 +108,10 @@ type Confirming = 'deck' | 'quiz' | 'delete' | null
 
 function NoteContent({ note }: { note: NoteSummary }) {
   const navigate = useNavigate()
+  // A deck or quiz generated here was reached *from* this note, so it carries
+  // the note on its trail. Deletion uses the plain navigate below: a note that
+  // no longer exists is not somewhere to offer a way back to.
+  const generatedNavigate = useTrailNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
 
   const [confirming, setConfirming] = useState<Confirming>(null)
@@ -118,7 +124,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
       // The generation response has no card IDs, so the deck page fetches the
       // saved deck itself; we only hand it the destination.
-      navigate(`/flashcards/${deck.deckId}`, { replace: true })
+      generatedNavigate(`/flashcards/${deck.deckId}`, { replace: true })
     },
     onError: (error) => {
       setConfirming(null)
@@ -132,7 +138,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
       // The generate response is the whole quiz, so the detail view needs no refetch.
       queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
-      navigate(`/quiz/${quiz.id}`, { replace: true })
+      generatedNavigate(`/quiz/${quiz.id}`, { replace: true })
     },
     onError: (error) => {
       setConfirming(null)
@@ -377,10 +383,7 @@ export function NotePage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <div className="mt-5">
           {note.isPending && <NoteSkeleton />}
@@ -399,10 +402,10 @@ export function NotePage() {
                     Try again
                   </button>
                 )}
-                <Link to="/notes/new" className={cardLink}>
+                <AppLink to="/notes/new" className={cardLink}>
                   Summarise a note
                   <IconArrowRight />
-                </Link>
+                </AppLink>
               </div>
             </div>
           )}
