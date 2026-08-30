@@ -15,10 +15,15 @@ import { FormAlert } from '../components/FormAlert'
 import { TextField } from '../components/TextField'
 import {
   IconArrowRight,
+  IconCard,
+  IconChart,
   IconCheck,
+  IconClock,
   IconDeck,
   IconNote,
+  IconPlay,
   IconQuiz,
+  IconStar,
 } from '../components/icons'
 import streakFlame from '../assets/streak_flame.webp'
 import streakFlameMuted from '../assets/streak_flame_muted.webp'
@@ -67,18 +72,23 @@ function Bar() {
 /** A number rendered by typography alone — no card, no border, no tint. */
 function Figure({
   label,
+  icon,
   hint,
   className = '',
   children,
 }: {
   label: string
+  icon?: ReactNode
   hint?: string
   className?: string
   children: ReactNode
 }) {
   return (
     <div className={className}>
-      <dt className="text-xs font-bold text-text-muted">{label}</dt>
+      <dt className="flex items-center gap-2 text-xs font-bold text-text-muted">
+        {icon && <span aria-hidden="true">{icon}</span>}
+        {label}
+      </dt>
       <dd className="mt-1.5 flex items-center gap-1.5 text-lg font-medium text-text tabular-nums">
         {children}
       </dd>
@@ -136,9 +146,9 @@ type Panel = 'summary' | 'details' | 'password'
 
 /** Which set of numbers the Performance panel is showing. */
 type PerfTab = 'flashcards' | 'quizzes'
-const PERF_TABS: { id: PerfTab; label: string }[] = [
-  { id: 'flashcards', label: 'Flashcards' },
-  { id: 'quizzes', label: 'Quizzes' },
+const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
+  { id: 'flashcards', label: 'Flashcards', icon: <IconDeck className="h-4 w-4" /> },
+  { id: 'quizzes', label: 'Quizzes', icon: <IconQuiz className="h-4 w-4" /> },
 ]
 
 /** How overdue the queue's oldest deck is, phrased for a single stat cell. */
@@ -674,7 +684,7 @@ export function ProfilePage() {
             </AppLink>
           </section>
 
-          <section className="border-t border-border pt-8 lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
+          <section className="border-t border-border pt-8 [&_dd]:text-accent-solid lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
             <h2 className="text-base font-medium">Performance</h2>
 
             {/* An `sr-only` radio group styled as underline tabs — the same
@@ -688,7 +698,7 @@ export function ProfilePage() {
                   return (
                     <label
                       key={tab.id}
-                      className={`-mb-px cursor-pointer border-b-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent-solid ${
+                      className={`-mb-px inline-flex cursor-pointer items-center gap-2 border-b-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent-solid ${
                         active
                           ? 'border-accent-solid text-text'
                           : 'border-transparent text-text-muted hover:text-text'
@@ -702,6 +712,7 @@ export function ProfilePage() {
                         checked={active}
                         onChange={() => setPerfTab(tab.id)}
                       />
+                      <span aria-hidden="true">{tab.icon}</span>
                       {tab.label}
                     </label>
                   )
@@ -730,16 +741,32 @@ export function ProfilePage() {
                 )}
 
                 <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
-                  <Figure label="Reviews completed" hint="Cards reviewed all-time.">
+                  <Figure
+                    label="Reviews completed"
+                    icon={<IconCheck className="h-4 w-4" />}
+                    hint="Cards reviewed all-time."
+                  >
                     {count({ isPending: reviewsLoading, isError: details.isError }, reviewsCompleted)}
                   </Figure>
-                  <Figure label="Decks due" hint="Ready to review now.">
+                  <Figure
+                    label="Decks due"
+                    icon={<IconDeck className="h-4 w-4" />}
+                    hint="Ready to review now."
+                  >
                     {count(reviewQueue, dueDeckCount)}
                   </Figure>
-                  <Figure label="Cards due" hint="Waiting in your queue.">
+                  <Figure
+                    label="Cards due"
+                    icon={<IconCard className="h-4 w-4" />}
+                    hint="Waiting in your queue."
+                  >
                     {count(reviewQueue, dueCardCount)}
                   </Figure>
-                  <Figure label="Oldest due" hint="Oldest in your queue.">
+                  <Figure
+                    label="Oldest due"
+                    icon={<IconClock className="h-4 w-4" />}
+                    hint="Oldest in your queue."
+                  >
                     {reviewQueue.isPending ? (
                       <Bar />
                     ) : reviewQueue.isError ? (
@@ -797,17 +824,30 @@ export function ProfilePage() {
                   <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
                     <Figure
                       label="Attempts"
+                      icon={<IconPlay className="h-4 w-4" />}
                       hint={`Across ${plural(attempts.quizzesAttempted, 'quiz', 'quizzes')}.`}
                     >
                       {quizzesPending ? <Bar /> : String(attempts.scores.length)}
                     </Figure>
-                    <Figure label="Average score" hint="Mean of every attempt.">
+                    <Figure
+                      label="Average score"
+                      icon={<IconChart className="h-4 w-4" />}
+                      hint="Mean of every attempt."
+                    >
                       {quizzesPending ? <Bar /> : `${Math.round(averagePercent)}%`}
                     </Figure>
-                    <Figure label="Best score" hint="Your strongest run.">
+                    <Figure
+                      label="Best score"
+                      icon={<IconStar className="h-4 w-4" />}
+                      hint="Your strongest run."
+                    >
                       {quizzesPending ? <Bar /> : `${Math.round(bestPercent)}%`}
                     </Figure>
-                    <Figure label="Last attempt" hint="Most recent saved run.">
+                    <Figure
+                      label="Last attempt"
+                      icon={<IconClock className="h-4 w-4" />}
+                      hint="Most recent saved run."
+                    >
                       {quizzesPending ? <Bar /> : formatDate(lastAttemptAt) || '—'}
                     </Figure>
                   </dl>

@@ -31,11 +31,30 @@ export function IconDeck({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
+/** One flashcard, distinct from the stacked-card deck icon. */
+export function IconCard({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <rect x="4" y="5.5" width="16" height="13" rx="2" />
+      <path d="M8 10h8M8 14h5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconChart({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
       <path d="M4 19V9M11 19V5M18 19v-6" strokeLinecap="round" />
       <path d="M4 19h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconClock({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
