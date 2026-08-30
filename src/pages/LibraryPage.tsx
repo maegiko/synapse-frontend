@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
 import { LibraryCard } from '../components/LibraryCard'
 import { DifficultyStars } from '../components/DifficultyStars'
-import { IconArrowLeft, IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
+import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { btnPrimaryLg, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
 import { toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
@@ -108,6 +111,7 @@ export function LibraryPage() {
   // The filter lives in the URL, so it survives a refresh and the back button,
   // and the dashboard can link straight to one kind.
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
   const kindParam = searchParams.get('type')
   const kind: Kind = isKind(kindParam) ? kindParam : 'all'
 
@@ -144,7 +148,12 @@ export function LibraryPage() {
 
   function selectKind(next: Kind) {
     // `replace`, so flicking through filters does not stack up history entries.
-    setSearchParams(next === 'all' ? {} : { type: next }, { replace: true })
+    // The location state is carried over by hand: `setSearchParams` drops it
+    // otherwise, and with it the trail this page's own back link is read from.
+    setSearchParams(next === 'all' ? {} : { type: next }, {
+      replace: true,
+      state: location.state,
+    })
   }
 
   const counts: Record<Kind, number | undefined> = {
@@ -163,10 +172,7 @@ export function LibraryPage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <h1 className="mt-5 text-3xl">Your library</h1>
         <p className="mt-3 max-w-[58ch] text-base text-text-muted">{summary}</p>
@@ -178,10 +184,10 @@ export function LibraryPage() {
               Summarise a note and it will show up here, along with any decks and quizzes you build
               from it.
             </p>
-            <Link to="/notes/new" className={`${btnPrimaryLg} mt-7`}>
+            <AppLink to="/notes/new" className={`${btnPrimaryLg} mt-7`}>
               Summarise your first note
               <IconArrowRight />
-            </Link>
+            </AppLink>
           </div>
         ) : (
           <>
