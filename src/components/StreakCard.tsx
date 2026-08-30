@@ -8,7 +8,7 @@ const KEEP_STREAK_MESSAGE =
   'Generate something or finish a deck or quiz to keep your streak going.'
 
 const CONSISTENCY_MESSAGES = [
-  'You showed up today—consistency is doing its work.',
+  'You showed up today. Consistency is doing its work.',
   'Another day of progress. Keep this rhythm going.',
   'Small efforts add up. Today’s session counts.',
   'You kept the promise to yourself today. Nicely done.',
@@ -90,7 +90,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
           <h2 id="streak-heading" className="min-w-0 truncate text-base sm:text-lg">
-            {hasStreak ? `${streak.currentStreak}-day streak` : 'Start your streak'}
+            {hasStreak ? `${streak.currentStreak} day streak` : 'Start your streak'}
           </h2>
           <span
             className={

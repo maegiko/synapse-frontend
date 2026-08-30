@@ -32,7 +32,7 @@ const CLOSING_NOTES = {
   perfect: [
     'A perfect run. You knew every answer and backed it up under pressure.',
     'Every question, exactly right. That consistency is paying off.',
-    'Full marks—clear recall from start to finish. Brilliant work.',
+    'Full marks. Clear recall from start to finish. Brilliant work.',
     'Nothing slipped past you this time. That is mastery in motion.',
   ],
   strong: [
@@ -230,7 +230,7 @@ function QuestionCard({
             }`}
             role="status"
           >
-            {wasCorrect ? 'Correct.' : 'Not this time — the right answer is marked above.'}
+            {wasCorrect ? 'Correct.' : 'Not this time. The right answer is marked above.'}
           </p>
         )}
       </div>
