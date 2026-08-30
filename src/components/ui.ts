@@ -50,8 +50,12 @@ export const authCard = 'rounded-lg border border-border bg-surface p-8 shadow-m
 export const surfaceCard = 'rounded-md border border-border bg-surface shadow-sm'
 export const iconChip =
   'inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong'
+/**
+ * A metadata chip. Fixed height and vertically centred, so a pill holding
+ * difficulty stars (or any non-text content) lines up with its text neighbours.
+ */
 export const countPill =
-  'rounded-full bg-surface-alt px-2.5 py-1 text-xs font-bold text-text-muted tabular-nums'
+  'inline-flex h-6.5 items-center rounded-full bg-surface-alt px-2.5 text-xs font-bold text-text-muted tabular-nums'
 
 export const btnPrimaryMdInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-5.5 py-3 text-base hover:bg-surface-alt hover:shadow-md hover:-translate-y-px`
 export const cardLink =

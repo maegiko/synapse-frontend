@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { ScoreRow } from '../components/ScoreRow'
 import { PlaybackModeControl } from '../components/PlaybackModeControl'
+import { DifficultyStars } from '../components/DifficultyStars'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import {
@@ -369,7 +370,11 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className={countPill}>{plural(questions.length, 'question')}</span>
         <span className={countPill}>
-          {quiz.difficulty === null ? 'No difficulty set' : `Difficulty ${quiz.difficulty}/5`}
+          {quiz.difficulty === null ? (
+            'No difficulty set'
+          ) : (
+            <DifficultyStars value={quiz.difficulty} />
+          )}
         </span>
         <span className={countPill}>Created {formatRelative(quiz.createdAt)}</span>
       </div>
