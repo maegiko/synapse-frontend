@@ -118,6 +118,33 @@ export function IconTrash({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
+/** A study group: a folder, since a group is a folder over existing content. */
+export function IconGroup({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <path d="M3.5 7.4A1.9 1.9 0 0 1 5.4 5.5h3.3l1.9 2.3h8A1.9 1.9 0 0 1 20.5 9.7v7.1a1.9 1.9 0 0 1-1.9 1.9H5.4a1.9 1.9 0 0 1-1.9-1.9V7.4Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconPencil({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="m15.4 5.4 3.2 3.2M4.5 19.5l.7-3.6L16 5.1a1.6 1.6 0 0 1 2.3 0l1.6 1.6a1.6 1.6 0 0 1 0 2.3L9.1 18.8l-4.6.7Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** Leaving a group: an item stepping out of a container. */
+export function IconRemoveFromGroup({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M13.5 4.5h4.6a1.9 1.9 0 0 1 1.9 1.9v11.2a1.9 1.9 0 0 1-1.9 1.9h-4.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10.5 12H3.5M6.6 8.9 3.5 12l3.1 3.1" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 /** Whole stars only, so this is either filled or outlined — never partial. */
 export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & { filled?: boolean }) {
   return (
