@@ -45,7 +45,7 @@ export function LibraryCard({ icon, title, to, preview, facts, timestamp }: Libr
         {facts.map((fact, i) => (
           <span
             key={i}
-            className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
+            className="inline-flex h-6.5 items-center rounded-full bg-surface-alt px-2 text-xs text-text-muted tabular-nums"
           >
             {fact}
           </span>
