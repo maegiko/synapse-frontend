@@ -1,15 +1,16 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
 import { ScoreRow } from '../components/ScoreRow'
 import { PlaybackModeControl } from '../components/PlaybackModeControl'
 import { DifficultyStars } from '../components/DifficultyStars'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import {
-  IconArrowLeft,
   IconArrowRight,
   IconPlay,
   IconPlus,
@@ -32,6 +33,7 @@ import {
   surfaceCard,
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz, useQuizScores } from '../lib/queries'
@@ -173,10 +175,10 @@ function ScoreHistory({ quizId }: { quizId: string }) {
         <h2 className="mr-auto text-base font-medium">Past attempts</h2>
         {scores.isSuccess && <span className={countPill}>{scores.data.length}</span>}
         {scores.isSuccess && scores.data.length > RECENT_SCORE_LIMIT && (
-          <Link to={`/quiz/${quizId}/scores`} className={cardLink}>
+          <AppLink to={`/quiz/${quizId}/scores`} className={cardLink}>
             View all
             <IconArrowRight />
-          </Link>
+          </AppLink>
         )}
       </div>
       <div className="px-6 py-5">
@@ -388,13 +390,13 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             onChange={(mode) => setIsShuffled(mode === 'shuffle')}
           />
           {questions.length > 0 ? (
-            <Link
+            <AppLink
               to={`/quiz/${quiz.id}/play${isShuffled ? `?${SHUFFLE_PARAM}=1` : ''}`}
               className={btnPrimarySm}
             >
               <IconPlay />
               Play quiz
-            </Link>
+            </AppLink>
           ) : (
             <button
               type="button"
@@ -706,10 +708,7 @@ export function QuizPage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <div className="mt-5">
           {quiz.isPending && <QuizSkeleton />}
@@ -730,10 +729,10 @@ export function QuizPage() {
                     Try again
                   </button>
                 )}
-                <Link to="/quiz/new" className={cardLink}>
+                <AppLink to="/quiz/new" className={cardLink}>
                   Generate a quiz
                   <IconArrowRight />
-                </Link>
+                </AppLink>
               </div>
             </div>
           )}

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
+import { BackLink } from '../components/BackLink'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import { IconArrowLeft, IconArrowRight, IconCheck } from '../components/icons'
+import { IconArrowRight, IconCheck } from '../components/icons'
 import { StarRating } from '../components/StarRating'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
@@ -20,6 +21,8 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
+import { DASHBOARD_BACK, useBackLink } from '../lib/backTrail'
+import type { BackTarget } from '../lib/backTrail'
 import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
 import type { Quiz, QuizQuestion } from '../api'
@@ -80,6 +83,9 @@ function PlaySkeleton() {
   )
 }
 
+/** A held-up exit: where it was headed, and the trail state that goes with it. */
+type PendingExit = { to: string; state?: Record<string, BackTarget[]> }
+
 interface QuestionCardProps {
   question: QuizQuestion
   position: number
@@ -88,10 +94,10 @@ interface QuestionCardProps {
   /** Advances the run. `wasCorrect` feeds the running score. */
   onAnswered: (wasCorrect: boolean) => void
   isLastQuestion: boolean
-  /** The quiz overview, for the back link. */
-  quizHref: string
+  /** Where the back link lands for anyone who opened the run directly. */
+  quizBack: BackTarget
   /** Returns false to hold the visitor here until they confirm leaving. */
-  guardLeaving: (destination: string) => boolean
+  guardLeaving: (to: string, state?: PendingExit['state']) => boolean
 }
 
 function QuestionCard({
@@ -101,7 +107,7 @@ function QuestionCard({
   isShuffled,
   onAnswered,
   isLastQuestion,
-  quizHref,
+  quizBack,
   guardLeaving,
 }: QuestionCardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -135,16 +141,7 @@ function QuestionCard({
           Question {position} of {total}
         </p>
         {isShuffled && <span className={countPill}>Shuffled</span>}
-        <Link
-          to={quizHref}
-          className={`${cardLink} ml-auto`}
-          onClick={(event) => {
-            if (!guardLeaving(quizHref)) event.preventDefault()
-          }}
-        >
-          <IconArrowLeft />
-          Back to quiz overview
-        </Link>
+        <BackLink fallback={quizBack} className={`${cardLink} ml-auto`} onLeave={guardLeaving} />
       </div>
 
       <div
@@ -279,7 +276,7 @@ function Runner({
   const [saveError, setSaveError] = useState('')
 
   /** Where a confirmed exit goes. Null means no exit is pending. */
-  const [pendingExit, setPendingExit] = useState<string | null>(null)
+  const [pendingExit, setPendingExit] = useState<PendingExit | null>(null)
   // Read by the popstate listener, which must not close over stale state.
   const isGuarding = useRef(true)
 
@@ -298,6 +295,12 @@ function Runner({
   }, [questions, isShuffled, seed])
 
   const quizHref = `/quiz/${quiz.id}`
+  /** The quiz this attempt belongs to, for anyone who opened the run directly. */
+  const quizBack = useMemo(() => ({ to: quizHref, label: 'quiz overview' }), [quizHref])
+  // Every way out of a guarded run — the back link, the browser's Back button,
+  // the exit dialog — has to agree on one destination, so they all read the
+  // same resolved back link.
+  const back = useBackLink(quizBack)
 
   const saveScore = useMutation({
     mutationFn: (finalScore: number) =>
@@ -339,18 +342,24 @@ function Runner({
     setPhase('summary')
   }
 
-  // Browser Back. A sentinel entry is pushed so the first Back lands here
-  // instead of leaving; it is put straight back and the dialog asks instead.
+  // Browser Back. One sentinel entry is pushed for the run, so the first Back
+  // lands here instead of leaving. Pushing it is a mount-only job; the listener
+  // is separate because it has to see the current back target.
   useEffect(() => {
     window.history.pushState({ quizGuard: true }, '')
+  }, [])
+
+  useEffect(() => {
     function onPopState() {
       if (!isGuarding.current) return
+      // The sentinel that was just consumed is put straight back, and the
+      // dialog asks rather than letting the run end silently.
       window.history.pushState({ quizGuard: true }, '')
-      setPendingExit(quizHref)
+      setPendingExit(back)
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
-  }, [quizHref])
+  }, [back])
 
   // Reloading or closing the tab. The browser supplies its own wording here.
   useEffect(() => {
@@ -363,17 +372,17 @@ function Runner({
   }, [])
 
   /** Returns false to hold the visitor here until they confirm. */
-  const guardLeaving = useCallback((destination: string) => {
+  const guardLeaving = useCallback((to: string, state?: PendingExit['state']) => {
     if (!isGuarding.current) return true
-    setPendingExit(destination)
+    setPendingExit({ to, state })
     return false
   }, [])
 
   function confirmExit() {
     isGuarding.current = false
-    const destination = pendingExit ?? quizHref
+    const destination = pendingExit ?? back
     setPendingExit(null)
-    navigate(destination, { replace: true })
+    navigate(destination.to, { replace: true, state: destination.state })
   }
 
   const total = order.length
@@ -394,7 +403,7 @@ function Runner({
             isShuffled={isShuffled}
             isLastQuestion={index === total - 1}
             onAnswered={handleAnswered}
-            quizHref={quizHref}
+            quizBack={quizBack}
             guardLeaving={guardLeaving}
           />
         )}
@@ -476,9 +485,7 @@ function Runner({
             )}
 
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link to={quizHref} className={btnPrimaryLg}>
-                Back to quiz overview
-              </Link>
+              <BackLink fallback={quizBack} className={btnPrimaryLg} showIcon={false} />
               <button type="button" className={btnGhostLg} onClick={onRetake}>
                 Take it again
               </button>
@@ -548,10 +555,7 @@ export function PlayQuizPage() {
                   Try again
                 </button>
               )}
-              <Link to="/dashboard" className={cardLink}>
-                <IconArrowLeft />
-                Back to dashboard
-              </Link>
+              <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
             </div>
           </div>
         )}
@@ -562,10 +566,10 @@ export function PlayQuizPage() {
             <p className="mt-3 text-base text-text-muted">
               “{quiz.data.title}” has no questions. Add one and it will be waiting here.
             </p>
-            <Link to={`/quiz/${quiz.data.id}`} className={`${cardLink} mt-6`}>
-              <IconArrowLeft />
-              Back to quiz overview
-            </Link>
+            <BackLink
+              fallback={{ to: `/quiz/${quiz.data.id}`, label: 'quiz overview' }}
+              className={`${cardLink} mt-6`}
+            />
           </div>
         )}
       </main>

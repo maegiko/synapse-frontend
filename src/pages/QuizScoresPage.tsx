@@ -1,9 +1,12 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
-import { IconArrowLeft, IconArrowRight } from '../components/icons'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
+import { IconArrowRight } from '../components/icons'
 import { ScoreRow } from '../components/ScoreRow'
 import { btnGhostSm, cardLink, countPill, shell, surfaceCard } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import type { BackTarget } from '../lib/backTrail'
 import { formatDateTime } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { useQuiz, useQuizScores } from '../lib/queries'
@@ -28,7 +31,8 @@ export function QuizScoresPage() {
   const scores = useQuizScores(quizId)
 
   const isMissing = isStatus(quiz.error, 404) || isStatus(scores.error, 404)
-  const quizHref = `/quiz/${quizId}`
+  /** The quiz these attempts belong to, for anyone who opened this page directly. */
+  const quizBack: BackTarget = { to: `/quiz/${quizId}`, label: 'quiz overview' }
 
   // Each attempt scores against its own question count, so a plain average of
   // the raw scores would be meaningless; the percentages are averaged instead.
@@ -45,10 +49,7 @@ export function QuizScoresPage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to={quizHref} className={cardLink}>
-          <IconArrowLeft />
-          Back to the quiz
-        </Link>
+        <BackLink fallback={quizBack} className={cardLink} />
 
         <div className="mt-5 max-w-200">
           <h1 className="text-3xl">Attempt history</h1>
@@ -91,10 +92,10 @@ export function QuizScoresPage() {
                       Try again
                     </button>
                   )}
-                  <Link to="/library?type=quizzes" className={cardLink}>
+                  <AppLink to="/library?type=quizzes" className={cardLink}>
                     Your quizzes
                     <IconArrowRight />
-                  </Link>
+                  </AppLink>
                 </div>
               </div>
             )}
