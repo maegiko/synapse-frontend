@@ -44,6 +44,8 @@ function describeRoute(pathname: string, search: string): BackTarget | null {
   if (path === '/dashboard') return { to: path, label: 'dashboard' }
   if (path === '/profile') return { to: path, label: 'your profile' }
 
+  if (path === '/groups') return { to: path, label: 'your groups' }
+
   if (path === '/library') {
     // The library is one page per type as far as the visitor is concerned, so
     // the filter is part of both the destination and its name.
@@ -64,6 +66,9 @@ function describeRoute(pathname: string, search: string): BackTarget | null {
   if (/^\/flashcards\/[^/]+$/.test(path)) return { to: path, label: 'deck overview' }
   if (/^\/quiz\/[^/]+$/.test(path)) return { to: path, label: 'quiz overview' }
   if (/^\/quiz\/[^/]+\/scores$/.test(path)) return { to: path, label: 'attempt history' }
+  // A group names itself: the pages it leads to override this with the group's
+  // own name, so "the group" is only the fallback before that name is known.
+  if (/^\/groups\/[^/]+$/.test(path)) return { to: path, label: 'the group' }
 
   return null
 }
@@ -104,10 +109,13 @@ export function useBackTrail(): BackTarget[] {
  * trail so far, with this page on the end. Every forward navigation carries it,
  * which is the whole mechanism — a page's back link is simply the last rung.
  */
-export function useTrailState(): Record<string, BackTarget[]> {
+export function useTrailState(labelOverride?: string): Record<string, BackTarget[]> {
   const location = useLocation()
   const trail = readTrail(location.state)
-  const here = describeRoute(location.pathname, location.search)
+  const route = describeRoute(location.pathname, location.search)
+  // A page that knows its own name — a group's, say — supplies it, so the back
+  // link reads "Back to Biology" instead of the route's generic label.
+  const here = route && labelOverride ? { ...route, label: labelOverride } : route
   return { [TRAIL_KEY]: here ? pushTrail(trail, here) : trail }
 }
 
