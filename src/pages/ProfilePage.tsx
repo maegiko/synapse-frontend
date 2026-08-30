@@ -32,7 +32,7 @@ import {
 } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
-import { formatCalendarDate, formatDate } from '../lib/formatDate'
+import { calendarDaysFromToday, formatCalendarDate, formatDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryClient } from '../lib/queryClient'
 import {
@@ -41,6 +41,7 @@ import {
   useFlashcardDecks,
   useNotes,
   useQuizzes,
+  useReviewQueue,
   useStreak,
   useUserDetails,
 } from '../lib/queries'
@@ -132,6 +133,22 @@ interface PasswordErrors {
 /** Which editor the profile card is showing. */
 type Panel = 'summary' | 'details' | 'password'
 
+/** Which set of numbers the Performance panel is showing. */
+type PerfTab = 'flashcards' | 'quizzes'
+const PERF_TABS: { id: PerfTab; label: string }[] = [
+  { id: 'flashcards', label: 'Flashcards' },
+  { id: 'quizzes', label: 'Quizzes' },
+]
+
+/** How overdue the queue's oldest deck is, phrased for a single stat cell. */
+function dueAgeLabel(date: string): string {
+  const days = calendarDaysFromToday(date)
+  if (days === null) return '—'
+  if (days >= 0) return 'Today'
+  if (days === -1) return 'Yesterday'
+  return `${-days} days ago`
+}
+
 /**
  * Account details plus a read-only view of how the study is going. Every number
  * here is derived from data the backend already exposes; there is no analytics
@@ -145,8 +162,10 @@ export function ProfilePage() {
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
   const attempts = useAllQuizScores(quizzes.data?.map((quiz) => quiz.id))
+  const reviewQueue = useReviewQueue()
 
   const [panel, setPanel] = useState<Panel>('summary')
+  const [perfTab, setPerfTab] = useState<PerfTab>('flashcards')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -279,6 +298,17 @@ export function ProfilePage() {
   }
 
   const cardTotal = decks.data?.reduce((sum, deck) => sum + deck.flashcards.length, 0) ?? 0
+
+  // Spaced-repetition figures. The only lifetime flashcard number the backend
+  // keeps is `totalFlashcardsReviewed`; everything else is derived from the
+  // current review queue (`GET /api/flashcards/review`), which lists only the
+  // decks due today or earlier, oldest due date first.
+  const reviewsCompleted = details.data?.totalFlashcardsReviewed ?? 0
+  // Auth state seeded from login/register has no review total until details load.
+  const reviewsLoading = details.isPending || details.data?.totalFlashcardsReviewed === undefined
+  const dueDeckCount = reviewQueue.data?.length ?? 0
+  const dueCardCount = reviewQueue.data?.reduce((sum, deck) => sum + deck.cardCount, 0) ?? 0
+  const oldestDue = reviewQueue.data?.[0]?.nextReviewDate ?? null
 
   // Each attempt was scored against its own question count, so percentages are
   // averaged rather than the raw scores.
@@ -647,64 +677,144 @@ export function ProfilePage() {
           </section>
 
           <section className="border-t border-border pt-8 lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
-            <h2 className="text-base font-medium">Quiz performance</h2>
-            <p className="mt-1 text-sm text-text-muted">Across every attempt you have saved.</p>
+            <h2 className="text-base font-medium">Performance</h2>
 
-            {/* Attempt history is per quiz, so a failure here is partial: the
-                numbers still hold for every quiz that did answer. */}
-            {attempts.failedCount > 0 && (
-              <div className="mt-4 grid justify-items-start gap-2.5">
-                <p className="text-sm text-text-muted">
-                  {plural(attempts.failedCount, 'quiz', 'quizzes')} could not be included, so these
-                  numbers are incomplete.
-                </p>
-                <button
-                  type="button"
-                  onClick={attempts.retryFailed}
-                  className="text-sm font-bold text-accent-solid hover:underline"
-                >
-                  Try again
-                </button>
+            {/* An `sr-only` radio group styled as underline tabs — the same
+                pattern as PlaybackModeControl, so arrow-key navigation and the
+                single tab stop come for free. */}
+            <fieldset className="m-0 mt-3 border-0 p-0">
+              <legend className="sr-only">Which performance metrics to show</legend>
+              <div className="flex gap-5 border-b border-border">
+                {PERF_TABS.map((tab) => {
+                  const active = perfTab === tab.id
+                  return (
+                    <label
+                      key={tab.id}
+                      className={`-mb-px cursor-pointer border-b-2 pb-2 text-sm font-medium whitespace-nowrap transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent-solid ${
+                        active
+                          ? 'border-accent-solid text-text'
+                          : 'border-transparent text-text-muted hover:text-text'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="perf-tab"
+                        className="sr-only"
+                        value={tab.id}
+                        checked={active}
+                        onChange={() => setPerfTab(tab.id)}
+                      />
+                      {tab.label}
+                    </label>
+                  )
+                })}
               </div>
-            )}
+            </fieldset>
 
-            {quizzes.isError ? (
-              <div className="mt-5 grid justify-items-start gap-2.5">
-                <p className="text-sm text-text-muted">
-                  We could not load your quizzes. {toFormMessage(quizzes.error)}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void quizzes.refetch()}
-                  className="text-sm font-bold text-accent-solid hover:underline"
-                >
-                  Try again
-                </button>
+            {perfTab === 'flashcards' ? (
+              <div className="mt-5">
+                <p className="text-sm text-text-muted">How your review schedule is going.</p>
+
+                {reviewQueue.isError && (
+                  <div className="mt-4 grid justify-items-start gap-2.5">
+                    <p className="text-sm text-text-muted">
+                      Your review queue did not load, so the due figures are unavailable.{' '}
+                      {toFormMessage(reviewQueue.error)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void reviewQueue.refetch()}
+                      className="text-sm font-bold text-accent-solid hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
+                  <Figure label="Reviews completed" hint="Cards reviewed all-time.">
+                    {count({ isPending: reviewsLoading, isError: details.isError }, reviewsCompleted)}
+                  </Figure>
+                  <Figure label="Decks due" hint="Ready to review now.">
+                    {count(reviewQueue, dueDeckCount)}
+                  </Figure>
+                  <Figure label="Cards due" hint="Waiting in your queue.">
+                    {count(reviewQueue, dueCardCount)}
+                  </Figure>
+                  <Figure label="Oldest due" hint="Oldest in your queue.">
+                    {reviewQueue.isPending ? (
+                      <Bar />
+                    ) : reviewQueue.isError ? (
+                      <span className="text-base text-text-muted">—</span>
+                    ) : oldestDue ? (
+                      dueAgeLabel(oldestDue)
+                    ) : (
+                      'Up to date'
+                    )}
+                  </Figure>
+                </dl>
               </div>
-            ) : !quizzesPending && !hasAttempts ? (
-              <p className="mt-5 max-w-[42ch] text-sm text-text-muted">
-                {quizzes.data?.length
-                  ? 'You have not saved a quiz attempt yet. Every run you save shows up here.'
-                  : 'Generate a quiz from a note, and every attempt you save shows up here.'}
-              </p>
             ) : (
-              <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
-                <Figure
-                  label="Attempts"
-                  hint={`Across ${plural(attempts.quizzesAttempted, 'quiz', 'quizzes')}.`}
-                >
-                  {quizzesPending ? <Bar /> : String(attempts.scores.length)}
-                </Figure>
-                <Figure label="Average score" hint="Mean of every attempt.">
-                  {quizzesPending ? <Bar /> : `${Math.round(averagePercent)}%`}
-                </Figure>
-                <Figure label="Best score" hint="Your strongest run.">
-                  {quizzesPending ? <Bar /> : `${Math.round(bestPercent)}%`}
-                </Figure>
-                <Figure label="Last attempt" hint="Most recent saved run.">
-                  {quizzesPending ? <Bar /> : formatDate(lastAttemptAt) || '—'}
-                </Figure>
-              </dl>
+              <div className="mt-5">
+                <p className="text-sm text-text-muted">Across every attempt you have saved.</p>
+
+                {/* Attempt history is per quiz, so a failure here is partial: the
+                    numbers still hold for every quiz that did answer. */}
+                {attempts.failedCount > 0 && (
+                  <div className="mt-4 grid justify-items-start gap-2.5">
+                    <p className="text-sm text-text-muted">
+                      {plural(attempts.failedCount, 'quiz', 'quizzes')} could not be included, so
+                      these numbers are incomplete.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={attempts.retryFailed}
+                      className="text-sm font-bold text-accent-solid hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {quizzes.isError ? (
+                  <div className="mt-5 grid justify-items-start gap-2.5">
+                    <p className="text-sm text-text-muted">
+                      We could not load your quizzes. {toFormMessage(quizzes.error)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void quizzes.refetch()}
+                      className="text-sm font-bold text-accent-solid hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                ) : !quizzesPending && !hasAttempts ? (
+                  <p className="mt-5 max-w-[42ch] text-sm text-text-muted">
+                    {quizzes.data?.length
+                      ? 'You have not saved a quiz attempt yet. Every run you save shows up here.'
+                      : 'Generate a quiz from a note, and every attempt you save shows up here.'}
+                  </p>
+                ) : (
+                  <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
+                    <Figure
+                      label="Attempts"
+                      hint={`Across ${plural(attempts.quizzesAttempted, 'quiz', 'quizzes')}.`}
+                    >
+                      {quizzesPending ? <Bar /> : String(attempts.scores.length)}
+                    </Figure>
+                    <Figure label="Average score" hint="Mean of every attempt.">
+                      {quizzesPending ? <Bar /> : `${Math.round(averagePercent)}%`}
+                    </Figure>
+                    <Figure label="Best score" hint="Your strongest run.">
+                      {quizzesPending ? <Bar /> : `${Math.round(bestPercent)}%`}
+                    </Figure>
+                    <Figure label="Last attempt" hint="Most recent saved run.">
+                      {quizzesPending ? <Bar /> : formatDate(lastAttemptAt) || '—'}
+                    </Figure>
+                  </dl>
+                )}
+              </div>
             )}
           </section>
         </div>
