@@ -25,6 +25,10 @@
   --color-text-muted: #625b72;
   --color-accent-solid: #6d28d9;
   --color-accent-strong: #5b21b6;
+  /* One ramp step lighter than `accent-solid`, for a filled CTA that should
+     read as an action without dominating its surroundings. Keeps ~5.7:1 on
+     white text. */
+  --color-accent-medium: #7c3aed;
   --color-accent-soft: #ede6fb;
   --color-on-accent: #ffffff;
 
@@ -148,6 +152,21 @@ h3 {
    flattened `.text-xs` weight so it reads as a label, not body text. */
 .rail-next-label {
   font-weight: 700;
+}
+
+/* "Due now" on the next-up card: a subtle step above the neutral due states,
+   which the flattened `.text-xs` weight would otherwise erase. */
+.rail-due-now {
+  font-weight: 600;
+}
+
+/* The review-queue CTA sits one ramp step lighter than a standard primary
+   button so it feels less dominant; hover still darkens it by one step. */
+.rail-review-btn {
+  background-color: var(--color-accent-medium);
+}
+.rail-review-btn:hover {
+  background-color: var(--color-accent-solid);
 }
 
 /* Flashcard flip — perspective/backface-visibility have no Tailwind utility class. */

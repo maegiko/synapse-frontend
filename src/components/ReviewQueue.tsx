@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconArrowLeft, IconArrowRight, IconCheck, IconDeck } from './icons'
-import { btnGhostSm, cardLink } from './ui'
+import { btnGhostSm, btnPrimarySm, cardLink } from './ui'
 import { calendarDaysFromToday, formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import type { ReviewQueueDeck } from '../api'
@@ -189,7 +189,7 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
             every title row aligns across the rail; it only carries text on the
             next-up card. */}
         <p
-          className="rail-next-label mb-1.5 text-xs uppercase tracking-[0.08em] text-accent-strong"
+          className="rail-next-label mb-1.5 text-xs text-accent-strong"
           aria-hidden={isNext ? undefined : true}
         >
           {isNext ? 'Next up' : ' '}
@@ -215,7 +215,7 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
           <span
             className={`min-w-0 truncate text-xs tabular-nums ${
-              isNext && isDueNow ? 'font-medium text-accent-strong' : 'text-text-muted'
+              isNext && isDueNow ? 'rail-due-now text-accent-strong' : 'text-text-muted'
             }`}
           >
             {timing}
@@ -223,7 +223,7 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
           <Link
             to={to}
             aria-label={`${action}: ${deck.title}`}
-            className={`${cardLink} -m-1 shrink-0 rounded-sm p-1 text-xs`}
+            className={`${btnPrimarySm} rail-review-btn shrink-0 gap-1.5 px-3 py-1.5 text-xs`}
           >
             {action}
             <IconArrowRight className="h-3.5 w-3.5" />
