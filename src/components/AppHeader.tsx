@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AppLink } from './AppLink'
 import synapseLogo from '../assets/synapse_logo.webp'
 import { useAuth } from '../auth/useAuth'
 import { Avatar } from './Avatar'
@@ -42,7 +43,7 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           <span className="translate-y-0.5">Synapse</span>
         </Link>
         {user && (
-          <Link
+          <AppLink
             to="/profile"
             onClick={(event) => {
               if (onLeave && !onLeave()) event.preventDefault()
@@ -55,7 +56,7 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
               fullName={user.fullName}
               className="transition-colors duration-150 hover:bg-accent-solid hover:text-on-accent"
             />
-          </Link>
+          </AppLink>
         )}
         <button type="button" className={btnGhostSm} onClick={handleLogout} disabled={loggingOut}>
           {loggingOut ? 'Logging out…' : 'Log out'}
