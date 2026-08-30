@@ -12,6 +12,8 @@ export const queryKeys = {
   quizzes: ['quizzes'] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
+  groups: ['groups'] as const,
+  group: (groupId: string) => ['groups', groupId] as const,
 }
 
 /**
@@ -115,5 +117,26 @@ export function useAllQuizScores(quizIds: string[] | undefined) {
         }
       },
     }),
+  })
+}
+
+/**
+ * Every study group, newest first, with the content counts the folder cards
+ * read from. The contents themselves come from `useGroup`.
+ */
+export function useGroups() {
+  return useQuery({ queryKey: queryKeys.groups, queryFn: api.groups.list })
+}
+
+/**
+ * One group with its notes, decks, and quizzes. Content items carry `id` and
+ * `title` for all three kinds — decks included — so they are their own type
+ * rather than a `FlashcardDeck`.
+ */
+export function useGroup(groupId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.group(groupId ?? ''),
+    queryFn: () => api.groups.get(groupId ?? ''),
+    enabled: Boolean(groupId),
   })
 }
