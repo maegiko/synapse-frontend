@@ -37,6 +37,18 @@ export const API_PATHS = {
     card: (deckId: string, cardId: string) =>
       `/api/flashcards/${encodeURIComponent(deckId)}/cards/${encodeURIComponent(cardId)}`,
   },
+  groups: {
+    create: '/api/groups',
+    list: '/api/groups/list',
+    /** Also the PATCH and DELETE target for one group. */
+    detail: (groupId: string) => `/api/groups/${encodeURIComponent(groupId)}`,
+    /**
+     * Membership. `PUT` adds or moves, `DELETE` clears; both answer 204. The
+     * path segment is the content kind exactly as the backend names it.
+     */
+    content: (groupId: string, kind: 'notes' | 'decks' | 'quizzes', resourceId: string) =>
+      `/api/groups/${encodeURIComponent(groupId)}/${kind}/${encodeURIComponent(resourceId)}`,
+  },
   quiz: {
     list: '/api/quiz/list',
     generate: '/api/quiz/generate',

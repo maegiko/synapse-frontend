@@ -1,11 +1,12 @@
 import * as auth from './auth'
 import * as flashcards from './flashcards'
+import * as groups from './groups'
 import * as notes from './notes'
 import * as quiz from './quiz'
 import * as user from './user'
 
 /** Every backend call in the app goes through this object. */
-export const api = { auth, user, notes, flashcards, quiz }
+export const api = { auth, user, notes, flashcards, quiz, groups }
 
 export { ApiError, NETWORK_ERROR_STATUS, refreshAccessToken } from './client'
 export { setAccessToken, subscribeToAccessToken } from './tokenStore'
