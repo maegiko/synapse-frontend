@@ -4,7 +4,14 @@ import { IconArrowLeft, IconArrowRight, IconCheck, IconDeck } from './icons'
 import { btnGhostSm, btnPrimarySm, cardLink } from './ui'
 import { calendarDaysFromToday, formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import type { ReviewQueueDeck } from '../api'
+import type { ReviewQueueDeck, ReviewRating } from '../api'
+
+const RATING_BADGES: Record<ReviewRating, { label: string; className: string }> = {
+  AGAIN: { label: 'AGAIN', className: 'bg-error-soft text-error-solid' },
+  HARD: { label: 'HARD', className: 'bg-warning-soft text-warning-solid' },
+  GOOD: { label: 'GOOD', className: 'bg-accent-soft text-accent-strong' },
+  EASY: { label: 'EASY', className: 'bg-success-soft text-success-solid' },
+}
 
 /**
  * The streak card's own shape, so the compact states of the two sit under the
@@ -178,6 +185,7 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
   const action = isEmpty ? 'Add cards' : isNext ? 'Review now' : 'Review'
   const isDueNow = (calendarDaysFromToday(deck.nextReviewDate) ?? 0) <= 0
   const timing = isNext && isDueNow ? 'Due now' : dueLabel(deck.nextReviewDate)
+  const lastRating = deck.lastRating ? RATING_BADGES[deck.lastRating] : null
 
   return (
     <li className={RAIL_ITEM}>
@@ -210,9 +218,18 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
               <p className="recents-title truncate text-base text-text" title={deck.title}>
                 {deck.title}
               </p>
-              <p className="mt-0.5 text-xs text-text-muted tabular-nums">
-                {plural(deck.cardCount, 'card')}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-text-muted tabular-nums">
+                  {plural(deck.cardCount, 'card')}
+                </span>
+                {lastRating && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-bold ${lastRating.className}`}
+                  >
+                    {lastRating.label}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
