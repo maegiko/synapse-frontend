@@ -71,6 +71,8 @@ export interface NoteSummary {
   keypoints: string[]
   concepts: ConceptSummary[]
   importantTerms: string[]
+  /** The study group holding this note, or null while it is ungrouped. */
+  groupId: PublicId | null
 }
 
 export interface NoteListResponse {
@@ -99,6 +101,8 @@ export interface FlashcardDeck {
   deckId: PublicId
   title: string
   flashcards: SavedFlashcard[]
+  /** The study group holding this deck, or null while it is ungrouped. */
+  groupId: PublicId | null
 }
 
 export interface FlashcardListResponse {
@@ -173,6 +177,8 @@ export interface Quiz {
   /** 1 through 5, or null until it is set. Generated quizzes start null. */
   difficulty: number | null
   createdAt: LocalDateTimeString
+  /** The study group holding this quiz, or null while it is ungrouped. */
+  groupId: PublicId | null
 }
 
 /** List items carry question previews only: no answers and no questionType. */
@@ -190,6 +196,8 @@ export interface QuizListItem {
   /** 1 through 5, or null until it is set. */
   difficulty: number | null
   createdAt: LocalDateTimeString
+  /** The study group holding this quiz, or null while it is ungrouped. */
+  groupId: PublicId | null
 }
 
 export interface QuizListResponse {
@@ -236,3 +244,65 @@ export interface QuizScore {
 export interface QuizScoreListResponse {
   scores: QuizScore[]
 }
+
+/**
+ * A study group is a user-owned folder holding notes, decks, and quizzes at
+ * once. Membership is single-valued: a resource is in zero or one group, so
+ * adding one that already belongs elsewhere moves it rather than copying it.
+ */
+export interface StudyGroup {
+  id: PublicId
+  name: string
+  description: string | null
+  createdAt: LocalDateTimeString
+}
+
+/** List rows carry counts only; the contents come from the single-group route. */
+export interface StudyGroupListItem {
+  id: PublicId
+  name: string
+  description: string | null
+  noteCount: number
+  deckCount: number
+  quizCount: number
+  createdAt: LocalDateTimeString
+}
+
+export interface StudyGroupListResponse {
+  groups: StudyGroupListItem[]
+}
+
+/**
+ * Group content items are uniform: `id` and `title` for all three kinds,
+ * including decks, which are `deckId` in their own endpoints. Do not reuse a
+ * resource type here — map explicitly.
+ */
+export interface StudyGroupContentItem {
+  id: PublicId
+  title: string
+  createdAt: LocalDateTimeString
+}
+
+export interface StudyGroupDetail {
+  id: PublicId
+  name: string
+  description: string | null
+  notes: StudyGroupContentItem[]
+  decks: StudyGroupContentItem[]
+  quizzes: StudyGroupContentItem[]
+  createdAt: LocalDateTimeString
+}
+
+export interface CreateGroupRequest {
+  name: string
+  /** Omitted, null, or blank all store null. */
+  description?: string | null
+}
+
+/** At least one property must be present; only supplied values change. */
+export type UpdateGroupRequest =
+  | { name: string; description?: string | null }
+  | { name?: string | null; description: string }
+
+/** The three kinds of content a group can hold, as used in membership routes. */
+export type GroupContentKind = 'notes' | 'decks' | 'quizzes'
