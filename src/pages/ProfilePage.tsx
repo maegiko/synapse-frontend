@@ -139,6 +139,7 @@ interface FieldErrors {
 interface PasswordErrors {
   currentPassword?: string
   newPassword?: string
+  confirmNewPassword?: string
 }
 
 /** Which editor the profile card is showing. */
@@ -185,6 +186,7 @@ export function ProfilePage() {
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({})
   const [passwordFormError, setPasswordFormError] = useState('')
 
@@ -203,6 +205,7 @@ export function ProfilePage() {
   function startChangingPassword() {
     setCurrentPassword('')
     setNewPassword('')
+    setConfirmNewPassword('')
     setPasswordErrors({})
     setPasswordFormError('')
     setSavedMessage('')
@@ -270,7 +273,8 @@ export function ProfilePage() {
 
   // Like the details form's `hasChanges`: the submit stays disabled until there
   // is something to send.
-  const passwordFilled = currentPassword.length > 0 && newPassword.length > 0
+  const passwordFilled =
+    currentPassword.length > 0 && newPassword.length > 0 && confirmNewPassword.length > 0
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -300,6 +304,11 @@ export function ProfilePage() {
     const errors: PasswordErrors = {
       currentPassword: currentPassword ? undefined : 'Enter your current password.',
       newPassword: validatePassword(newPassword) ?? undefined,
+      confirmNewPassword: !confirmNewPassword
+        ? 'Confirm your new password.'
+        : confirmNewPassword === newPassword
+          ? undefined
+          : 'The passwords do not match.',
     }
     setPasswordErrors(errors)
     setPasswordFormError('')
@@ -548,6 +557,17 @@ export function ProfilePage() {
                   onChange={(event) => setNewPassword(event.target.value)}
                 />
 
+                <TextField
+                  label="Confirm new password"
+                  type="password"
+                  name="confirmNewPassword"
+                  autoComplete="new-password"
+                  value={confirmNewPassword}
+                  error={passwordErrors.confirmNewPassword}
+                  disabled={changePassword.isPending}
+                  onChange={(event) => setConfirmNewPassword(event.target.value)}
+                />
+
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     type="submit"
@@ -566,7 +586,7 @@ export function ProfilePage() {
                   </button>
                   {!passwordFilled && !changePassword.isPending && (
                     <span className="text-xs text-text-muted">
-                      Fill in both fields to continue.
+                      Fill in all fields to continue.
                     </span>
                   )}
                 </div>
