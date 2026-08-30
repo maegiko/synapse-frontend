@@ -132,6 +132,8 @@ export interface ReviewQueueDeck {
   intervalDays: number
   reviewCount: number
   lastReviewedAt: LocalDateTimeString | null
+  /** The most recent recall grade, or null until the deck has been reviewed. */
+  lastRating: ReviewRating | null
 }
 
 export interface ReviewQueueResponse {
