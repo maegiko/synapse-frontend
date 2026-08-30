@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import {
   api,
   type ChangePasswordRequest,
@@ -9,11 +8,12 @@ import {
   type UserDetails,
 } from '../api'
 import { AppHeader } from '../components/AppHeader'
+import { AppLink } from '../components/AppLink'
+import { BackLink } from '../components/BackLink'
 import { Avatar } from '../components/Avatar'
 import { FormAlert } from '../components/FormAlert'
 import { TextField } from '../components/TextField'
 import {
-  IconArrowLeft,
   IconArrowRight,
   IconCheck,
   IconDeck,
@@ -32,6 +32,7 @@ import {
 } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { DASHBOARD_BACK } from '../lib/backTrail'
 import { calendarDaysFromToday, formatCalendarDate, formatDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryClient } from '../lib/queryClient'
@@ -101,7 +102,7 @@ function LibraryRow({
   detail?: string
 }) {
   return (
-    <Link
+    <AppLink
       to={to}
       className="group flex items-center gap-3 py-3.5 no-underline transition-colors hover:bg-surface-alt/60"
     >
@@ -116,7 +117,7 @@ function LibraryRow({
         {detail}
       </span>
       <IconArrowRight className="h-3.5 w-3.5 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5" />
-    </Link>
+    </AppLink>
   )
 }
 
@@ -342,10 +343,7 @@ export function ProfilePage() {
       <AppHeader />
 
       <main className={`${shell} pt-10 pb-20`}>
-        <Link to="/dashboard" className={cardLink}>
-          <IconArrowLeft />
-          Back to your dashboard
-        </Link>
+        <BackLink fallback={DASHBOARD_BACK} className={cardLink} />
 
         <div className="mt-5 max-w-200">
           <h1 className="text-3xl">Your profile</h1>
@@ -670,10 +668,10 @@ export function ProfilePage() {
               />
             </div>
 
-            <Link to="/library" className={`${cardLink} mt-4`}>
+            <AppLink to="/library" className={`${cardLink} mt-4`}>
               Browse your library
               <IconArrowRight />
-            </Link>
+            </AppLink>
           </section>
 
           <section className="border-t border-border pt-8 lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
