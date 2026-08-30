@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { ActionCard } from '../components/ActionCard'
+import { DashboardGroups } from '../components/DashboardGroups'
 import { RecentsCard } from '../components/RecentsCard'
 import { RecentsItem } from '../components/RecentsItem'
 import { ReviewQueue } from '../components/ReviewQueue'
@@ -258,6 +259,8 @@ export function DashboardPage() {
             blockedReason={needsFirstNote ? 'Summarise a note first' : undefined}
           />
         </div>
+
+        <DashboardGroups />
 
         <div className="mt-14 mb-5 flex items-center justify-between gap-4">
           <h2 className="text-xl">Your library</h2>
