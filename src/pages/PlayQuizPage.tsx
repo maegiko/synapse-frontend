@@ -21,6 +21,7 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
+import { useSessionTimer } from '../lib/useSessionTimer'
 import { DASHBOARD_BACK, useBackLink } from '../lib/backTrail'
 import type { BackTarget } from '../lib/backTrail'
 import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
@@ -73,6 +74,12 @@ const LEAVE_BODY =
   'The quiz is still in progress. Your answers so far will be lost and no score will be saved.'
 
 type Phase = 'playing' | 'rating' | 'summary'
+
+/** What one finished attempt sends: the score, and how long it took. */
+interface SavedAttempt {
+  score: number
+  durationSeconds: number
+}
 
 function PlaySkeleton() {
   return (
@@ -264,6 +271,10 @@ function Runner({
   const { recordQualifyingAction } = useStreakCelebration()
   const questions = quiz.questions
 
+  // Starts when the attempt does and pauses while the tab is hidden, so what is
+  // reported is time actually spent answering.
+  const elapsedSeconds = useSessionTimer()
+
   const [seed] = useState(newSeed)
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -303,10 +314,14 @@ function Runner({
   const back = useBackLink(quizBack)
 
   const saveScore = useMutation({
-    mutationFn: (finalScore: number) =>
-      recordQualifyingAction(() => api.quiz.saveScore(quiz.id, finalScore)),
+    // The duration is measured once, when the last answer lands, and travels
+    // with the score rather than being sent on its own.
+    mutationFn: ({ score: finalScore, durationSeconds }: SavedAttempt) =>
+      recordQualifyingAction(() => api.quiz.saveScore(quiz.id, finalScore, durationSeconds)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizScores(quiz.id) })
+      // Every analytics window now has this attempt, its score, and its length.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
     },
     onError: (error) =>
       setSaveError(`Your score could not be saved. ${toFormMessage(error)}`),
@@ -327,11 +342,14 @@ function Runner({
       setIndex(index + 1)
       return
     }
+    // The attempt ends here, not on the difficulty screen that follows, so the
+    // timer is read now rather than when the request settles.
+    const durationSeconds = elapsedSeconds()
     // The run is over, so nothing is left to lose and the guard comes off.
     isGuarding.current = false
     setClosingNote(drawClosingNote(nextScore, order.length))
     setPhase('rating')
-    saveScore.mutate(nextScore)
+    saveScore.mutate({ score: nextScore, durationSeconds })
   }
 
   function finishRating(level: number | null) {

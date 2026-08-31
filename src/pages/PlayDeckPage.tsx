@@ -20,6 +20,7 @@ import { formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryKeys, useFlashcardDeck } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
+import { useSessionTimer } from '../lib/useSessionTimer'
 import { DASHBOARD_BACK, useBackLink } from '../lib/backTrail'
 import type { BackTarget } from '../lib/backTrail'
 import { newSeed, shuffled, SHUFFLE_PARAM } from '../lib/shuffle'
@@ -113,6 +114,16 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   // array is built here — a fresh one each render would defeat the memo below.
   const cards = deck.flashcards
 
+  // Starts when the run does and pauses while the tab is hidden, so what is
+  // reported is time actually spent on the cards.
+  const elapsedSeconds = useSessionTimer()
+  /**
+   * The run's length, frozen the moment the last card was finished. The review
+   * is sent from the rating screen, and how long someone spends choosing a
+   * rating is not study time.
+   */
+  const sessionSeconds = useRef<number | null>(null)
+
   const [seed, setSeed] = useState(newSeed)
   const [index, setIndex] = useState(0)
   const [isRevealed, setIsRevealed] = useState(false)
@@ -159,12 +170,13 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
         setPhase('summary')
         return
       }
+      sessionSeconds.current = elapsedSeconds()
       setPhase('rating')
       return
     }
     setIndex((current) => current + 1)
     setIsRevealed(false)
-  }, [isLast, reviewResult])
+  }, [elapsedSeconds, isLast, reviewResult])
 
   // Stepping back re-hides the answer, so a revisited card is asked again
   // rather than handed straight over.
@@ -178,14 +190,22 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   // schedule and for the streak. It is a one-shot call, so a failure holds the
   // rating screen open to be retried rather than being swallowed.
   const review = useMutation({
+    // One call per completed run, carrying the length frozen for that run. A
+    // rejected review saves nothing at all, so retrying it re-sends the same
+    // measured length rather than a second, longer session.
     mutationFn: (rating: ReviewRating) =>
-      recordQualifyingAction(() => api.flashcards.review(deck.deckId, rating)),
+      recordQualifyingAction(() =>
+        api.flashcards.review(deck.deckId, rating, sessionSeconds.current ?? elapsedSeconds()),
+      ),
     onSuccess: (result) => {
       // The run is recorded, so nothing is left to lose and the guard comes off.
       isGuarding.current = false
       setReviewResult(result)
       // The deck has left the review queue until its new due date.
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
+      // Every analytics window now has one more session, and this run's cards
+      // and duration, in it.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
       // The response carries the user's new lifetime total, so the cached
       // profile is corrected from it instead of being fetched again.
       queryClient.setQueryData<UserDetails>(
