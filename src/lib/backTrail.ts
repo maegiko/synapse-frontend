@@ -100,6 +100,29 @@ function pushTrail(trail: BackTarget[], here: BackTarget): BackTarget[] {
   return [...base, here].slice(-MAX_TRAIL)
 }
 
+/**
+ * Whether a trail rung points at the page already on screen. Same-page links
+ * can create a new history entry with the current route on its own trail; that
+ * entry is not somewhere the page can meaningfully go "back" to.
+ *
+ * Search remains part of the identity so, for example, the Notes and Decks
+ * library filters can still lead back to one another. Hashes are view state and
+ * do not make a page a different back destination.
+ */
+function pointsAtCurrentPage(target: BackTarget, pathname: string, search: string): boolean {
+  try {
+    const destination = new URL(target.to, 'https://synapse.local')
+    const currentPath = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
+    const destinationPath =
+      destination.pathname.length > 1
+        ? destination.pathname.replace(/\/+$/, '')
+        : destination.pathname
+    return destinationPath === currentPath && destination.search === search
+  } catch {
+    return false
+  }
+}
+
 /** The trail behind the current page, oldest first. */
 export function useBackTrail(): BackTarget[] {
   return readTrail(useLocation().state)
@@ -130,19 +153,29 @@ export interface ResolvedBackLink extends BackTarget {
  * `fallback` for a visit that started here (a bookmark, a fresh tab, a reload).
  */
 export function useBackLink(fallback: BackTarget): ResolvedBackLink {
-  const { state } = useLocation()
+  const { pathname, search, state } = useLocation()
   // Memoised on the two things that can actually change it, so the result is
   // stable enough to be an effect dependency — the exit guards on the play
   // pages listen for the browser's Back button and must not reinstall that
   // listener on every render.
   return useMemo(() => {
     const trail = readTrail(state)
-    const previous = trail[trail.length - 1]
+    // Ignore every trailing self-reference rather than only one, so old or
+    // hand-edited location state cannot expose the same bug repeatedly.
+    let previousIndex = trail.length - 1
+    while (
+      previousIndex >= 0 &&
+      pointsAtCurrentPage(trail[previousIndex], pathname, search)
+    ) {
+      previousIndex -= 1
+    }
+
+    const previous = trail[previousIndex]
     if (!previous) {
       return { to: fallback.to, label: fallback.label, state: { [TRAIL_KEY]: [] } }
     }
-    return { ...previous, state: { [TRAIL_KEY]: trail.slice(0, -1) } }
-  }, [state, fallback.to, fallback.label])
+    return { ...previous, state: { [TRAIL_KEY]: trail.slice(0, previousIndex) } }
+  }, [pathname, search, state, fallback.to, fallback.label])
 }
 
 /**
