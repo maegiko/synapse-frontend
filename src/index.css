@@ -36,8 +36,17 @@
   --color-success-soft: #e7f5ea;
   --color-error-solid: #b91c1c;
   --color-error-soft: #fdecec;
-  --color-warning-solid: #b45309;
-  --color-warning-soft: #fdf1de;
+  /* Gold rather than the burnt orange this used to be: as an adjacent bar
+     segment or a neighbouring badge, an orange sat only ~26 degrees of hue from
+     `error-solid` and at almost the same lightness, so "again" and "hard" read
+     as one colour. Gold is ~44 degrees out and unmistakably its own. Text-safe
+     on white, `warning-soft`, and `surface-alt` alike. */
+  --color-warning-solid: #8a6500;
+  /* The fill twin of `warning-solid`, the way `accent-solid` is to
+     `accent-strong`: a block of colour carries no contrast requirement of its
+     own, so this is free to be bright where the text beside it cannot be. */
+  --color-warning-medium: #d1a01a;
+  --color-warning-soft: #fbf2d9;
   --color-info-solid: #1d4ed8;
   --color-info-soft: #e8eefd;
 

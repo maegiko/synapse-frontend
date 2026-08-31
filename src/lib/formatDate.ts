@@ -80,17 +80,50 @@ export function formatDateTime(value: string | null | undefined, timeZone?: stri
  * converting one into any zone would shift it off the day it means.
  */
 export function formatCalendarDate(value: string | null | undefined): string {
-  if (!value) return ''
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return ''
-  const date = new Date(Date.UTC(year, month - 1, day))
-  if (Number.isNaN(date.getTime())) return ''
+  const date = calendarDateAsUtc(value)
+  if (!date) return ''
   return date.toLocaleDateString(undefined, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+/**
+ * The same calendar date as a short day-and-month label, for the axis of a
+ * chart where the year is already stated by the window it belongs to.
+ */
+export function formatCalendarDateShort(value: string | null | undefined): string {
+  const date = calendarDateAsUtc(value)
+  if (!date) return ''
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' })
+}
+
+/** Just the month of a backend calendar date, for grouping a run of them. */
+export function formatCalendarMonth(value: string | null | undefined): string {
+  const date = calendarDateAsUtc(value)
+  if (!date) return ''
+  return date.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
+}
+
+/**
+ * The weekday of a backend calendar date, `0` for Sunday. Read off the date as
+ * written rather than as an instant, so a chart that lays days out in weeks
+ * lines them up the way the user's own calendar does.
+ */
+export function calendarWeekday(value: string | null | undefined): number | null {
+  const date = calendarDateAsUtc(value)
+  return date ? date.getUTCDay() : null
+}
+
+/** A `YYYY-MM-DD` calendar date pinned to UTC midnight, or null if unusable. */
+function calendarDateAsUtc(value: string | null | undefined): Date | null {
+  if (!value) return null
+  const [year, month, day] = value.split('-').map(Number)
+  if (!year || !month || !day) return null
+  const date = new Date(Date.UTC(year, month - 1, day))
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 /**
