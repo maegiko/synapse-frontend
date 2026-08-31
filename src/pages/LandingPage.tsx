@@ -101,7 +101,8 @@ export function LandingPage() {
           <div className={`${shell} grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-14 items-center`}>
             <div>
               <h1 className="mb-5.5 text-3xl md:text-4xl leading-[1.08]">
-                Turn your notes into summaries, flashcards and quizzes.
+                Turn your <em className="mr-[0.08em]">notes</em> into summaries, flashcards and
+                quizzes.
               </h1>
               <p className="mb-8.5 max-w-[46ch] text-lg text-text-muted">
                 Synapse turns your own lecture slides and course PDFs into study
