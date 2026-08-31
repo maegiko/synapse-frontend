@@ -164,6 +164,24 @@ export function IconRemoveFromGroup({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
+/** A study streak, matching the flame the streak card and profile already use. */
+export function IconFlame({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <path d="M12 3.5c.5 2.4 2 3.6 3.2 4.9A6.3 6.3 0 0 1 17.2 13a5.2 5.2 0 0 1-10.4 0c0-1.7.6-3 1.6-4.2.3.9.9 1.5 1.6 1.8-.4-2.6.3-5 2-7.1Z" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** Nothing recorded: a broken outline, the visual opposite of {@link IconCheck}. */
+export function IconCircleDashed({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5" strokeDasharray="3 3.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 /** Whole stars only, so this is either filled or outlined — never partial. */
 export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & { filled?: boolean }) {
   return (

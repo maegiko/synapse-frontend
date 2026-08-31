@@ -16,8 +16,10 @@ import {
   IconCard,
   IconChart,
   IconCheck,
+  IconCircleDashed,
   IconClock,
   IconDeck,
+  IconFlame,
   IconPlay,
   IconQuiz,
   IconStar,
@@ -554,26 +556,32 @@ function AnalyticsSections({
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 sm:grid-cols-3">
           <Metric
             label="Current streak"
+            icon={<IconFlame className="h-4 w-4" />}
             value={plural(consistency.currentStreak, 'day')}
           />
           <Metric
             label="Longest streak"
+            icon={<IconStar className="h-4 w-4" />}
             value={plural(consistency.longestStreak, 'day')}
           />
           <Metric
             label="Active days"
+            icon={<IconCheck className="h-4 w-4" />}
             value={`${consistency.activeDays} of ${period.days}`}
           />
           <Metric
             label="Inactive days"
+            icon={<IconCircleDashed className="h-4 w-4" />}
             value={`${consistency.inactiveDays} of ${period.days}`}
           />
           <Metric
             label="Sessions per active day"
+            icon={<IconPlay className="h-4 w-4" />}
             value={formatAverage(consistency.averageSessionsPerActiveDay)}
           />
           <Metric
             label="Longest gap"
+            icon={<IconClock className="h-4 w-4" />}
             value={plural(consistency.longestInactivityGap, 'day')}
           />
         </dl>
