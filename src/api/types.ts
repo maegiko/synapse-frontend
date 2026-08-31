@@ -79,6 +79,14 @@ export interface NoteListResponse {
   notes: NoteSummary[]
 }
 
+/**
+ * At least one property must be present and non-null; only supplied values
+ * change. The structured keypoints, concepts, and terms cannot be edited.
+ */
+export type UpdateNoteRequest =
+  | { title: string; overview?: string }
+  | { title?: string; overview: string }
+
 /** Generation responses carry no card IDs; fetch the deck when IDs are needed. */
 export interface GeneratedFlashcard {
   title: string
@@ -144,6 +152,19 @@ export interface AddFlashcardRequest {
   question: string
   answer: string
 }
+
+/** Renaming is the only deck edit; a missing or blank title is rejected. */
+export interface UpdateDeckRequest {
+  title: string
+}
+
+/**
+ * At least one property must be present and non-null; only supplied values
+ * change. Both are trimmed and must be non-blank when supplied.
+ */
+export type UpdateFlashcardRequest =
+  | { question: string; answer?: string }
+  | { question?: string; answer: string }
 
 /** Manual creation answers with `question`, unlike list and generation responses. */
 export interface AddFlashcardResponse {
@@ -216,6 +237,29 @@ export interface CreateQuestionRequest {
   question: string
   questionType: QuestionType
   answers: CreateQuestionAnswerRequest[]
+}
+
+/**
+ * At least one property must be present and non-null; only supplied values
+ * change. `title` is trimmed and must be non-blank; a blank `description` clears
+ * it back to null. Difficulty is set through its own endpoint, not here.
+ */
+export type UpdateQuizRequest =
+  | { title: string; description?: string | null }
+  | { title?: string; description: string | null }
+
+/**
+ * At least one property must be present and non-null; only supplied values
+ * change. When `answers` is present it is the complete replacement set: the old
+ * answers are discarded and every answer ID changes, so the question or quiz
+ * must be refetched afterwards. Changing `questionType` requires a matching
+ * `answers` set (four for multiple choice, two for boolean), with exactly one
+ * marked correct.
+ */
+export interface UpdateQuestionRequest {
+  question?: string
+  questionType?: QuestionType
+  answers?: CreateQuestionAnswerRequest[]
 }
 
 /** Manual creation uses a different field vocabulary from later quiz fetches. */
