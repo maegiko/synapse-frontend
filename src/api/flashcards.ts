@@ -11,6 +11,8 @@ import type {
   ReviewQueueDeck,
   ReviewQueueResponse,
   ReviewRating,
+  UpdateDeckRequest,
+  UpdateFlashcardRequest,
 } from './types'
 
 /** Newest first, unpaginated, with every card of every deck included. */
@@ -49,6 +51,37 @@ export async function addCard(
   return apiRequest<AddFlashcardResponse>(API_PATHS.flashcards.detail(deckId), {
     method: 'POST',
     json: card,
+    authenticated: true,
+  })
+}
+
+/**
+ * Renames a deck. Returns the complete updated deck, cards included and in
+ * position order. The deck's review schedule and history are untouched.
+ */
+export async function updateDeck(
+  deckId: PublicId,
+  body: UpdateDeckRequest,
+): Promise<FlashcardDeck> {
+  return apiRequest<FlashcardDeck>(API_PATHS.flashcards.detail(deckId), {
+    method: 'PATCH',
+    json: body,
+    authenticated: true,
+  })
+}
+
+/**
+ * Edits one card's question and/or answer. Only the supplied fields change. The
+ * response names the question `question`, while the saved deck names it `title`.
+ */
+export async function updateCard(
+  deckId: PublicId,
+  cardId: PublicId,
+  body: UpdateFlashcardRequest,
+): Promise<AddFlashcardResponse> {
+  return apiRequest<AddFlashcardResponse>(API_PATHS.flashcards.card(deckId, cardId), {
+    method: 'PATCH',
+    json: body,
     authenticated: true,
   })
 }
