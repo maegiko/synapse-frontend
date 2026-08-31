@@ -389,7 +389,7 @@ export function ProfilePage() {
         {/* The shared surfaceCard classes minus its shadow-sm, so the card can
             carry a slightly deeper drop shadow as the page's anchor. */}
         <section
-          className="mt-8 rounded-md border border-border bg-surface px-6 py-6 shadow-[0_4px_18px_rgba(30,20,60,0.05)] sm:px-8 sm:py-7"
+          className="mt-8 rounded-md border border-border bg-surface px-6 py-6 shadow-sm sm:px-8 sm:py-7"
         >
           {details.isError && (
             <div className={profile ? 'mb-6' : ''}>
@@ -627,7 +627,7 @@ export function ProfilePage() {
               <button
                 type="button"
                 onClick={() => void streak.refetch()}
-                className="text-sm font-bold text-accent-solid hover:underline"
+                className="text-sm font-bold text-accent-foreground hover:underline"
               >
                 Try again
               </button>
@@ -721,7 +721,7 @@ export function ProfilePage() {
             </AppLink>
           </section>
 
-          <section className="border-t border-border pt-8 [&_dd]:text-accent-solid lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
+          <section className="border-t border-border pt-8 [&_dd]:text-accent-foreground lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
             <h2 className="text-base font-medium">Performance</h2>
 
             {/* An `sr-only` radio group styled as underline tabs — the same
@@ -765,7 +765,7 @@ export function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => void analytics.refetch()}
-                  className="text-sm font-bold text-accent-solid hover:underline"
+                  className="text-sm font-bold text-accent-foreground hover:underline"
                 >
                   Try again
                 </button>

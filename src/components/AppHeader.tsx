@@ -4,6 +4,7 @@ import { AppLink } from './AppLink'
 import synapseLogo from '../assets/synapse_logo.webp'
 import { useAuth } from '../auth/useAuth'
 import { Avatar } from './Avatar'
+import { ThemeToggle } from './ThemeToggle'
 import { btnGhostSm, shell } from './ui'
 
 interface AppHeaderProps {
@@ -42,22 +43,25 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           <img src={synapseLogo} alt="" width="48" height="48" decoding="async" />
           <span className="translate-y-0.5">Synapse</span>
         </Link>
-        {user && (
-          <AppLink
-            to="/profile"
-            onClick={(event) => {
-              if (onLeave && !onLeave()) event.preventDefault()
-            }}
-            className="no-underline"
-            aria-label="Your profile"
-            title="Your profile"
-          >
-            <Avatar
-              fullName={user.fullName}
-              className="transition-colors duration-150 hover:bg-accent-solid hover:text-on-accent"
-            />
-          </AppLink>
-        )}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          {user && (
+            <AppLink
+              to="/profile"
+              onClick={(event) => {
+                if (onLeave && !onLeave()) event.preventDefault()
+              }}
+              className="no-underline"
+              aria-label="Your profile"
+              title="Your profile"
+            >
+              <Avatar
+                fullName={user.fullName}
+                className="transition-colors duration-150 hover:bg-accent-solid hover:text-on-accent"
+              />
+            </AppLink>
+          )}
+        </div>
         <button type="button" className={btnGhostSm} onClick={handleLogout} disabled={loggingOut}>
           {loggingOut ? 'Logging out…' : 'Log out'}
         </button>

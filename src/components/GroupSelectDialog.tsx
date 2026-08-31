@@ -186,7 +186,7 @@ export function GroupSelectDialog({
                           : 'cursor-pointer border-border bg-surface hover:border-accent-solid hover:bg-surface-alt/60 disabled:cursor-not-allowed disabled:opacity-60'
                       }`}
                     >
-                      <IconGroup className="h-4.5 w-4.5 shrink-0 text-accent-solid" />
+                      <IconGroup className="h-4.5 w-4.5 shrink-0 text-accent-foreground" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-bold text-text">
                           {group.name}

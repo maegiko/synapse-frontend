@@ -59,6 +59,23 @@ export function IconClock({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
+export function IconMoon({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <path d="M19.2 15.3A8.1 8.1 0 0 1 8.7 4.8 8.3 8.3 0 1 0 19.2 15.3Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+export function IconSun({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="3.6" />
+      <path d="M12 2.8v2M12 19.2v2M2.8 12h2M19.2 12h2M5.5 5.5l1.4 1.4M17.1 17.1l1.4 1.4M18.5 5.5l-1.4 1.4M6.9 17.1l-1.4 1.4" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconQuiz({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">

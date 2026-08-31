@@ -15,11 +15,11 @@ export const creationAside = 'lg:pt-8'
 
 export const btnBase =
   'inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm font-bold no-underline border border-transparent transition-[transform,box-shadow,background-color] duration-150 ease-out'
-export const btnPrimarySm = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
-export const btnPrimaryLg = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-6 py-3.5 text-base hover:bg-accent-strong hover:shadow-md hover:-translate-y-px`
-export const btnPrimaryLgInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-6 py-3.5 text-base hover:bg-surface-alt`
-export const btnGhostSm = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-4.5 py-2.25 text-sm hover:bg-stone-300`
-export const btnGhostLg = `${btnBase} border-stone-300 bg-stone-200 text-stone-800 px-6 py-3.25 text-base hover:bg-stone-300`
+export const btnPrimarySm = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-accent-hover hover:shadow-md hover:-translate-y-px`
+export const btnPrimaryLg = `${btnBase} bg-accent-solid text-on-accent shadow-sm px-6 py-3.5 text-base hover:bg-accent-hover hover:shadow-md hover:-translate-y-px`
+export const btnPrimaryLgInverted = `${btnBase} bg-on-accent text-accent-on-light shadow-sm px-6 py-3.5 text-base hover:bg-inverted-hover`
+export const btnGhostSm = `${btnBase} border-control-border bg-control text-control-text px-4.5 py-2.25 text-sm hover:bg-control-hover`
+export const btnGhostLg = `${btnBase} border-control-border bg-control text-control-text px-6 py-3.25 text-base hover:bg-control-hover`
 
 /** Greys an accent button out, for a request in flight or an action not yet built. */
 export const btnPrimaryDisabled =
@@ -29,7 +29,7 @@ export const btnPrimaryDisabled =
 export const btnSubmit = `${btnPrimaryLg} w-full ${btnPrimaryDisabled}`
 
 /** Destructive actions: quiet in a toolbar, solid only on the confirm step. */
-export const btnDangerSm = `${btnBase} bg-error-solid text-on-accent shadow-sm px-4.5 py-2.25 text-sm hover:bg-error-solid hover:shadow-md hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none disabled:translate-y-0`
+export const btnDangerSm = `${btnBase} bg-error-solid text-on-status shadow-sm px-4.5 py-2.25 text-sm hover:bg-error-solid hover:shadow-md hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none disabled:translate-y-0`
 export const btnDangerGhostSm = `${btnBase} border-error-solid/30 bg-error-soft text-error-solid px-4.5 py-2.25 text-sm hover:border-error-solid/55 hover:bg-error-solid/10 disabled:cursor-not-allowed disabled:opacity-60`
 
 export const fieldLabel = 'mb-1.5 block text-sm font-bold text-text'
@@ -57,6 +57,6 @@ export const iconChip =
 export const countPill =
   'inline-flex h-6.5 items-center rounded-full bg-surface-alt px-2.5 text-xs font-bold text-text-muted tabular-nums'
 
-export const btnPrimaryMdInverted = `${btnBase} bg-on-accent text-accent-strong shadow-sm px-5.5 py-3 text-base hover:bg-surface-alt hover:shadow-md hover:-translate-y-px`
+export const btnPrimaryMdInverted = `${btnBase} bg-on-accent text-accent-on-light shadow-sm px-5.5 py-3 text-base hover:bg-inverted-hover hover:shadow-md hover:-translate-y-px`
 export const cardLink =
-  'inline-flex items-center gap-1.5 text-sm font-bold text-accent-solid no-underline hover:underline'
+  'inline-flex items-center gap-1.5 text-sm font-bold text-accent-foreground no-underline hover:underline'

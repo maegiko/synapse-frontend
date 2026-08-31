@@ -95,14 +95,14 @@ function ContentCard({
     <div
       className={`${surfaceCard} group relative flex min-w-0 items-center gap-3 p-4 transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent-solid hover:shadow-md`}
     >
-      <span className="shrink-0 text-accent-solid" aria-hidden="true">
+      <span className="shrink-0 text-accent-foreground" aria-hidden="true">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
         <AppLink
           to={to}
           trailLabel={groupName}
-          className="block truncate text-sm font-bold text-text no-underline transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-accent-solid"
+          className="block truncate text-sm font-bold text-text no-underline transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-accent-foreground"
         >
           {item.title}
         </AppLink>
@@ -111,13 +111,13 @@ function ContentCard({
         </span>
       </span>
       <IconArrowRight
-        className="h-4 w-4 shrink-0 text-accent-solid transition-transform duration-150 group-hover:translate-x-0.5"
+        className="h-4 w-4 shrink-0 text-accent-foreground transition-transform duration-150 group-hover:translate-x-0.5"
         aria-hidden="true"
       />
       <button
         type="button"
         // Above the stretched link, so this is a click on the button alone.
-        className="relative z-10 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm border border-transparent p-1.5 text-text-muted transition-colors duration-150 hover:border-border hover:bg-surface-alt hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-60"
+        className="relative z-10 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm border border-transparent p-1.5 text-text-muted transition-colors duration-150 hover:border-border hover:bg-surface-alt hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60"
         aria-label={`Remove ${item.title} from ${groupName}`}
         title={`Remove from ${groupName}. This does not delete it.`}
         disabled={removeFromGroup.isPending}

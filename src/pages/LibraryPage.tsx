@@ -91,7 +91,7 @@ function Section({ title, query, total, shown, isSearching, emptyMessage, childr
           <button
             type="button"
             onClick={() => void query.refetch()}
-            className="text-sm font-bold text-accent-solid hover:underline"
+            className="text-sm font-bold text-accent-foreground hover:underline"
           >
             Try again
           </button>
@@ -247,7 +247,7 @@ export function LibraryPage() {
                     >
                       {option.label}
                       {count !== undefined && (
-                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-solid tabular-nums">
+                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-normal text-accent-foreground tabular-nums">
                           {count}
                         </span>
                       )}

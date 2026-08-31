@@ -42,7 +42,7 @@ export function AuthLayout({
         </div>
       </main>
 
-      <aside className="hidden bg-accent-solid px-12 py-8 text-on-accent lg:order-first lg:flex lg:flex-col">
+      <aside className="hidden bg-accent-panel px-12 py-8 text-on-accent lg:order-first lg:flex lg:flex-col">
         <Link
           to="/"
           className="inline-flex items-center gap-2.5 self-start font-display text-lg font-medium text-on-accent no-underline"
@@ -57,7 +57,7 @@ export function AuthLayout({
             <ul className="mt-8 grid gap-5 p-0">
               {asideBullets.map((bullet) => (
                 <li key={bullet} className="flex items-start gap-3 text-base">
-                  <span className="mt-0.5 inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full bg-on-accent text-accent-strong">
+                  <span className="mt-0.5 inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full bg-on-accent text-accent-on-light">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"

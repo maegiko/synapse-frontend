@@ -147,7 +147,7 @@ function QuestionRow({
         <div className="flex shrink-0 items-start gap-1">
           <button
             type="button"
-            className="rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-accent-solid hover:bg-accent-soft hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-accent-solid hover:bg-accent-soft hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onAskEdit}
             disabled={disabled || isConfirming}
           >

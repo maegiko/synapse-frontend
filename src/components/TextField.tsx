@@ -36,7 +36,7 @@ export function TextField({ label, error, hint, type = 'text', ...inputProps }: 
           <button
             type="button"
             onClick={() => setRevealed((current) => !current)}
-            className="absolute inset-y-0 right-0 px-3.5 text-xs font-bold text-text-muted hover:text-accent-solid"
+            className="absolute inset-y-0 right-0 px-3.5 text-xs font-bold text-text-muted hover:text-accent-foreground"
             aria-pressed={revealed}
           >
             {revealed ? 'Hide' : 'Show'}

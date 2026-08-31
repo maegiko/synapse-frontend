@@ -134,7 +134,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
           The label collapses to its arrow where the row is tightest. */}
       <AppLink
         to="/analytics"
-        className="inline-flex items-center gap-1.5 border-l border-border pl-3 text-xs font-bold whitespace-nowrap text-accent-solid no-underline hover:underline sm:pl-5"
+        className="inline-flex items-center gap-1.5 border-l border-border pl-3 text-xs font-bold whitespace-nowrap text-accent-foreground no-underline hover:underline sm:pl-5"
         aria-label="View progress"
       >
         <span className="hidden sm:inline">View progress</span>

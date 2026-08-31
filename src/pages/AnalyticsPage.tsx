@@ -197,7 +197,7 @@ function AttemptRow({ attempt, when }: { attempt: AnalyticsScoreHistoryItem; whe
       <span className="shrink-0 text-sm font-bold text-text tabular-nums">
         {attempt.score} / {attempt.totalQuestions}
       </span>
-      <span className="w-14 shrink-0 text-right text-sm text-accent-solid tabular-nums">
+      <span className="w-14 shrink-0 text-right text-sm text-accent-foreground tabular-nums">
         {percentage}%
       </span>
       <span className="w-40 shrink-0 text-right text-xs text-text-muted tabular-nums">{when}</span>

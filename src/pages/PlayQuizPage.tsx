@@ -203,9 +203,9 @@ function QuestionCard({
                   <span
                     className={`flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full border-2 ${
                       showAsCorrect
-                        ? 'border-success-solid bg-success-solid text-on-accent'
+                        ? 'border-success-solid bg-success-solid text-on-status'
                         : showAsWrong
-                          ? 'border-error-solid bg-error-solid text-on-accent'
+                          ? 'border-error-solid bg-error-solid text-on-status'
                           : isChosen
                             ? 'border-accent-solid bg-accent-solid text-on-accent'
                             : 'border-border'
@@ -476,7 +476,7 @@ function Runner({
             </span>
             <h1 className="mt-5 text-3xl">Quiz complete</h1>
 
-            <p className="mt-6 font-display text-5xl font-medium text-accent-solid tabular-nums">
+            <p className="mt-6 font-display text-5xl font-medium text-accent-foreground tabular-nums">
               {score}
               <span className="text-text-muted"> / {total}</span>
             </p>

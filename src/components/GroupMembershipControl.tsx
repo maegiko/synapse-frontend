@@ -10,7 +10,7 @@ import type { GroupContentKind } from '../api'
 
 /** Quiet, chip-sized actions, so group controls sit beside the metadata pills. */
 const CHIP_ACTION =
-  'inline-flex h-6.5 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-xs font-bold text-text-muted transition-colors duration-150 hover:border-accent-solid hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-60'
+  'inline-flex h-6.5 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-xs font-bold text-text-muted transition-colors duration-150 hover:border-accent-solid hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60'
 
 interface GroupMembershipControlProps {
   kind: GroupContentKind

@@ -45,7 +45,7 @@ const EDGE_EPS = 2
  * `shrink-0`, and centred icon, so nothing can squeeze it oval.
  */
 const NAV_CIRCLE =
-  'grid shrink-0 place-items-center rounded-full border border-border bg-surface text-accent-solid shadow-sm transition-colors duration-150 ease-out hover:border-accent-solid/55 hover:bg-surface-alt/60 hover:text-accent-strong'
+  'grid shrink-0 place-items-center rounded-full border border-border bg-surface text-accent-foreground shadow-sm transition-colors duration-150 ease-out hover:border-accent-solid/55 hover:bg-surface-alt/60 hover:text-accent-strong'
 
 /**
  * Side-mounted controls appear only at `min-[1200px]` and up. Below that, the

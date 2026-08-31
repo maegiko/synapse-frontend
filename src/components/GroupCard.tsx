@@ -26,11 +26,11 @@ export function GroupCard({ group }: { group: StudyGroupListItem }) {
           <IconGroup />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-text transition-colors group-hover:text-accent-solid">
+          <p className="truncate text-sm font-bold text-text transition-colors group-hover:text-accent-foreground">
             {group.name}
           </p>
         </div>
-        <IconArrowRight className="mt-3 h-4 w-4 shrink-0 text-accent-solid transition-transform duration-150 group-hover:translate-x-0.5" />
+        <IconArrowRight className="mt-3 h-4 w-4 shrink-0 text-accent-foreground transition-transform duration-150 group-hover:translate-x-0.5" />
       </div>
 
       {group.description && (

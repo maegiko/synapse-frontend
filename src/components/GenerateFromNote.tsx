@@ -242,7 +242,7 @@ export function GenerateFromNote({
                   <button
                     type="button"
                     onClick={() => void notes.refetch()}
-                    className="text-sm font-bold text-accent-solid hover:underline"
+                    className="text-sm font-bold text-accent-foreground hover:underline"
                   >
                     Try again
                   </button>

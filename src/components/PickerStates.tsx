@@ -25,7 +25,7 @@ export function PickerError({ error, onRetry }: { error: unknown; onRetry: () =>
       <button
         type="button"
         onClick={onRetry}
-        className="text-sm font-bold text-accent-solid hover:underline"
+        className="text-sm font-bold text-accent-foreground hover:underline"
       >
         Try again
       </button>

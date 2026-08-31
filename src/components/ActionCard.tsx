@@ -46,7 +46,7 @@ export function ActionCard({ to, art, title, body, cta, blockedReason }: ActionC
       className={`${surfaceCard} group relative flex flex-col overflow-hidden p-6 no-underline transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent-solid hover:shadow-md`}
     >
       {inner}
-      <span className="relative mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-bold text-accent-solid transition-transform duration-150 group-hover:translate-x-0.5">
+      <span className="relative mt-auto inline-flex items-center gap-1.5 pt-4 text-sm font-bold text-accent-foreground transition-transform duration-150 group-hover:translate-x-0.5">
         {cta}
         <IconArrowRight />
       </span>

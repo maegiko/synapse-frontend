@@ -39,7 +39,7 @@ export function StarRating({
           aria-pressed={value === level}
           aria-label={`${level} out of 5`}
           className={`rounded-sm p-1 transition-transform duration-150 hover:scale-110 disabled:cursor-not-allowed disabled:opacity-60 ${
-            level <= shown ? 'text-accent-solid' : 'text-border'
+            level <= shown ? 'text-accent-foreground' : 'text-border'
           }`}
         >
           <IconStar className="h-9 w-9" filled={level <= shown} />

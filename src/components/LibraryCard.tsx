@@ -27,7 +27,7 @@ export function LibraryCard({ icon, title, to, preview, facts, timestamp }: Libr
         <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-bold text-text ${
-              to ? 'transition-colors group-hover:text-accent-solid' : ''
+              to ? 'transition-colors group-hover:text-accent-foreground' : ''
             }`}
           >
             {title}
@@ -35,7 +35,7 @@ export function LibraryCard({ icon, title, to, preview, facts, timestamp }: Libr
           {timestamp && <p className="mt-1 text-xs text-text-muted tabular-nums">{timestamp}</p>}
         </div>
         {to && (
-          <IconArrowRight className="mt-3 h-4 w-4 shrink-0 text-accent-solid transition-transform duration-150 group-hover:translate-x-0.5" />
+          <IconArrowRight className="mt-3 h-4 w-4 shrink-0 text-accent-foreground transition-transform duration-150 group-hover:translate-x-0.5" />
         )}
       </div>
 

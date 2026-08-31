@@ -31,13 +31,13 @@ export function RecentsItem({
 }: RecentsItemProps) {
   const content = (
     <>
-      <span className="mt-0.5 inline-flex shrink-0 text-accent-solid" aria-hidden="true">
+      <span className="mt-0.5 inline-flex shrink-0 text-accent-foreground" aria-hidden="true">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
         <p
           className={`recents-title truncate text-sm font-medium text-text ${
-            to ? 'transition-colors group-hover:text-accent-solid' : ''
+            to ? 'transition-colors group-hover:text-accent-foreground' : ''
           }`}
         >
           {title}

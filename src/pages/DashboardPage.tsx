@@ -60,7 +60,7 @@ function drawGreeting(name: string): string {
   return HERO_GREETINGS[Math.floor(Math.random() * HERO_GREETINGS.length)](name)
 }
 // One icon treatment for every Library item: small, standalone, accent, no tile.
-const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-solid'
+const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-foreground'
 /** Row hairline is lighter than the section dividers; most of the separation is
  *  the generous vertical padding on the link, not the line. */
 const FLAT_ROW =
@@ -84,7 +84,7 @@ function RecentNoteRow({
       <AppLink to={to} className={FLAT_ROW_LINK}>
         <span className="flex min-w-0 items-center gap-3">
           <IconNote className={ROW_ICON} />
-          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
+          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-foreground">
             {title}
           </span>
         </span>
@@ -116,7 +116,7 @@ function RecentQuizRow({
       <AppLink to={to} className={FLAT_ROW_LINK}>
         <span className="flex min-w-0 items-center gap-3">
           <IconQuiz className={ROW_ICON} />
-          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-solid">
+          <span className="recents-title min-w-0 flex-1 truncate text-sm font-medium text-text transition-colors group-hover:text-accent-foreground">
             {title}
           </span>
           {timestamp && (
@@ -186,7 +186,7 @@ export function DashboardPage() {
           />
           <div className="relative max-w-[54ch]">
             <h1 className="text-2xl text-on-accent">{greeting}</h1>
-            <p className="mt-3 text-base text-accent-soft">{summary}</p>
+            <p className="mt-3 text-base text-on-hero-muted">{summary}</p>
             <AppLink to={hero.to} className={`${btnPrimaryMdInverted} mt-7`}>
               {hero.label}
               <IconArrowRight />

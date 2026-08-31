@@ -24,13 +24,25 @@
   --color-text: #211c2c;
   --color-text-muted: #625b72;
   --color-accent-solid: #6d28d9;
+  --color-accent-foreground: #6d28d9;
   --color-accent-strong: #5b21b6;
+  --color-accent-hover: #5b21b6;
   /* One ramp step lighter than `accent-solid`, for a filled CTA that should
      read as an action without dominating its surroundings. Keeps ~5.7:1 on
      white text. */
   --color-accent-medium: #7c3aed;
   --color-accent-soft: #ede6fb;
+  --color-accent-panel: #6d28d9;
   --color-on-accent: #ffffff;
+  --color-on-hero-muted: #ede6fb;
+  --color-accent-on-light: #5b21b6;
+  --color-inverted-hover: #f1eef7;
+  --color-on-status: #ffffff;
+
+  --color-control: #e7e5e4;
+  --color-control-hover: #d6d3d1;
+  --color-control-border: #d6d3d1;
+  --color-control-text: #292524;
 
   --color-success-solid: #15803d;
   --color-success-soft: #e7f5ea;
@@ -38,7 +50,7 @@
   --color-error-soft: #fdecec;
   /* Gold rather than the burnt orange this used to be: as an adjacent bar
      segment or a neighbouring badge, an orange sat only ~26 degrees of hue from
-     `error-solid` and at almost the same lightness, so "again" and "hard" read
+     `error-solid` and at almost the same lightness, so "rough" and "hard" read
      as one colour. Gold is ~44 degrees out and unmistakably its own. Text-safe
      on white, `warning-soft`, and `surface-alt` alike. */
   --color-warning-solid: #8a6500;
@@ -77,6 +89,49 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-background: #0c0911;
+  --color-surface: #120e18;
+  --color-surface-alt: #1d1726;
+  --color-border: #342b40;
+  --color-text: #f5f1fa;
+  --color-text-muted: #b9afc7;
+
+  --color-accent-solid: #8552ed;
+  --color-accent-foreground: #a78bfa;
+  --color-accent-strong: #b69af8;
+  --color-accent-hover: #7c3aed;
+  --color-accent-medium: #7c3aed;
+  --color-accent-soft: #2b2039;
+  --color-accent-panel: #301b54;
+  --color-on-accent: #ffffff;
+  --color-on-hero-muted: #ede6fb;
+  --color-accent-on-light: #5b21b6;
+  --color-inverted-hover: #e8dff5;
+  --color-on-status: #160f1d;
+
+  --color-success-solid: #4ade80;
+  --color-success-soft: #142d1d;
+  --color-error-solid: #fb7185;
+  --color-error-soft: #351820;
+  --color-warning-solid: #f4c84e;
+  --color-warning-medium: #d1a01a;
+  --color-warning-soft: #332914;
+  --color-info-solid: #8aacff;
+  --color-info-soft: #172441;
+
+  --color-control: #211a2a;
+  --color-control-hover: #2d2437;
+  --color-control-border: #453951;
+  --color-control-text: #f2edf7;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.42);
+  --shadow-md: 0 14px 36px -12px rgba(0, 0, 0, 0.72);
+  --shadow-lg: 0 26px 64px -20px rgba(0, 0, 0, 0.78);
 }
 
 html {

@@ -9,6 +9,7 @@ import {
   shell,
 } from '../components/ui'
 import { IconArrowRight, IconChart, IconDeck, IconSummary, IconUpload } from '../components/icons'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 const NAV_LINKS = [
   { href: '#how-it-works', label: 'How it works' },
@@ -64,10 +65,10 @@ export function LandingPage() {
       </a>
 
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
-        <div className={`${shell} flex items-center gap-7 py-4`}>
+        <div className={`${shell} flex items-center gap-3 py-4 sm:gap-7`}>
           <Link to="/" className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline">
             <img src={synapseLogo} alt="" width="48" height="48" decoding="async" />
-            <span className="translate-y-0.5">Synapse</span>
+            <span className="hidden translate-y-0.5 sm:inline">Synapse</span>
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-semibold" aria-label="Primary">
             {NAV_LINKS.map((link) => (
@@ -76,7 +77,8 @@ export function LandingPage() {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle />
             <Link to="/login" className={btnGhostSm}>
               Log in
             </Link>
@@ -216,10 +218,10 @@ export function LandingPage() {
             <span>Synapse</span>
           </Link>
           <div className="flex gap-5 text-sm font-semibold">
-            <Link to="/login" className="text-text-muted no-underline hover:text-accent-solid">
+            <Link to="/login" className="text-text-muted no-underline hover:text-accent-foreground">
               Log in
             </Link>
-            <Link to="/register" className="text-text-muted no-underline hover:text-accent-solid">
+            <Link to="/register" className="text-text-muted no-underline hover:text-accent-foreground">
               Create account
             </Link>
           </div>
@@ -256,10 +258,10 @@ function AppPreviewMock() {
         {/* Dashboard hero — the app's signature violet gradient panel */}
         <div className="rounded-md border border-accent-strong bg-[radial-gradient(circle_at_75%_20%,rgba(216,205,255,0.32)_0%,rgba(216,205,255,0)_40%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-5 py-5">
           <p className="font-display text-lg text-on-accent">Ready to learn, Maya?</p>
-          <p className="mt-1.5 text-sm text-accent-soft">
+          <p className="mt-1.5 text-sm text-on-hero-muted">
             You have 6 notes, 4 decks, and 3 quizzes in your library.
           </p>
-          <span className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-on-accent px-3.5 py-2 text-sm font-bold text-accent-strong">
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-on-accent px-3.5 py-2 text-sm font-bold text-accent-on-light">
             Continue learning
             <IconArrowRight className="h-3.5 w-3.5" />
           </span>
@@ -319,7 +321,7 @@ function AppPreviewMock() {
 function FlashcardMock() {
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Flashcard deck</p>
+      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Flashcard deck</p>
       <div className="flashcard flashcard--hover-flip relative h-42 cursor-pointer" tabIndex={0}>
         <div className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-md border border-border bg-surface-alt p-4.5 text-center font-semibold text-text transition-transform duration-500">
           <p>What does a state machine model?</p>
@@ -336,12 +338,12 @@ function FlashcardMock() {
 function QuizMock() {
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Quiz - question 3 of 10</p>
+      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Quiz - question 3 of 10</p>
       <div className="flex h-42 flex-col justify-center gap-3.5 rounded-md bg-surface-alt p-4.5">
         <p className="text-sm font-bold">A sequence diagram represents interactions over time.</p>
         <ul className="grid gap-2 p-0 text-sm">
           <li className="flex items-center gap-2.5 rounded-sm border border-success-solid bg-success-soft px-3 py-2.25 font-bold text-success-solid">
-            <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-success-solid bg-success-solid text-xs text-on-accent">
+            <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-success-solid bg-success-solid text-xs text-on-status">
               ✓
             </span>
             True
@@ -365,7 +367,7 @@ function ScoreMock() {
   ]
   return (
     <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Score history</p>
+      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Score history</p>
       <ul className="flex h-42 flex-col justify-center gap-4 p-0">
         {rows.map((row) => (
           <li key={row.label} className="grid grid-cols-[1fr_2fr_auto] items-center gap-2.5 text-xs">
