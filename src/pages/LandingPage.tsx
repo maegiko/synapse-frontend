@@ -43,15 +43,23 @@ const STEPS = [
 const FAQS = [
   {
     q: 'What can I upload?',
-    a: 'PDF, DOCX, TXT, or Markdown, up to 10 MB per file. Scanned images and legacy .doc files aren’t supported yet.',
+    a: 'PDF, DOCX, TXT or Markdown, up to 10 MB per file. Scanned images and legacy .doc files aren’t supported yet.',
   },
   {
-    q: 'Is this going to do the reading for me?',
-    a: 'No. Synapse only works from the file you upload, so it can’t summarize material you haven’t engaged with yet. Think of it as a faster way to organize and drill what you’ve already read, not a way to skip it.',
+    q: 'Does Synapse replace reading the material?',
+    a: 'No. Synapse turns the material you’ve read into summaries, flashcards and quizzes for revision.',
+  },
+  {
+    q: "Can I edit what Synapse generates?",
+    a: "Yes. You can edit generated flashcards and quizzes after they’re created, so you can correct, refine or tailor them to how you want to study."
+  },
+  {
+    q: "How accurate is the generated material?",
+    a: "Synapse generates from your uploaded material, but AI can still make mistakes. You can edit anything it generates and important details should be checked against your original notes."
   },
   {
     q: 'Why does generating something take a few seconds?',
-    a: 'Summaries, decks, and quizzes are produced by a real AI model at the moment you ask for them, not pre-written. That makes them specific to your file, but it also means each one takes longer than a normal click, closer to a search than a page load.',
+    a: 'Summaries, decks and quizzes are generated on demand by an AI model, so they take a little longer than a normal page load',
   },
 ]
 
@@ -177,11 +185,12 @@ export function LandingPage() {
 
         <section className="pt-22 pb-24">
           <div className={shell}>
-            <div className="grid justify-items-center gap-7 rounded-lg bg-accent-solid px-10 py-14 text-center text-on-accent">
-              <h2 className="max-w-[34ch] text-2xl text-on-accent">
+            <div className="relative grid justify-items-center gap-7 overflow-hidden rounded-lg bg-accent-solid px-10 py-14 text-center text-on-accent">
+              <CtaDecorations />
+              <h2 className="relative z-10 max-w-[34ch] text-2xl text-on-accent">
                 Turn your notes into study material you’ll actually remember.
               </h2>
-              <Link to="/register" className={btnPrimaryLgInverted}>
+              <Link to="/register" className={`relative z-10 ${btnPrimaryLgInverted}`}>
                 Create your first quiz
               </Link>
             </div>
@@ -213,6 +222,82 @@ export function LandingPage() {
         </div>
       </footer>
     </>
+  )
+}
+
+/** A grid of evenly spaced dots, used as a decorative texture on the CTA. */
+function dotGrid(x: number, y: number, cols: number, rows: number, gap: number) {
+  return Array.from({ length: cols * rows }, (_, i) => (
+    <circle key={i} cx={x + (i % cols) * gap} cy={y + Math.floor(i / cols) * gap} r={1.6} />
+  ))
+}
+
+/**
+ * Faint geometric line-art bleeding off the CTA panel: flowcharts, a node graph,
+ * a plotted curve, a card stack — the shapes Synapse turns notes into. Purely
+ * decorative, drawn in the panel's own foreground colour at low opacity, and
+ * split into two edge-anchored SVGs so the centre stays clear at any width.
+ */
+function CtaDecorations() {
+  return (
+    <div aria-hidden="true" className="cta-decor pointer-events-none absolute inset-0">
+      <svg
+        viewBox="0 0 300 340"
+        fill="none"
+        preserveAspectRatio="xMinYMid slice"
+        className="absolute inset-y-0 left-0 h-full w-auto"
+      >
+        <g stroke="currentColor" strokeWidth="1.4">
+          <circle cx="14" cy="16" r="66" />
+          {/* flowchart */}
+          <rect x="150" y="18" width="26" height="26" />
+          <path d="M163 62l-19 19 19 19 19-19-19-19z" />
+          <rect x="196" y="68" width="26" height="26" />
+          <rect x="150" y="120" width="26" height="26" />
+          <path d="M163 44v18M182 81h14M163 100v20" strokeDasharray="3 4" />
+          {/* plotted curve */}
+          <path d="M44 214v92h92" />
+          <path d="M40 222l4-10 4 10zM128 302l10 4-10 4z" fill="currentColor" stroke="none" />
+          <path d="M54 300c20 2 44-10 60-70" />
+          <path d="M62 250h-18M96 300v-42" strokeDasharray="3 4" />
+          {/* dashed square + plus */}
+          <rect x="150" y="238" width="42" height="42" strokeDasharray="5 5" />
+          <path d="M214 300h16M222 292v16" />
+        </g>
+        <g fill="currentColor" stroke="none">
+          {dotGrid(54, 34, 6, 5, 13)}
+        </g>
+      </svg>
+
+      <svg
+        viewBox="0 0 300 340"
+        fill="none"
+        preserveAspectRatio="xMaxYMid slice"
+        className="absolute inset-y-0 right-0 h-full w-auto"
+      >
+        <g stroke="currentColor" strokeWidth="1.4">
+          {/* node graph */}
+          <path d="M96 58l40 26M136 84l42-26M136 84l18 46" />
+          <circle cx="96" cy="58" r="10" />
+          <circle cx="138" cy="84" r="12" />
+          <circle cx="180" cy="56" r="8" />
+          <circle cx="156" cy="132" r="9" />
+          <circle cx="210" cy="94" r="6" />
+          <circle cx="132" cy="30" r="5" />
+          {/* card stack */}
+          <rect x="176" y="196" width="56" height="74" rx="4" transform="rotate(7 204 233)" />
+          <rect x="168" y="204" width="56" height="74" rx="4" transform="rotate(-3 196 241)" />
+          <rect x="160" y="210" width="56" height="74" rx="4" />
+          <circle cx="158" cy="300" r="7" />
+          {/* dashed arc + plus */}
+          <path d="M70 322C118 250 180 214 288 214" strokeDasharray="4 6" />
+          <path d="M120 254h16M128 246v16" />
+        </g>
+        <g fill="currentColor" stroke="none">
+          {dotGrid(150, 148, 5, 4, 13)}
+        </g>
+      </svg>
+    </div>
   )
 }
 

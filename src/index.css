@@ -172,6 +172,15 @@ h3 {
   line-height: 1.15;
 }
 
+/* Decorative line-art on the CTA panel. Brighter on the deeper light-mode
+   purple; eased back on the lighter dark-mode purple so it doesn't shout. */
+.cta-decor {
+  color: rgb(255 255 255 / 0.32);
+}
+:root[data-theme='dark'] .cta-decor {
+  color: rgb(255 255 255 / 0.16);
+}
+
 /* Dashboard-only hierarchy: lighter content without changing shared components. */
 .dashboard-typography {
   font-weight: 450;
