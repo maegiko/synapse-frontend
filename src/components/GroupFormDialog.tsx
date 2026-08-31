@@ -59,13 +59,22 @@ export function GroupFormDialog({
   const [groupDescription, setGroupDescription] = useState(initialValues?.description ?? '')
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string }>({})
 
+  const trimmedName = name.trim()
+  const trimmedDescription = groupDescription.trim()
+  // Creating has nothing to compare against; editing needs a real change, the
+  // same rule the profile form uses.
+  const hasChanges =
+    !initialValues ||
+    trimmedName !== initialValues.name ||
+    trimmedDescription !== initialValues.description
+  // Matches the profile form: the submit only lights up once the name is filled
+  // in and there is something to save.
+  const canSubmit = trimmedName !== '' && hasChanges
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     // A second submit while the first is in flight would create a second group.
-    if (isPending) return
-
-    const trimmedName = name.trim()
-    const trimmedDescription = groupDescription.trim()
+    if (isPending || !canSubmit) return
 
     const nextErrors: { name?: string; description?: string } = {}
     if (!trimmedName) nextErrors.name = 'Give this group a name.'
@@ -126,14 +135,25 @@ export function GroupFormDialog({
           )}
         </div>
 
-        <div className="mt-1 flex flex-wrap gap-3">
-          <button type="submit" className={`${btnPrimaryLg} ${btnPrimaryDisabled}`} disabled={isPending}>
+        <div className="mt-1 flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            className={`${btnPrimaryLg} ${btnPrimaryDisabled}`}
+            disabled={isPending || !canSubmit}
+          >
             {isPending && <IconSpinner className="h-4.5 w-4.5 animate-spin" />}
             {isPending ? pendingLabel : submitLabel}
           </button>
           <button type="button" className={btnGhostLg} onClick={onClose} disabled={isPending}>
             Cancel
           </button>
+          {!canSubmit && !isPending && (
+            <span className="text-xs text-text-muted">
+              {trimmedName === ''
+                ? 'Give this group a name.'
+                : 'Change the name or description to save.'}
+            </span>
+          )}
         </div>
       </form>
     </Dialog>
