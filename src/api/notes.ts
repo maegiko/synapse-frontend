@@ -1,6 +1,6 @@
 import { apiRequest } from './client'
 import { API_PATHS } from './config'
-import type { NoteListResponse, NoteSummary, PublicId } from './types'
+import type { NoteListResponse, NoteSummary, PublicId, UpdateNoteRequest } from './types'
 
 /**
  * Newest first, unpaginated, and every note arrives with its full summary
@@ -16,6 +16,19 @@ export async function list(): Promise<NoteSummary[]> {
 /** A note that is missing or belongs to another account answers 404. */
 export async function get(noteId: PublicId): Promise<NoteSummary> {
   return apiRequest<NoteSummary>(API_PATHS.notes.detail(noteId), { authenticated: true })
+}
+
+/**
+ * Edits the note title and/or overview. Only the supplied fields change; the
+ * structured keypoints, concepts, and terms stay as they were. Returns the
+ * complete updated summary.
+ */
+export async function update(noteId: PublicId, body: UpdateNoteRequest): Promise<NoteSummary> {
+  return apiRequest<NoteSummary>(API_PATHS.notes.detail(noteId), {
+    method: 'PATCH',
+    json: body,
+    authenticated: true,
+  })
 }
 
 /**
