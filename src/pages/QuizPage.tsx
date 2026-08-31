@@ -11,8 +11,11 @@ import { DifficultyStars } from '../components/DifficultyStars'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
+import { QuestionEditDialog } from '../components/QuestionEditDialog'
+import { QuizEditDialog } from '../components/QuizEditDialog'
 import {
   IconArrowRight,
+  IconPencil,
   IconPlay,
   IconPlus,
   IconSpinner,
@@ -41,7 +44,13 @@ import { queryKeys, useQuiz, useQuizScores } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
 import { SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
-import type { QuestionType, Quiz, QuizQuestion } from '../api'
+import type {
+  QuestionType,
+  Quiz,
+  QuizQuestion,
+  UpdateQuestionRequest,
+  UpdateQuizRequest,
+} from '../api'
 
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
@@ -87,6 +96,7 @@ interface QuestionRowProps {
   isConfirming: boolean
   isDeleting: boolean
   disabled: boolean
+  onAskEdit: () => void
   onAskDelete: () => void
   onCancelDelete: () => void
   onConfirmDelete: () => void
@@ -98,6 +108,7 @@ function QuestionRow({
   isConfirming,
   isDeleting,
   disabled,
+  onAskEdit,
   onAskDelete,
   onCancelDelete,
   onConfirmDelete,
@@ -132,15 +143,26 @@ function QuestionRow({
             )}
           </div>
         </div>
-        <button
-          type="button"
-          className="relative shrink-0 rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-error-solid hover:bg-error-soft hover:text-error-solid disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={onAskDelete}
-          disabled={disabled || isConfirming}
-        >
-          <IconTrash />
-          <span className="sr-only">Delete question {position}</span>
-        </button>
+        <div className="flex shrink-0 items-start gap-1">
+          <button
+            type="button"
+            className="rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-accent-solid hover:bg-accent-soft hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onAskEdit}
+            disabled={disabled || isConfirming}
+          >
+            <IconPencil />
+            <span className="sr-only">Edit question {position}</span>
+          </button>
+          <button
+            type="button"
+            className="relative rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-error-solid hover:bg-error-soft hover:text-error-solid disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onAskDelete}
+            disabled={disabled || isConfirming}
+          >
+            <IconTrash />
+            <span className="sr-only">Delete question {position}</span>
+          </button>
+        </div>
       </div>
 
       {isConfirming && (
@@ -241,8 +263,15 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const [confirmingQuestionId, setConfirmingQuestionId] = useState<string | null>(null)
   const [isConfirmingQuiz, setIsConfirmingQuiz] = useState(false)
   const [isShuffled, setIsShuffled] = useState(false)
+  const [isEditingQuiz, setIsEditingQuiz] = useState(false)
+  const [quizEditError, setQuizEditError] = useState('')
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null)
+  const [questionEditError, setQuestionEditError] = useState('')
 
   const questions = quiz.questions ?? []
+  const editingQuestion = editingQuestionId
+    ? questions.find((question) => question.id === editingQuestionId)
+    : undefined
 
   /** Every mutation changes what the dashboard and library show for this quiz. */
   async function refreshQuiz() {
@@ -273,6 +302,41 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       await refreshQuiz()
     },
     onError: (error) => setActionError(messageForQuestionFailure(error, 'add')),
+  })
+
+  const updateQuiz = useMutation({
+    mutationFn: (body: UpdateQuizRequest) => api.quiz.update(quiz.id, body),
+    onSuccess: (updated) => {
+      // The response is the whole updated quiz in the normal quiz vocabulary, so
+      // the detail view is current at once; the list feeds the library,
+      // dashboard, and any group.
+      queryClient.setQueryData(queryKeys.quiz(quiz.id), updated)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
+      if (updated.groupId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.group(updated.groupId) })
+      }
+      setIsEditingQuiz(false)
+    },
+    onError: (error) => {
+      setQuizEditError(
+        isStatus(error, 404)
+          ? 'This quiz no longer exists. It may have just been deleted.'
+          : `We could not save your changes. ${toFormMessage(error)}`,
+      )
+    },
+  })
+
+  const updateQuestion = useMutation({
+    mutationFn: (vars: { questionId: string; body: UpdateQuestionRequest }) =>
+      api.quiz.updateQuestion(quiz.id, vars.questionId, vars.body),
+    onSuccess: async () => {
+      // The update answers in the creation vocabulary and regenerates answer
+      // IDs, so the quiz is refetched rather than merged — the mapping the API
+      // contract calls for.
+      await refreshQuiz()
+      setEditingQuestionId(null)
+    },
+    onError: (error) => setQuestionEditError(messageForQuestionFailure(error, 'edit')),
   })
 
   const deleteQuestion = useMutation({
@@ -314,7 +378,15 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     addQuestion.isPending ||
     deleteQuestion.isPending ||
     setDifficulty.isPending ||
-    deleteQuiz.isPending
+    deleteQuiz.isPending ||
+    updateQuiz.isPending ||
+    updateQuestion.isPending
+
+  // Matches the profile form: the submit only lights up once the question and
+  // every answer the current type needs are filled in.
+  const canAddQuestion =
+    questionText.trim() !== '' &&
+    (questionType === 'BOOLEAN' || choices.every((choice) => choice.trim() !== ''))
 
   // Questions are usually added in runs, so the form stays open and takes focus
   // back. It has to wait for the request to settle, since the field is disabled
@@ -429,6 +501,18 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
           >
             <IconPlus />
             {isAdding ? 'Close question form' : 'Add a question'}
+          </button>
+          <button
+            type="button"
+            className={btnGhostSm}
+            onClick={() => {
+              setQuizEditError('')
+              setIsEditingQuiz(true)
+            }}
+            disabled={isBusy || isConfirmingQuiz}
+          >
+            <IconPencil />
+            Edit quiz
           </button>
           <button
             type="button"
@@ -604,7 +688,11 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button type="submit" className={btnPrimarySm} disabled={addQuestion.isPending}>
+              <button
+                type="submit"
+                className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+                disabled={addQuestion.isPending || !canAddQuestion}
+              >
                 {addQuestion.isPending && <IconSpinner className="h-4 w-4" />}
                 {addQuestion.isPending ? 'Adding…' : 'Add question'}
               </button>
@@ -619,6 +707,11 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
               <p className="text-sm font-bold text-success-solid" role="status" aria-live="polite">
                 {justAdded && !addQuestion.isPending ? 'Question added.' : ''}
               </p>
+              {!canAddQuestion && !addQuestion.isPending && (
+                <span className="text-xs text-text-muted">
+                  Fill in the question and every answer to add it.
+                </span>
+              )}
             </div>
           </form>
         )}
@@ -675,6 +768,12 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
                   isConfirming={confirmingQuestionId === question.id}
                   isDeleting={deleteQuestion.isPending && deleteQuestion.variables === question.id}
                   disabled={isBusy || isConfirmingQuiz}
+                  onAskEdit={() => {
+                    setActionError('')
+                    setQuestionEditError('')
+                    setConfirmingQuestionId(null)
+                    setEditingQuestionId(question.id)
+                  }}
                   onAskDelete={() => {
                     setActionError('')
                     setConfirmingQuestionId(question.id)
@@ -687,23 +786,51 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
           )}
         </section>
       </div>
+
+      {isEditingQuiz && (
+        <QuizEditDialog
+          initialValues={{ title: quiz.title, description: quiz.description ?? '' }}
+          isPending={updateQuiz.isPending}
+          errorMessage={quizEditError}
+          onSubmit={(body) => {
+            setQuizEditError('')
+            updateQuiz.mutate(body)
+          }}
+          onClose={() => setIsEditingQuiz(false)}
+        />
+      )}
+
+      {editingQuestion && (
+        <QuestionEditDialog
+          question={editingQuestion}
+          isPending={updateQuestion.isPending}
+          errorMessage={questionEditError}
+          onSubmit={(body) => {
+            setQuestionEditError('')
+            updateQuestion.mutate({ questionId: editingQuestion.id, body })
+          }}
+          onClose={() => setEditingQuestionId(null)}
+        />
+      )}
     </>
   )
 }
 
 /** Question-level failures, which are all recoverable without leaving the page. */
-function messageForQuestionFailure(error: unknown, action: 'add' | 'delete'): string {
+function messageForQuestionFailure(error: unknown, action: 'add' | 'edit' | 'delete'): string {
   if (isStatus(error, 404)) {
-    return action === 'add'
-      ? 'This quiz no longer exists, so the question was not saved.'
-      : 'That question has already been deleted.'
+    if (action === 'add') return 'This quiz no longer exists, so the question was not saved.'
+    if (action === 'edit') {
+      return 'This quiz or question no longer exists, so your changes were not saved.'
+    }
+    return 'That question has already been deleted.'
   }
   if (isStatus(error, 400)) {
     return 'That question was rejected. Check that every answer is filled in and exactly one is marked correct.'
   }
-  return action === 'add'
-    ? `We could not add that question. ${toFormMessage(error)}`
-    : `We could not delete that question. ${toFormMessage(error)}`
+  if (action === 'add') return `We could not add that question. ${toFormMessage(error)}`
+  if (action === 'edit') return `We could not save that question. ${toFormMessage(error)}`
+  return `We could not delete that question. ${toFormMessage(error)}`
 }
 
 /** One saved quiz: its questions, its difficulty, and its score history. */
