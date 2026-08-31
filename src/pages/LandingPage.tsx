@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import synapseLogo from '../assets/synapse_logo.webp'
 import {
@@ -153,10 +154,10 @@ export function LandingPage() {
               Synapse hasn’t launched yet, so instead of quotes from other students,
               here’s the actual material it produces.
             </p>
-            <div className="mt-11 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-              <FlashcardMock />
+            <div className="mt-11 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              <SummaryMock />
+              <FlashcardDeckMock />
               <QuizMock />
-              <ScoreMock />
             </div>
           </div>
         </section>
@@ -326,16 +327,76 @@ function AppPreviewMock() {
   )
 }
 
-function FlashcardMock() {
+/**
+ * A compressed slice of the real note summary view (see NotePage): an overview
+ * line, bulleted key points with the accent dot, and the important-term pills.
+ * Same tokens and shapes the product uses, just fewer of each.
+ */
+function SummaryMock() {
   return (
-    <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Flashcard deck</p>
-      <div className="flashcard flashcard--hover-flip relative h-42 cursor-pointer" tabIndex={0}>
-        <div className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-md border border-border bg-surface-alt p-4.5 text-center font-semibold text-text transition-transform duration-500">
-          <p>What does a state machine model?</p>
+    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Summary</p>
+      <div className="flex flex-1 flex-col gap-2.5 rounded-md bg-surface-alt p-4.5">
+        <div>
+          <p className="mb-1 font-display text-xs font-bold uppercase tracking-wide text-text-muted">Overview</p>
+          <p className="text-xs leading-snug text-text">
+            Models a system as a finite set of states, with events driving the transitions between them.
+          </p>
         </div>
-        <div className="flashcard-face flashcard-face--back absolute inset-0 flex items-center justify-center rounded-md bg-accent-solid p-4.5 text-center font-semibold text-on-accent transition-transform duration-500">
-          <p>How a system moves between defined states in response to events.</p>
+        <div>
+          <p className="mb-1.5 font-display text-xs font-bold uppercase tracking-wide text-text-muted">Key points</p>
+          <ul className="grid gap-1.5 p-0">
+            {['Each state defines its valid transitions', 'Events, not elapsed time, drive them'].map((point) => (
+              <li key={point} className="flex items-start gap-2 text-xs leading-snug text-text">
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid" aria-hidden="true" />
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <ul className="mt-auto flex flex-wrap gap-1.5 p-0">
+          {['Transition', 'Guard condition', 'Final state'].map((term) => (
+            <li
+              key={term}
+              className="list-none rounded-full bg-accent-soft px-2.5 py-1 text-xs font-bold text-accent-strong"
+            >
+              {term}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-xs text-text-muted">Overview, key points, and terms from your note</p>
+    </div>
+  )
+}
+
+/**
+ * The real hover/focus flashcard flip (see PlayDeckPage and index.css), with two
+ * cards peeking out above it so it reads as a deck. Only the front card flips;
+ * the cards behind it are decorative.
+ */
+function FlashcardDeckMock() {
+  return (
+    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Flashcard deck</p>
+      <div className="flex flex-1 items-center justify-center">
+        <div className="relative h-48 w-full">
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-6 bottom-3 top-0 rounded-md border border-border bg-surface shadow-sm"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-3 bottom-1.5 top-3 rounded-md border border-border bg-surface shadow-sm"
+          />
+          <div className="flashcard flashcard--hover-flip absolute inset-x-0 bottom-0 top-6 cursor-pointer" tabIndex={0}>
+            <div className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-md border border-border bg-surface-alt p-4.5 text-center font-semibold text-text shadow-sm transition-transform duration-500">
+              <p>What does a state machine model?</p>
+            </div>
+            <div className="flashcard-face flashcard-face--back absolute inset-0 flex items-center justify-center rounded-md bg-accent-solid p-4.5 text-center font-semibold text-on-accent shadow-md transition-transform duration-500">
+              <p>How a system moves between defined states in response to events.</p>
+            </div>
+          </div>
         </div>
       </div>
       <p className="text-xs text-text-muted">Hover or focus to flip</p>
@@ -343,51 +404,55 @@ function FlashcardMock() {
   )
 }
 
+const QUIZ_OPTIONS = [
+  { value: 'true', label: 'True' },
+  { value: 'false', label: 'False' },
+] as const
+
+/**
+ * The realistic quiz-question preview. The answer is selectable so the card
+ * responds to a click, but it grades nothing — it is only a preview.
+ */
 function QuizMock() {
+  const [picked, setPicked] = useState<(typeof QUIZ_OPTIONS)[number]['value']>('true')
+
   return (
-    <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
       <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Quiz - question 3 of 10</p>
-      <div className="flex h-42 flex-col justify-center gap-3.5 rounded-md bg-surface-alt p-4.5">
+      <div className="flex flex-1 flex-col justify-center gap-3.5 rounded-md bg-surface-alt p-4.5">
         <p className="text-sm font-bold">A sequence diagram represents interactions over time.</p>
         <ul className="grid gap-2 p-0 text-sm">
-          <li className="flex items-center gap-2.5 rounded-sm border border-success-solid bg-success-soft px-3 py-2.25 font-bold text-success-solid">
-            <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border border-success-solid bg-success-solid text-xs text-on-status">
-              ✓
-            </span>
-            True
-          </li>
-          <li className="flex items-center gap-2.5 rounded-sm border border-border bg-surface px-3 py-2.25">
-            <span className="h-4.5 w-4.5 shrink-0 rounded-full border border-border" />
-            False
-          </li>
+          {QUIZ_OPTIONS.map((option) => {
+            const isPicked = picked === option.value
+            return (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  onClick={() => setPicked(option.value)}
+                  aria-pressed={isPicked}
+                  className={`flex w-full items-center gap-2.5 rounded-sm border px-3 py-2.25 text-left transition-colors duration-150 ${
+                    isPicked
+                      ? 'border-success-solid bg-success-soft font-bold text-success-solid'
+                      : 'border-border bg-surface text-text hover:border-text-muted'
+                  }`}
+                >
+                  <span
+                    className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border text-xs ${
+                      isPicked
+                        ? 'border-success-solid bg-success-solid text-on-status'
+                        : 'border-border'
+                    }`}
+                  >
+                    {isPicked ? '✓' : ''}
+                  </span>
+                  {option.label}
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </div>
-      <p className="text-xs text-text-muted">Multiple choice or true/false, generated from your note</p>
-    </div>
-  )
-}
-
-function ScoreMock() {
-  const rows = [
-    { label: 'Behavioural Modelling', score: 8 },
-    { label: 'Cell Biology – Ch. 4', score: 6 },
-    { label: 'Macro: Fiscal Policy', score: 9 },
-  ]
-  return (
-    <div className="flex flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
-      <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Score history</p>
-      <ul className="flex h-42 flex-col justify-center gap-4 p-0">
-        {rows.map((row) => (
-          <li key={row.label} className="grid grid-cols-[1fr_2fr_auto] items-center gap-2.5 text-xs">
-            <span className="truncate font-semibold text-text-muted">{row.label}</span>
-            <span className="h-2 overflow-hidden rounded-full bg-surface-alt">
-              <span className="block h-full rounded-full bg-accent-solid" style={{ width: `${row.score * 10}%` }} />
-            </span>
-            <span className="font-bold text-text">{row.score}/10</span>
-          </li>
-        ))}
-      </ul>
-      <p className="text-xs text-text-muted">Every attempt is saved automatically</p>
+      <p className="text-xs text-text-muted">Multiple choice or true/false, from your note</p>
     </div>
   )
 }
