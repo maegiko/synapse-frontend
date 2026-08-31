@@ -9,6 +9,8 @@ import type {
   QuizListResponse,
   QuizScore,
   QuizScoreListResponse,
+  UpdateQuestionRequest,
+  UpdateQuizRequest,
 } from './types'
 
 /** Newest first, unpaginated. Items carry question previews, not answers. */
@@ -36,6 +38,19 @@ export async function get(quizId: PublicId): Promise<Quiz> {
   return apiRequest<Quiz>(API_PATHS.quiz.detail(quizId), { authenticated: true })
 }
 
+/**
+ * Edits the quiz title and/or description. A blank description clears it back to
+ * null. This does not touch difficulty. Returns the complete updated quiz, with
+ * its questions and answers in position order.
+ */
+export async function update(quizId: PublicId, body: UpdateQuizRequest): Promise<Quiz> {
+  return apiRequest<Quiz>(API_PATHS.quiz.detail(quizId), {
+    method: 'PATCH',
+    json: body,
+    authenticated: true,
+  })
+}
+
 /** Also removes the quiz's questions, answers, and saved score history. */
 export async function remove(quizId: PublicId): Promise<void> {
   await apiRequest<void>(API_PATHS.quiz.detail(quizId), {
@@ -55,6 +70,24 @@ export async function addQuestion(
   return apiRequest<CreatedQuestion>(API_PATHS.quiz.questions(quizId), {
     method: 'POST',
     json: question,
+    authenticated: true,
+  })
+}
+
+/**
+ * Edits a question's text, type, and/or answers. A supplied `answers` array is
+ * the complete replacement set: the old answers are discarded and answer IDs
+ * change, so the quiz is refetched afterwards. The response uses the creation
+ * vocabulary (`question`, `answer`, `isCorrect`), not a quiz fetch's.
+ */
+export async function updateQuestion(
+  quizId: PublicId,
+  questionId: PublicId,
+  body: UpdateQuestionRequest,
+): Promise<CreatedQuestion> {
+  return apiRequest<CreatedQuestion>(API_PATHS.quiz.question(quizId, questionId), {
+    method: 'PATCH',
+    json: body,
     authenticated: true,
   })
 }
