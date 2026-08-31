@@ -179,10 +179,10 @@ export function LandingPage() {
           <div className={shell}>
             <div className="grid justify-items-center gap-7 rounded-lg bg-accent-solid px-10 py-14 text-center text-on-accent">
               <h2 className="max-w-[34ch] text-2xl text-on-accent">
-                Next reading you open, turn it into a quiz before you close the tab.
+                Turn your notes into study material you’ll actually remember.
               </h2>
               <Link to="/register" className={btnPrimaryLgInverted}>
-                Start studying free
+                Create your first quiz
               </Link>
             </div>
           </div>
