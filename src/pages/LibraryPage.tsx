@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '../components/AppHeader'
@@ -7,13 +7,14 @@ import { BackLink } from '../components/BackLink'
 import { LibraryCard } from '../components/LibraryCard'
 import { DifficultyStars } from '../components/DifficultyStars'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
-import { btnPrimaryLg, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
+import { btnGhostSm, btnPrimaryLg, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
 import { toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import { useFlashcardDecks, useNotes, useQuizzes } from '../lib/queries'
-import type { UseQueryResult } from '@tanstack/react-query'
+import { useDebouncedValue } from '../lib/useDebouncedValue'
+import { useFlashcardDecksSearch, useNotesSearch, useQuizzesSearch } from '../lib/queries'
+import type { UseInfiniteQueryResult } from '@tanstack/react-query'
 
 type Kind = 'all' | 'notes' | 'decks' | 'quizzes'
 
@@ -26,12 +27,6 @@ const KINDS: { value: Kind; label: string }[] = [
 
 function isKind(value: string | null): value is Kind {
   return value !== null && KINDS.some((kind) => kind.value === value)
-}
-
-/** Case-insensitive match across whichever fields a resource happens to have. */
-function matches(term: string, ...fields: (string | null | undefined)[]): boolean {
-  if (!term) return true
-  return fields.some((field) => field?.toLowerCase().includes(term))
 }
 
 /** Reads as a gap waiting to be filled, rather than as a card with nothing in it. */
@@ -53,17 +48,23 @@ function CardSkeleton() {
 
 interface SectionProps {
   title: string
-  /** The query behind this section, so one place handles all of its states. */
-  query: Pick<UseQueryResult, 'isPending' | 'isError' | 'error' | 'refetch'>
+  /** The paged query behind this section, so one place handles all of its states. */
+  query: Pick<
+    UseInfiniteQueryResult,
+    'isPending' | 'isError' | 'error' | 'refetch' | 'hasNextPage' | 'isFetchingNextPage' | 'fetchNextPage'
+  >
+  /** Everything the current search matched, not just the pages loaded so far. */
   total: number | undefined
   shown: number
-  /** True when a search is active and this section has nothing to show. */
-  filteredOut: boolean
+  /** True when a search is active, which is what tells an empty section apart from an empty library. */
+  isSearching: boolean
   emptyMessage: string
   children: ReactNode
 }
 
-function Section({ title, query, total, shown, filteredOut, emptyMessage, children }: SectionProps) {
+function Section({ title, query, total, shown, isSearching, emptyMessage, children }: SectionProps) {
+  const isSettled = !query.isPending && !query.isError
+
   return (
     <section className="mt-12 first:mt-10">
       {/* No count here — the filter tabs above already carry it. */}
@@ -92,22 +93,33 @@ function Section({ title, query, total, shown, filteredOut, emptyMessage, childr
         </div>
       )}
 
-      {!query.isPending && !query.isError && total === 0 && (
-        <p className={placeholderPanel}>{emptyMessage}</p>
+      {/* Nothing saved and nothing matched read differently, so they say different things. */}
+      {isSettled && total === 0 && (
+        <p className={placeholderPanel}>
+          {isSearching ? 'Nothing here matches your search.' : emptyMessage}
+        </p>
       )}
 
-      {filteredOut && <p className={placeholderPanel}>Nothing here matches your search.</p>}
-
       {shown > 0 && <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{children}</div>}
+
+      {/* Paged by hand rather than on scroll, so nothing loads that was not asked for. */}
+      {isSettled && query.hasNextPage && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            className={`${btnGhostSm} disabled:cursor-not-allowed disabled:opacity-60`}
+            disabled={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            {query.isFetchingNextPage ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
     </section>
   )
 }
 
 export function LibraryPage() {
-  const notes = useNotes()
-  const decks = useFlashcardDecks()
-  const quizzes = useQuizzes()
-
   // The filter lives in the URL, so it survives a refresh and the back button,
   // and the dashboard can link straight to one kind.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -115,35 +127,39 @@ export function LibraryPage() {
   const kindParam = searchParams.get('type')
   const kind: Kind = isKind(kindParam) ? kindParam : 'all'
 
+  // Searching and paging are the backend's job now. The debounced term is what
+  // the three queries are keyed on, so typing settles into one request per kind
+  // and a new term starts from page 0 with a fresh list rather than appending.
   const [search, setSearch] = useState('')
-  const term = search.trim().toLowerCase()
+  const term = useDebouncedValue(search).trim()
+  const isSearching = term.length > 0
 
-  const visibleNotes = useMemo(
-    () => (notes.data ?? []).filter((note) => matches(term, note.title, note.overview)),
-    [notes.data, term],
-  )
-  const visibleDecks = useMemo(
-    () =>
-      (decks.data ?? []).filter((deck) =>
-        matches(term, deck.title, ...deck.flashcards.map((card) => card.title)),
-      ),
-    [decks.data, term],
-  )
-  const visibleQuizzes = useMemo(
-    () => (quizzes.data ?? []).filter((quiz) => matches(term, quiz.title, quiz.description)),
-    [quizzes.data, term],
-  )
+  const notes = useNotesSearch(term)
+  const decks = useFlashcardDecksSearch(term)
+  const quizzes = useQuizzesSearch(term)
+
+  const visibleNotes = notes.data?.pages.flatMap((page) => page.notes ?? []) ?? []
+  const visibleDecks = decks.data?.pages.flatMap((page) => page.flashcardDecks ?? []) ?? []
+  const visibleQuizzes = quizzes.data?.pages.flatMap((page) => page.quizzes ?? []) ?? []
+
+  // Every page of a query carries the same totals, so the first one answers for all.
+  const noteTotal = notes.data?.pages[0]?.totalElements
+  const deckTotal = decks.data?.pages[0]?.totalElements
+  const quizTotal = quizzes.data?.pages[0]?.totalElements
 
   const allLoaded = notes.isSuccess && decks.isSuccess && quizzes.isSuccess
+  // Only an unsearched, empty result means the library itself is empty; a search
+  // that matched nothing is answered inside each section instead.
   const isLibraryEmpty =
-    allLoaded && notes.data.length === 0 && decks.data.length === 0 && quizzes.data.length === 0
+    allLoaded && !isSearching && noteTotal === 0 && deckTotal === 0 && quizTotal === 0
 
   let summary = 'Everything you have made, in one place.'
-  if (allLoaded && !isLibraryEmpty) {
-    summary = `${plural(notes.data.length, 'note')}, ${plural(
-      decks.data.length,
-      'deck',
-    )}, and ${plural(quizzes.data.length, 'quiz', 'quizzes')}.`
+  if (allLoaded && !isSearching && !isLibraryEmpty) {
+    summary = `${plural(noteTotal ?? 0, 'note')}, ${plural(deckTotal ?? 0, 'deck')}, and ${plural(
+      quizTotal ?? 0,
+      'quiz',
+      'quizzes',
+    )}.`
   }
 
   function selectKind(next: Kind) {
@@ -156,11 +172,13 @@ export function LibraryPage() {
     })
   }
 
+  // While a search is running these are match counts rather than library totals,
+  // which is what the tabs should say when the sections below are filtered.
   const counts: Record<Kind, number | undefined> = {
-    all: allLoaded ? notes.data.length + decks.data.length + quizzes.data.length : undefined,
-    notes: notes.data?.length,
-    decks: decks.data?.length,
-    quizzes: quizzes.data?.length,
+    all: allLoaded ? (noteTotal ?? 0) + (deckTotal ?? 0) + (quizTotal ?? 0) : undefined,
+    notes: noteTotal,
+    decks: deckTotal,
+    quizzes: quizTotal,
   }
 
   const showNotes = kind === 'all' || kind === 'notes'
@@ -195,8 +213,8 @@ export function LibraryPage() {
               <input
                 type="search"
                 className={`${fieldInput} max-w-100 flex-1`}
-                placeholder="Search your library"
-                aria-label="Search your library"
+                placeholder="Search by title"
+                aria-label="Search your library by title"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -237,9 +255,9 @@ export function LibraryPage() {
               <Section
                 title="Notes"
                 query={notes}
-                total={notes.data?.length}
+                total={noteTotal}
                 shown={visibleNotes.length}
-                filteredOut={notes.isSuccess && notes.data.length > 0 && visibleNotes.length === 0}
+                isSearching={isSearching}
                 emptyMessage="Your summarised notes will show up here."
               >
                 {visibleNotes.map((note) => (
@@ -263,9 +281,9 @@ export function LibraryPage() {
               <Section
                 title="Flashcard decks"
                 query={decks}
-                total={decks.data?.length}
+                total={deckTotal}
                 shown={visibleDecks.length}
-                filteredOut={decks.isSuccess && decks.data.length > 0 && visibleDecks.length === 0}
+                isSearching={isSearching}
                 emptyMessage="Decks you generate from a note will show up here."
               >
                 {visibleDecks.map((deck) => (
@@ -286,11 +304,9 @@ export function LibraryPage() {
               <Section
                 title="Quizzes"
                 query={quizzes}
-                total={quizzes.data?.length}
+                total={quizTotal}
                 shown={visibleQuizzes.length}
-                filteredOut={
-                  quizzes.isSuccess && quizzes.data.length > 0 && visibleQuizzes.length === 0
-                }
+                isSearching={isSearching}
                 emptyMessage="Quizzes you generate from a note will show up here."
               >
                 {visibleQuizzes.map((quiz) => (

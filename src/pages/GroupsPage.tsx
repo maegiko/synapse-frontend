@@ -8,7 +8,8 @@ import { btnGhostSm, btnPrimarySm, cardLink, fieldInput, shell, surfaceCard } fr
 import { toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { useCreateGroup } from '../lib/groupMutations'
-import { useGroups } from '../lib/queries'
+import { useGroupsSearch } from '../lib/queries'
+import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { plural } from '../lib/plural'
 
 /** Reads as a gap waiting to be filled, matching the library's empty panels. */
@@ -34,7 +35,6 @@ function GroupSkeleton() {
  * the library's Everything / Notes / Decks / Quizzes filter.
  */
 export function GroupsPage() {
-  const groups = useGroups()
   const createGroup = useCreateGroup()
   const navigate = useTrailNavigate()
 
@@ -42,14 +42,18 @@ export function GroupsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  const term = search.trim().toLowerCase()
-  const visible = (groups.data ?? []).filter(
-    (group) =>
-      !term ||
-      group.name.toLowerCase().includes(term) ||
-      group.description?.toLowerCase().includes(term),
-  )
-  const isEmpty = groups.isSuccess && groups.data.length === 0
+  // Searching and paging are the backend's job. The debounced term keys the
+  // query, so a new term starts from page 0 with a fresh list of its own.
+  const term = useDebouncedValue(search).trim()
+  const isSearching = term.length > 0
+  const groups = useGroupsSearch(term)
+
+  const visible = groups.data?.pages.flatMap((page) => page.groups ?? []) ?? []
+  // Every page carries the same totals, so the first one answers for all.
+  const total = groups.data?.pages[0]?.totalElements
+  // Only an unsearched, empty result means there are no groups at all; a search
+  // that matched nothing is answered by the grid below instead.
+  const isEmpty = groups.isSuccess && !isSearching && total === 0
 
   function openCreate() {
     setCreateError('')
@@ -91,21 +95,20 @@ export function GroupsPage() {
           </div>
         ) : (
           <>
-            {groups.isSuccess && groups.data.length > 0 && (
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <input
-                  type="search"
-                  className={`${fieldInput} max-w-100 flex-1`}
-                  placeholder="Search your groups"
-                  aria-label="Search your groups"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-                <p className="text-sm text-text-muted tabular-nums">
-                  {plural(groups.data.length, 'group')}
-                </p>
-              </div>
-            )}
+            {/* Kept mounted while a search runs, so the box never loses focus mid-typing. */}
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <input
+                type="search"
+                className={`${fieldInput} max-w-100 flex-1`}
+                placeholder="Search by name"
+                aria-label="Search your groups by name"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              {total !== undefined && (
+                <p className="text-sm text-text-muted tabular-nums">{plural(total, 'group')}</p>
+              )}
+            </div>
 
             <div className="mt-8">
               {groups.isPending && (
@@ -131,7 +134,7 @@ export function GroupsPage() {
                 </div>
               )}
 
-              {groups.isSuccess && groups.data.length > 0 && visible.length === 0 && (
+              {groups.isSuccess && total === 0 && (
                 <p className={placeholderPanel}>No groups match your search.</p>
               )}
 
@@ -140,6 +143,20 @@ export function GroupsPage() {
                   {visible.map((group) => (
                     <GroupCard key={group.id} group={group} />
                   ))}
+                </div>
+              )}
+
+              {/* Paged by hand rather than on scroll, so nothing loads that was not asked for. */}
+              {groups.isSuccess && groups.hasNextPage && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    className={`${btnGhostSm} disabled:cursor-not-allowed disabled:opacity-60`}
+                    disabled={groups.isFetchingNextPage}
+                    onClick={() => void groups.fetchNextPage()}
+                  >
+                    {groups.isFetchingNextPage ? 'Loading…' : 'Load more'}
+                  </button>
                 </div>
               )}
             </div>
