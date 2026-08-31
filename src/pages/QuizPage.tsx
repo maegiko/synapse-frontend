@@ -20,6 +20,7 @@ import {
   IconPlus,
   IconSpinner,
   IconTrash,
+  IconX,
 } from '../components/icons'
 import {
   btnDangerGhostSm,
@@ -501,7 +502,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             onClick={toggleAddForm}
             aria-expanded={isAdding}
           >
-            <IconPlus />
+            {isAdding ? <IconX /> : <IconPlus />}
             {isAdding ? 'Close question form' : 'Add a question'}
           </button>
           <button

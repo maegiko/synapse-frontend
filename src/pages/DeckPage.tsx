@@ -16,6 +16,7 @@ import {
   IconPlus,
   IconSpinner,
   IconTrash,
+  IconX,
 } from '../components/icons'
 import {
   btnDangerGhostSm,
@@ -357,7 +358,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             onClick={toggleAddForm}
             aria-expanded={isAdding}
           >
-            <IconPlus />
+            {isAdding ? <IconX /> : <IconPlus />}
             {isAdding ? 'Close card form' : 'Add a card'}
           </button>
           <button
