@@ -8,10 +8,12 @@ import { BackLink } from '../components/BackLink'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
+import { NoteEditDialog } from '../components/NoteEditDialog'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
   IconArrowRight,
   IconDeck,
+  IconPencil,
   IconQuiz,
   IconSpinner,
   IconTrash,
@@ -32,7 +34,7 @@ import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys, useNote } from '../lib/queries'
 import { api } from '../api'
-import type { NoteSummary } from '../api'
+import type { NoteSummary, UpdateNoteRequest } from '../api'
 
 const ICON = 'h-4 w-4'
 
@@ -118,6 +120,8 @@ function NoteContent({ note }: { note: NoteSummary }) {
   const [confirming, setConfirming] = useState<Confirming>(null)
   const [actionError, setActionError] = useState('')
   const [step, setStep] = useState(0)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editError, setEditError] = useState('')
 
   const makeDeck = useMutation({
     mutationFn: () => recordQualifyingAction(() => api.flashcards.generate(note.id)),
@@ -147,6 +151,27 @@ function NoteContent({ note }: { note: NoteSummary }) {
     },
   })
 
+  const updateNote = useMutation({
+    mutationFn: (body: UpdateNoteRequest) => api.notes.update(note.id, body),
+    onSuccess: (updated) => {
+      // The PATCH response is the complete updated summary, so the detail view
+      // updates at once; the list feeds the library, dashboard, and any group.
+      queryClient.setQueryData(queryKeys.note(note.id), updated)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
+      if (updated.groupId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.group(updated.groupId) })
+      }
+      setIsEditing(false)
+    },
+    onError: (error) => {
+      setEditError(
+        isStatus(error, 404)
+          ? 'This note no longer exists. It may have just been deleted.'
+          : `We could not save your changes. ${toFormMessage(error)}`,
+      )
+    },
+  })
+
   const deleteNote = useMutation({
     mutationFn: () => api.notes.remove(note.id),
     onSuccess: () => {
@@ -165,7 +190,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
   })
 
   const generatingNoun = makeDeck.isPending ? 'deck' : makeQuiz.isPending ? 'quiz' : null
-  const isBusy = generatingNoun !== null || deleteNote.isPending
+  const isBusy = generatingNoun !== null || deleteNote.isPending || updateNote.isPending
 
   // The narration step only advances while a generate call is in flight; it is
   // reset when a run is started (below), like the other generate flows.
@@ -235,15 +260,30 @@ function NoteContent({ note }: { note: NoteSummary }) {
             Make quiz
           </button>
         </div>
-        <button
-          type="button"
-          className={btnDangerGhostSm}
-          onClick={() => ask('delete')}
-          disabled={isBusy || confirming !== null}
-        >
-          <IconTrash />
-          Delete note
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className={btnGhostSm}
+            onClick={() => {
+              setActionError('')
+              setEditError('')
+              setIsEditing(true)
+            }}
+            disabled={isBusy || confirming !== null}
+          >
+            <IconPencil />
+            Edit note
+          </button>
+          <button
+            type="button"
+            className={btnDangerGhostSm}
+            onClick={() => ask('delete')}
+            disabled={isBusy || confirming !== null}
+          >
+            <IconTrash />
+            Delete note
+          </button>
+        </div>
       </div>
 
       {showFeedback && (
@@ -377,6 +417,19 @@ function NoteContent({ note }: { note: NoteSummary }) {
           </Section>
         )}
       </div>
+
+      {isEditing && (
+        <NoteEditDialog
+          initialValues={{ title: note.title, overview: note.overview }}
+          isPending={updateNote.isPending}
+          errorMessage={editError}
+          onSubmit={(body) => {
+            setEditError('')
+            updateNote.mutate(body)
+          }}
+          onClose={() => setIsEditing(false)}
+        />
+      )}
     </>
   )
 }
