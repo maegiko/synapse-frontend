@@ -1,19 +1,38 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import { api, type UserDetails } from '../api'
 
 export const queryKeys = {
   userDetails: ['user-details'] as const,
   streak: ['streak'] as const,
   notes: ['notes'] as const,
+  notesSearch: (query: string) => ['notes', 'search', query] as const,
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
+  flashcardDecksSearch: (query: string) => ['flashcard-decks', 'search', query] as const,
   flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
   reviewQueue: ['flashcard-decks', 'review-queue'] as const,
   quizzes: ['quizzes'] as const,
+  quizzesSearch: (query: string) => ['quizzes', 'search', query] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,
   groups: ['groups'] as const,
+  groupsSearch: (query: string) => ['groups', 'search', query] as const,
   group: (groupId: string) => ['groups', groupId] as const,
+}
+
+/**
+ * What the four searchable list screens share. A screen holds one page at a
+ * time and appends the next on demand, so the term belongs in the key: a new
+ * term is a different query rather than a later answer to the current one, and
+ * a slow reply to an abandoned term can never land on top of the live one.
+ *
+ * `staleTime: 0` overrides the shared 30 second window on purpose. These are the
+ * indexes a user returns to straight after creating or deleting something on
+ * another screen, and the list they come back to has to be the current one.
+ */
+const SEARCH_LIST_OPTIONS: { initialPageParam: number; staleTime: number } = {
+  initialPageParam: 0,
+  staleTime: 0,
 }
 
 /**
@@ -34,8 +53,19 @@ export function useStreak() {
   return useQuery({ queryKey: queryKeys.streak, queryFn: api.user.getStreak })
 }
 
+/** Every note at once, for the counts, recents, and pickers built over the whole set. */
 export function useNotes() {
-  return useQuery({ queryKey: queryKeys.notes, queryFn: api.notes.list })
+  return useQuery({ queryKey: queryKeys.notes, queryFn: api.notes.listAll })
+}
+
+/** The library's notes section: one page per request, filtered by a title search. */
+export function useNotesSearch(query: string) {
+  return useInfiniteQuery({
+    ...SEARCH_LIST_OPTIONS,
+    queryKey: queryKeys.notesSearch(query),
+    queryFn: ({ pageParam }) => api.notes.list({ query, page: pageParam }),
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+  })
 }
 
 /** One note's full summary. Seeded by the generation flow, so it rarely refetches. */
@@ -47,8 +77,19 @@ export function useNote(noteId: string | undefined) {
   })
 }
 
+/** Every deck at once, for the counts, recents, and pickers built over the whole set. */
 export function useFlashcardDecks() {
-  return useQuery({ queryKey: queryKeys.flashcardDecks, queryFn: api.flashcards.list })
+  return useQuery({ queryKey: queryKeys.flashcardDecks, queryFn: api.flashcards.listAll })
+}
+
+/** The library's decks section: one page per request, filtered by a deck title search. */
+export function useFlashcardDecksSearch(query: string) {
+  return useInfiniteQuery({
+    ...SEARCH_LIST_OPTIONS,
+    queryKey: queryKeys.flashcardDecksSearch(query),
+    queryFn: ({ pageParam }) => api.flashcards.list({ query, page: pageParam }),
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+  })
 }
 
 /** One saved deck with its cards, in the backend's saved position order. */
@@ -68,8 +109,19 @@ export function useReviewQueue() {
   return useQuery({ queryKey: queryKeys.reviewQueue, queryFn: api.flashcards.reviewQueue })
 }
 
+/** Every quiz at once, for the counts, recents, and analytics built over the whole set. */
 export function useQuizzes() {
-  return useQuery({ queryKey: queryKeys.quizzes, queryFn: api.quiz.list })
+  return useQuery({ queryKey: queryKeys.quizzes, queryFn: api.quiz.listAll })
+}
+
+/** The library's quizzes section: one page per request, filtered by a title search. */
+export function useQuizzesSearch(query: string) {
+  return useInfiniteQuery({
+    ...SEARCH_LIST_OPTIONS,
+    queryKey: queryKeys.quizzesSearch(query),
+    queryFn: ({ pageParam }) => api.quiz.list({ query, page: pageParam }),
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+  })
 }
 
 /**
@@ -125,7 +177,17 @@ export function useAllQuizScores(quizIds: string[] | undefined) {
  * read from. The contents themselves come from `useGroup`.
  */
 export function useGroups() {
-  return useQuery({ queryKey: queryKeys.groups, queryFn: api.groups.list })
+  return useQuery({ queryKey: queryKeys.groups, queryFn: api.groups.listAll })
+}
+
+/** The groups page's own grid: one page per request, filtered by a group name search. */
+export function useGroupsSearch(query: string) {
+  return useInfiniteQuery({
+    ...SEARCH_LIST_OPTIONS,
+    queryKey: queryKeys.groupsSearch(query),
+    queryFn: ({ pageParam }) => api.groups.list({ query, page: pageParam }),
+    getNextPageParam: (lastPage) => (lastPage.hasNext ? lastPage.page + 1 : undefined),
+  })
 }
 
 /**
