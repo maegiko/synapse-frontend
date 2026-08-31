@@ -5,10 +5,13 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
+import { CardEditDialog } from '../components/CardEditDialog'
+import { DeckEditDialog } from '../components/DeckEditDialog'
 import { FormAlert } from '../components/FormAlert'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import {
   IconArrowRight,
+  IconPencil,
   IconPlay,
   IconPlus,
   IconSpinner,
@@ -37,7 +40,12 @@ import { PlaybackModeControl } from '../components/PlaybackModeControl'
 import { SHUFFLE_PARAM } from '../lib/shuffle'
 import { queryClient } from '../lib/queryClient'
 import { api } from '../api'
-import type { FlashcardDeck, SavedFlashcard } from '../api'
+import type {
+  FlashcardDeck,
+  SavedFlashcard,
+  UpdateDeckRequest,
+  UpdateFlashcardRequest,
+} from '../api'
 
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
@@ -69,6 +77,7 @@ interface CardRowProps {
   isConfirming: boolean
   isDeleting: boolean
   disabled: boolean
+  onAskEdit: () => void
   onAskDelete: () => void
   onCancelDelete: () => void
   onConfirmDelete: () => void
@@ -80,6 +89,7 @@ function CardRow({
   isConfirming,
   isDeleting,
   disabled,
+  onAskEdit,
   onAskDelete,
   onCancelDelete,
   onConfirmDelete,
@@ -102,15 +112,26 @@ function CardRow({
            */}
           <p className="max-w-[72ch] text-sm font-bold text-text">{card.title}</p>
         </div>
-        <button
-          type="button"
-          className="relative shrink-0 rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-error-solid hover:bg-error-soft hover:text-error-solid disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={onAskDelete}
-          disabled={disabled || isConfirming}
-        >
-          <IconTrash />
-          <span className="sr-only">Delete card {position}</span>
-        </button>
+        <div className="flex shrink-0 items-start gap-1">
+          <button
+            type="button"
+            className="rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-accent-solid hover:bg-accent-soft hover:text-accent-solid disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onAskEdit}
+            disabled={disabled || isConfirming}
+          >
+            <IconPencil />
+            <span className="sr-only">Edit card {position}</span>
+          </button>
+          <button
+            type="button"
+            className="relative rounded-sm border border-transparent p-2 text-text-muted transition-colors duration-150 hover:border-error-solid hover:bg-error-soft hover:text-error-solid disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onAskDelete}
+            disabled={disabled || isConfirming}
+          >
+            <IconTrash />
+            <span className="sr-only">Delete card {position}</span>
+          </button>
+        </div>
       </div>
 
       {isConfirming && (
@@ -154,8 +175,13 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   const [confirmingCardId, setConfirmingCardId] = useState<string | null>(null)
   const [isConfirmingDeck, setIsConfirmingDeck] = useState(false)
   const [isShuffled, setIsShuffled] = useState(false)
+  const [isEditingDeck, setIsEditingDeck] = useState(false)
+  const [deckEditError, setDeckEditError] = useState('')
+  const [editingCardId, setEditingCardId] = useState<string | null>(null)
+  const [cardEditError, setCardEditError] = useState('')
 
   const cards = deck.flashcards ?? []
+  const editingCard = editingCardId ? cards.find((card) => card.id === editingCardId) : undefined
 
   /** Both mutations change the card count the dashboard and library show. */
   async function refreshDeck() {
@@ -173,6 +199,41 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       await refreshDeck()
     },
     onError: (error) => setActionError(messageForCardFailure(error, 'add')),
+  })
+
+  const updateDeck = useMutation({
+    mutationFn: (body: UpdateDeckRequest) => api.flashcards.updateDeck(deck.deckId, body),
+    onSuccess: (updated) => {
+      // The response is the whole updated deck, so the detail view is current at
+      // once. The list feeds the library, dashboard, and any group; the review
+      // queue shows the deck title too.
+      queryClient.setQueryData(queryKeys.flashcardDeck(deck.deckId), updated)
+      void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue, exact: true })
+      if (updated.groupId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.group(updated.groupId) })
+      }
+      setIsEditingDeck(false)
+    },
+    onError: (error) => {
+      setDeckEditError(
+        isStatus(error, 404)
+          ? 'This deck no longer exists. It may have just been deleted.'
+          : `We could not rename this deck. ${toFormMessage(error)}`,
+      )
+    },
+  })
+
+  const updateCard = useMutation({
+    mutationFn: (vars: { cardId: string; body: UpdateFlashcardRequest }) =>
+      api.flashcards.updateCard(deck.deckId, vars.cardId, vars.body),
+    onSuccess: async () => {
+      setEditingCardId(null)
+      // Refetching keeps the cards in the backend's saved position order and
+      // maps its `question` field back to the deck's `title`.
+      await refreshDeck()
+    },
+    onError: (error) => setCardEditError(messageForCardFailure(error, 'edit')),
   })
 
   const deleteCard = useMutation({
@@ -204,7 +265,16 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     },
   })
 
-  const isBusy = addCard.isPending || deleteCard.isPending || deleteDeck.isPending
+  const isBusy =
+    addCard.isPending ||
+    deleteCard.isPending ||
+    deleteDeck.isPending ||
+    updateDeck.isPending ||
+    updateCard.isPending
+
+  // Matches the profile form: the submit only lights up once both fields hold
+  // something to send.
+  const canAddCard = question.trim() !== '' && answer.trim() !== ''
 
   // Cards are usually added in runs, so the form stays open and takes focus
   // back. It has to wait for the request to settle, since the input is disabled
@@ -289,6 +359,18 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
           >
             <IconPlus />
             {isAdding ? 'Close card form' : 'Add a card'}
+          </button>
+          <button
+            type="button"
+            className={btnGhostSm}
+            onClick={() => {
+              setDeckEditError('')
+              setIsEditingDeck(true)
+            }}
+            disabled={isBusy || isConfirmingDeck}
+          >
+            <IconPencil />
+            Rename deck
           </button>
           <button
             type="button"
@@ -394,7 +476,11 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button type="submit" className={btnPrimarySm} disabled={addCard.isPending}>
+              <button
+                type="submit"
+                className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+                disabled={addCard.isPending || !canAddCard}
+              >
                 {addCard.isPending && <IconSpinner className="h-4 w-4" />}
                 {addCard.isPending ? 'Adding…' : 'Add card'}
               </button>
@@ -409,6 +495,9 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
               <p className="text-sm font-bold text-success-solid" role="status" aria-live="polite">
                 {justAdded && !addCard.isPending ? 'Card added.' : ''}
               </p>
+              {!canAddCard && !addCard.isPending && (
+                <span className="text-xs text-text-muted">Fill in both fields to add the card.</span>
+              )}
             </div>
           </form>
         )}
@@ -435,6 +524,12 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
                   isConfirming={confirmingCardId === card.id}
                   isDeleting={deleteCard.isPending && deleteCard.variables === card.id}
                   disabled={isBusy || isConfirmingDeck}
+                  onAskEdit={() => {
+                    setActionError('')
+                    setCardEditError('')
+                    setConfirmingCardId(null)
+                    setEditingCardId(card.id)
+                  }}
                   onAskDelete={() => {
                     setActionError('')
                     setConfirmingCardId(card.id)
@@ -447,23 +542,51 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
           )}
         </section>
       </div>
+
+      {isEditingDeck && (
+        <DeckEditDialog
+          initialTitle={deck.title}
+          isPending={updateDeck.isPending}
+          errorMessage={deckEditError}
+          onSubmit={(body) => {
+            setDeckEditError('')
+            updateDeck.mutate(body)
+          }}
+          onClose={() => setIsEditingDeck(false)}
+        />
+      )}
+
+      {editingCard && (
+        <CardEditDialog
+          initialValues={{ question: editingCard.title, answer: editingCard.answer }}
+          isPending={updateCard.isPending}
+          errorMessage={cardEditError}
+          onSubmit={(body) => {
+            setCardEditError('')
+            updateCard.mutate({ cardId: editingCard.id, body })
+          }}
+          onClose={() => setEditingCardId(null)}
+        />
+      )}
     </>
   )
 }
 
 /** Card-level failures, which are all recoverable without leaving the page. */
-function messageForCardFailure(error: unknown, action: 'add' | 'delete'): string {
+function messageForCardFailure(error: unknown, action: 'add' | 'edit' | 'delete'): string {
   if (isStatus(error, 404)) {
-    return action === 'add'
-      ? 'This deck no longer exists, so the card was not saved.'
-      : 'That card has already been deleted.'
+    if (action === 'add') return 'This deck no longer exists, so the card was not saved.'
+    if (action === 'edit') {
+      return 'This deck or card no longer exists, so your changes were not saved.'
+    }
+    return 'That card has already been deleted.'
   }
   if (isStatus(error, 400)) {
     return 'A card needs both a question and an answer.'
   }
-  return action === 'add'
-    ? `We could not add that card. ${toFormMessage(error)}`
-    : `We could not delete that card. ${toFormMessage(error)}`
+  if (action === 'add') return `We could not add that card. ${toFormMessage(error)}`
+  if (action === 'edit') return `We could not save that card. ${toFormMessage(error)}`
+  return `We could not delete that card. ${toFormMessage(error)}`
 }
 
 /** One saved deck: its cards, and every action that changes them. */
