@@ -4,6 +4,8 @@
  * else in the codebase should ever hard-code a URL.
  */
 
+import type { ListParams } from './types'
+
 const DEFAULT_API_BASE_URL = 'http://localhost:8080'
 
 export const API_BASE_URL = (
@@ -61,3 +63,21 @@ export const API_PATHS = {
     scores: (quizId: string) => `/api/quiz/${encodeURIComponent(quizId)}/score/list`,
   },
 } as const
+
+/** The largest `size` a list endpoint accepts. */
+export const MAX_LIST_PAGE_SIZE = 100
+
+/**
+ * Adds the optional search and paging parameters to a list path. Omitted values
+ * are left off entirely so the backend applies its own defaults, and a blank
+ * `query` is dropped rather than sent as an empty search.
+ */
+export function listPath(path: string, { query, page, size }: ListParams): string {
+  const params = new URLSearchParams()
+  if (query?.trim()) params.set('query', query.trim())
+  if (page !== undefined) params.set('page', String(page))
+  if (size !== undefined) params.set('size', String(size))
+
+  const search = params.toString()
+  return search ? `${path}?${search}` : path
+}

@@ -1,8 +1,9 @@
 import { apiRequest } from './client'
-import { API_PATHS } from './config'
+import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
 import type {
   CreatedQuestion,
   CreateQuestionRequest,
+  ListParams,
   PublicId,
   Quiz,
   QuizListItem,
@@ -13,12 +14,27 @@ import type {
   UpdateQuizRequest,
 } from './types'
 
-/** Newest first, unpaginated. Items carry question previews, not answers. */
-export async function list(): Promise<QuizListItem[]> {
-  const { quizzes } = await apiRequest<QuizListResponse>(API_PATHS.quiz.list, {
+/**
+ * One page of quizzes, newest first. Items carry question previews, not
+ * answers. `query` searches quiz titles, not descriptions or question text.
+ */
+export async function list(params: ListParams = {}): Promise<QuizListResponse> {
+  return apiRequest<QuizListResponse>(listPath(API_PATHS.quiz.list, params), {
     authenticated: true,
   })
-  return quizzes ?? []
+}
+
+/**
+ * Every quiz, by walking the pages. For the screens that count or pick across
+ * the whole library rather than showing a paged list of it.
+ */
+export async function listAll(): Promise<QuizListItem[]> {
+  const all: QuizListItem[] = []
+  for (let page = 0; ; page++) {
+    const body = await list({ page, size: MAX_LIST_PAGE_SIZE })
+    all.push(...(body.quizzes ?? []))
+    if (!body.hasNext) return all
+  }
 }
 
 /**

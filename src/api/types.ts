@@ -59,6 +59,31 @@ export type UpdateUserDetailsRequest =
   | { fullName: string; email?: string }
   | { fullName?: string; email: string }
 
+/**
+ * Every list endpoint answers one page. `page` and `size` echo the request,
+ * `totalElements` counts everything the search matched rather than the page,
+ * and `hasNext` is what a "Load more" control reads.
+ */
+export interface PageMetadata {
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  hasNext: boolean
+}
+
+/**
+ * The optional parameters every list endpoint takes. `query` is a partial,
+ * case-insensitive match, trimmed server-side, and a blank one is no search.
+ * `page` is zero-based and defaults to 0; `size` defaults to 20 and must be
+ * 1 to 100.
+ */
+export interface ListParams {
+  query?: string
+  page?: number
+  size?: number
+}
+
 export interface ConceptSummary {
   name: string
   explanation: string
@@ -75,7 +100,7 @@ export interface NoteSummary {
   groupId: PublicId | null
 }
 
-export interface NoteListResponse {
+export interface NoteListResponse extends PageMetadata {
   notes: NoteSummary[]
 }
 
@@ -113,7 +138,7 @@ export interface FlashcardDeck {
   groupId: PublicId | null
 }
 
-export interface FlashcardListResponse {
+export interface FlashcardListResponse extends PageMetadata {
   flashcardDecks: FlashcardDeck[]
 }
 
@@ -223,7 +248,7 @@ export interface QuizListItem {
   groupId: PublicId | null
 }
 
-export interface QuizListResponse {
+export interface QuizListResponse extends PageMetadata {
   quizzes: QuizListItem[]
 }
 
@@ -314,7 +339,7 @@ export interface StudyGroupListItem {
   createdAt: LocalDateTimeString
 }
 
-export interface StudyGroupListResponse {
+export interface StudyGroupListResponse extends PageMetadata {
   groups: StudyGroupListItem[]
 }
 

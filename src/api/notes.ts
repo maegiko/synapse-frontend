@@ -1,16 +1,35 @@
 import { apiRequest } from './client'
-import { API_PATHS } from './config'
-import type { NoteListResponse, NoteSummary, PublicId, UpdateNoteRequest } from './types'
+import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
+import type {
+  ListParams,
+  NoteListResponse,
+  NoteSummary,
+  PublicId,
+  UpdateNoteRequest,
+} from './types'
 
 /**
- * Newest first, unpaginated, and every note arrives with its full summary
- * content. Only the envelope is unwrapped; field names are left alone.
+ * One page of notes, newest first, each with its full summary content. `query`
+ * searches note titles. The whole envelope is returned because the paging
+ * metadata beside `notes` is the point of it; field names are left alone.
  */
-export async function list(): Promise<NoteSummary[]> {
-  const { notes } = await apiRequest<NoteListResponse>(API_PATHS.notes.list, {
+export async function list(params: ListParams = {}): Promise<NoteListResponse> {
+  return apiRequest<NoteListResponse>(listPath(API_PATHS.notes.list, params), {
     authenticated: true,
   })
-  return notes ?? []
+}
+
+/**
+ * Every note, by walking the pages. For the screens that count or pick across
+ * the whole library rather than showing a paged list of it.
+ */
+export async function listAll(): Promise<NoteSummary[]> {
+  const all: NoteSummary[] = []
+  for (let page = 0; ; page++) {
+    const body = await list({ page, size: MAX_LIST_PAGE_SIZE })
+    all.push(...(body.notes ?? []))
+    if (!body.hasNext) return all
+  }
 }
 
 /** A note that is missing or belongs to another account answers 404. */

@@ -1,8 +1,9 @@
 import { apiRequest } from './client'
-import { API_PATHS } from './config'
+import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
 import type {
   CreateGroupRequest,
   GroupContentKind,
+  ListParams,
   PublicId,
   StudyGroup,
   StudyGroupDetail,
@@ -11,12 +12,27 @@ import type {
   UpdateGroupRequest,
 } from './types'
 
-/** Newest first, unpaginated. Rows carry content counts, not the content. */
-export async function list(): Promise<StudyGroupListItem[]> {
-  const { groups } = await apiRequest<StudyGroupListResponse>(API_PATHS.groups.list, {
+/**
+ * One page of groups, newest first. Rows carry content counts, not the content.
+ * `query` searches group names, not descriptions.
+ */
+export async function list(params: ListParams = {}): Promise<StudyGroupListResponse> {
+  return apiRequest<StudyGroupListResponse>(listPath(API_PATHS.groups.list, params), {
     authenticated: true,
   })
-  return groups ?? []
+}
+
+/**
+ * Every group, by walking the pages. For the pickers and dashboard panels that
+ * need the whole set rather than a paged list of it.
+ */
+export async function listAll(): Promise<StudyGroupListItem[]> {
+  const all: StudyGroupListItem[] = []
+  for (let page = 0; ; page++) {
+    const body = await list({ page, size: MAX_LIST_PAGE_SIZE })
+    all.push(...(body.groups ?? []))
+    if (!body.hasNext) return all
+  }
 }
 
 /**

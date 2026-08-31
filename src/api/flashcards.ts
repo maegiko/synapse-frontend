@@ -1,11 +1,12 @@
 import { apiRequest } from './client'
-import { API_PATHS } from './config'
+import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
 import type {
   AddFlashcardRequest,
   AddFlashcardResponse,
   FlashcardDeck,
   FlashcardGenerateResponse,
   FlashcardListResponse,
+  ListParams,
   PublicId,
   ReviewDeckResponse,
   ReviewQueueDeck,
@@ -15,12 +16,27 @@ import type {
   UpdateFlashcardRequest,
 } from './types'
 
-/** Newest first, unpaginated, with every card of every deck included. */
-export async function list(): Promise<FlashcardDeck[]> {
-  const { flashcardDecks } = await apiRequest<FlashcardListResponse>(API_PATHS.flashcards.list, {
+/**
+ * One page of decks, newest first, with every card of each deck included.
+ * `query` searches deck titles, not card text.
+ */
+export async function list(params: ListParams = {}): Promise<FlashcardListResponse> {
+  return apiRequest<FlashcardListResponse>(listPath(API_PATHS.flashcards.list, params), {
     authenticated: true,
   })
-  return flashcardDecks ?? []
+}
+
+/**
+ * Every deck, by walking the pages. For the screens that count or pick across
+ * the whole library rather than showing a paged list of it.
+ */
+export async function listAll(): Promise<FlashcardDeck[]> {
+  const all: FlashcardDeck[] = []
+  for (let page = 0; ; page++) {
+    const body = await list({ page, size: MAX_LIST_PAGE_SIZE })
+    all.push(...(body.flashcardDecks ?? []))
+    if (!body.hasNext) return all
+  }
 }
 
 /**
