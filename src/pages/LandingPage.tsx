@@ -151,8 +151,7 @@ export function LandingPage() {
           <div className={shell}>
             <h2 className="max-w-[32ch] text-2xl">What comes out the other side</h2>
             <p className="mt-3 max-w-[56ch] text-base text-text-muted">
-              Synapse hasn’t launched yet, so instead of quotes from other students,
-              here’s the actual material it produces.
+              No abstract promises. Here’s what Synapse actually gives you to study with.
             </p>
             <div className="mt-11 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
               <SummaryMock />
@@ -162,30 +161,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section className="py-20 bg-surface border-y border-border">
-          <div className={`${shell} grid grid-cols-1 md:grid-cols-2 gap-6`}>
-            <div className="rounded-md border border-border bg-background p-6.5">
-              <h3 className="mb-2.5 text-lg">You still do the reading</h3>
-              <p className="text-sm text-text-muted">
-                Synapse only ever works from the file you upload. It can’t summarize a
-                chapter you haven’t given it, and there’s no shared library of other
-                people’s notes to lean on instead. It’s a faster way to organize and
-                test what you’ve already read, not a substitute for reading it.
-              </p>
-            </div>
-            <div className="rounded-md border border-border bg-background p-6.5">
-              <h3 className="mb-2.5 text-lg">Generating takes a moment</h3>
-              <p className="text-sm text-text-muted">
-                Every summary, deck, and quiz is produced by a real AI model at request
-                time, so it’s specific to your file rather than a stock answer. That
-                also means it takes a few seconds, more like a search than a page load.
-                We show a loading state so you’re never left wondering if it worked.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section id="faq" className="py-20">
+        <section id="faq" className="py-20 bg-surface border-y border-border">
           <div className={shell}>
             <h2 className="max-w-[32ch] text-2xl">Questions worth answering upfront</h2>
             <dl className="mt-9 grid gap-6">
