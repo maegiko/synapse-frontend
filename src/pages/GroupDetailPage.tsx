@@ -32,7 +32,7 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { useDeleteGroup, useRemoveFromGroup, useUpdateGroup } from '../lib/groupMutations'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import { useGroup } from '../lib/queries'
+import { useGroup, useUserTimeZone } from '../lib/queries'
 import type { GroupContentKind, StudyGroupContentItem, StudyGroupDetail } from '../api'
 
 /** The groups page is where a deleted group's visitor is sent, and the fallback. */
@@ -89,6 +89,7 @@ function ContentCard({
   onError: (message: string) => void
 }) {
   const removeFromGroup = useRemoveFromGroup()
+  const timeZone = useUserTimeZone()
 
   return (
     <div
@@ -106,7 +107,7 @@ function ContentCard({
           {item.title}
         </AppLink>
         <span className="block truncate text-xs text-text-muted tabular-nums">
-          Created {formatRelative(item.createdAt)}
+          Created {formatRelative(item.createdAt, timeZone)}
         </span>
       </span>
       <IconArrowRight
@@ -194,6 +195,7 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
   const navigate = useNavigate()
   const updateGroup = useUpdateGroup(group.id)
   const deleteGroup = useDeleteGroup()
+  const timeZone = useUserTimeZone()
 
   const [isEditing, setIsEditing] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -212,7 +214,7 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
         <span className={countPill}>{plural(group.notes.length, 'note')}</span>
         <span className={countPill}>{plural(group.decks.length, 'deck')}</span>
         <span className={countPill}>{plural(group.quizzes.length, 'quiz', 'quizzes')}</span>
-        <span className={countPill}>Created {formatRelative(group.createdAt)}</span>
+        <span className={countPill}>Created {formatRelative(group.createdAt, timeZone)}</span>
       </div>
 
       {/* Filling the group on the left; managing the group itself on the right. */}

@@ -4,6 +4,7 @@ import { IconArrowLeft, IconArrowRight, IconCheck, IconDeck } from './icons'
 import { btnGhostSm, btnPrimarySm, cardLink } from './ui'
 import { calendarDaysFromToday, formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
+import { useUserTimeZone } from '../lib/queries'
 import type { ReviewQueueDeck, ReviewRating } from '../api'
 
 const RATING_BADGES: Record<ReviewRating, { label: string; className: string }> = {
@@ -150,12 +151,13 @@ function useRailOverflow(itemCount: number) {
 }
 
 /**
- * The backend schedules in whole UTC days, so there is no time of day to count
- * down to and nothing here ever ticks. The queue only carries decks that are
- * already due, so a future date is defensive rather than expected.
+ * The backend schedules in whole calendar days of the user's own time zone, so
+ * there is no time of day to count down to and nothing here ever ticks. The
+ * queue only carries decks that are already due, so a future date is defensive
+ * rather than expected.
  */
-function dueLabel(nextReviewDate: string): string {
-  const days = calendarDaysFromToday(nextReviewDate)
+function dueLabel(nextReviewDate: string, timeZone: string): string {
+  const days = calendarDaysFromToday(nextReviewDate, timeZone)
   if (days === null) return 'Due now'
   if (days > 0) return `Due ${formatCalendarDate(nextReviewDate)}`
   if (days === 0) return 'Due today'
@@ -180,11 +182,12 @@ function dueLabel(nextReviewDate: string): string {
 function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean }) {
   // An empty deck can sit in the queue but the review endpoint rejects it, so
   // it points at its overview to be filled instead of at a run it cannot start.
+  const timeZone = useUserTimeZone()
   const isEmpty = deck.cardCount === 0
   const to = isEmpty ? `/flashcards/${deck.deckId}` : `/flashcards/${deck.deckId}/play`
   const action = isEmpty ? 'Add cards' : isNext ? 'Review now' : 'Review'
-  const isDueNow = (calendarDaysFromToday(deck.nextReviewDate) ?? 0) <= 0
-  const timing = isNext && isDueNow ? 'Due now' : dueLabel(deck.nextReviewDate)
+  const isDueNow = (calendarDaysFromToday(deck.nextReviewDate, timeZone) ?? 0) <= 0
+  const timing = isNext && isDueNow ? 'Due now' : dueLabel(deck.nextReviewDate, timeZone)
   const lastRating = deck.lastRating ? RATING_BADGES[deck.lastRating] : null
 
   return (

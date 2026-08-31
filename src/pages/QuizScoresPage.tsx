@@ -9,7 +9,7 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import type { BackTarget } from '../lib/backTrail'
 import { formatDateTime } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import { useQuiz, useQuizScores } from '../lib/queries'
+import { useQuiz, useQuizScores, useUserTimeZone } from '../lib/queries'
 
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
@@ -29,6 +29,7 @@ export function QuizScoresPage() {
   const { quizId } = useParams<{ quizId: string }>()
   const quiz = useQuiz(quizId)
   const scores = useQuizScores(quizId)
+  const timeZone = useUserTimeZone()
 
   const isMissing = isStatus(quiz.error, 404) || isStatus(scores.error, 404)
   /** The quiz these attempts belong to, for anyone who opened this page directly. */
@@ -119,7 +120,7 @@ export function QuizScoresPage() {
                         <ScoreRow
                           key={score.publicId}
                           score={score}
-                          when={formatDateTime(score.createdAt)}
+                          when={formatDateTime(score.createdAt, timeZone)}
                         />
                       ))}
                     </ol>

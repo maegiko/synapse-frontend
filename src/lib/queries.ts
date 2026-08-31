@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import { api, type UserDetails } from '../api'
+import { DEFAULT_TIME_ZONE } from './timeZone'
 
 export const queryKeys = {
   userDetails: ['user-details'] as const,
@@ -47,6 +48,17 @@ export function useUserDetails(fallback?: UserDetails | null) {
     initialData: fallback ?? undefined,
     initialDataUpdatedAt: 0,
   })
+}
+
+/**
+ * The time zone every date on screen is read in. Falls back to UTC while the
+ * profile is still loading, and to UTC for an account that predates the field.
+ *
+ * <p>Deliberately the saved zone rather than the browser's: a user who travels
+ * should still see their own calendar until they change it themselves.</p>
+ */
+export function useUserTimeZone(): string {
+  return useUserDetails().data?.timeZone ?? DEFAULT_TIME_ZONE
 }
 
 export function useStreak() {

@@ -15,7 +15,14 @@ import noteSplash from '../assets/note_splash.webp'
 import quizSplash from '../assets/quiz_splash.webp'
 import { btnPrimaryMdInverted, cardLink, shell } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
-import { useFlashcardDecks, useNotes, useQuizzes, useReviewQueue, useStreak } from '../lib/queries'
+import {
+  useFlashcardDecks,
+  useNotes,
+  useQuizzes,
+  useReviewQueue,
+  useStreak,
+  useUserTimeZone,
+} from '../lib/queries'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
@@ -130,6 +137,7 @@ export function DashboardPage() {
   const notes = useNotes()
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
+  const timeZone = useUserTimeZone()
   const streak = useStreak()
   const reviewQueue = useReviewQueue()
 
@@ -345,7 +353,7 @@ export function DashboardPage() {
                   questionCount={quiz.questions.length}
                   difficulty={quiz.difficulty}
                   // Quizzes are the only listed resource the API timestamps.
-                  timestamp={formatRelative(quiz.createdAt)}
+                  timestamp={formatRelative(quiz.createdAt, timeZone)}
                 />
               ))}
             </RecentsCard>

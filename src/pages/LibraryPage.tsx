@@ -13,7 +13,12 @@ import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
-import { useFlashcardDecksSearch, useNotesSearch, useQuizzesSearch } from '../lib/queries'
+import {
+  useFlashcardDecksSearch,
+  useNotesSearch,
+  useQuizzesSearch,
+  useUserTimeZone,
+} from '../lib/queries'
 import type { UseInfiniteQueryResult } from '@tanstack/react-query'
 
 type Kind = 'all' | 'notes' | 'decks' | 'quizzes'
@@ -134,6 +139,7 @@ export function LibraryPage() {
   const term = useDebouncedValue(search).trim()
   const isSearching = term.length > 0
 
+  const timeZone = useUserTimeZone()
   const notes = useNotesSearch(term)
   const decks = useFlashcardDecksSearch(term)
   const quizzes = useQuizzesSearch(term)
@@ -325,7 +331,7 @@ export function LibraryPage() {
                       ),
                     ]}
                     // Quizzes are the only listed resource the API timestamps.
-                    timestamp={formatRelative(quiz.createdAt)}
+                    timestamp={formatRelative(quiz.createdAt, timeZone)}
                   />
                 ))}
               </Section>

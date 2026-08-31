@@ -40,7 +40,7 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
-import { queryKeys, useQuiz, useQuizScores } from '../lib/queries'
+import { queryKeys, useQuiz, useQuizScores, useUserTimeZone } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
 import { SHUFFLE_PARAM } from '../lib/shuffle'
 import { api } from '../api'
@@ -191,6 +191,7 @@ function QuestionRow({
 /** Past attempts. Saving one belongs to the quiz runner, so this is read-only. */
 function ScoreHistory({ quizId }: { quizId: string }) {
   const scores = useQuizScores(quizId)
+  const timeZone = useUserTimeZone()
 
   return (
     <section className={surfaceCard}>
@@ -237,7 +238,7 @@ function ScoreHistory({ quizId }: { quizId: string }) {
                 <ScoreRow
                   key={score.publicId}
                   score={score}
-                  when={formatRelative(score.createdAt)}
+                  when={formatRelative(score.createdAt, timeZone)}
                 />
               ))}
             </ol>
@@ -250,6 +251,7 @@ function ScoreHistory({ quizId }: { quizId: string }) {
 function QuizContent({ quiz }: { quiz: Quiz }) {
   const navigate = useNavigate()
   const questionId = useId()
+  const timeZone = useUserTimeZone()
   const questionRef = useRef<HTMLTextAreaElement>(null)
 
   const [isAdding, setIsAdding] = useState(false)
@@ -451,7 +453,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             <DifficultyStars value={quiz.difficulty} />
           )}
         </span>
-        <span className={countPill}>Created {formatRelative(quiz.createdAt)}</span>
+        <span className={countPill}>Created {formatRelative(quiz.createdAt, timeZone)}</span>
       </div>
 
       <div className="mt-3">

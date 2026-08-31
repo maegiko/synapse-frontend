@@ -12,6 +12,7 @@ import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { Avatar } from '../components/Avatar'
 import { FormAlert } from '../components/FormAlert'
+import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
 import {
   IconArrowRight,
@@ -39,6 +40,7 @@ import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { calendarDaysFromToday, formatCalendarDate, formatDate } from '../lib/formatDate'
+import { timeZoneOptions } from '../lib/timeZone'
 import { plural } from '../lib/plural'
 import { queryClient } from '../lib/queryClient'
 import {
@@ -47,6 +49,7 @@ import {
   useFlashcardDecks,
   useNotes,
   useQuizzes,
+  useUserTimeZone,
   useReviewQueue,
   useStreak,
   useUserDetails,
@@ -153,8 +156,8 @@ const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
 ]
 
 /** How overdue the queue's oldest deck is, phrased for a single stat cell. */
-function dueAgeLabel(date: string): string {
-  const days = calendarDaysFromToday(date)
+function dueAgeLabel(date: string, timeZone: string): string {
+  const days = calendarDaysFromToday(date, timeZone)
   if (days === null) return '—'
   if (days >= 0) return 'Today'
   if (days === -1) return 'Yesterday'
@@ -180,6 +183,7 @@ export function ProfilePage() {
   const [perfTab, setPerfTab] = useState<PerfTab>('flashcards')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
+  const [timeZoneField, setTimeZoneField] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
@@ -191,11 +195,13 @@ export function ProfilePage() {
   const [passwordFormError, setPasswordFormError] = useState('')
 
   const profile = details.data
+  const timeZone = useUserTimeZone()
 
   function startEditing() {
     if (!profile) return
     setFullName(profile.fullName)
     setEmail(profile.email)
+    setTimeZoneField(timeZone)
     setFieldErrors({})
     setFormError('')
     setSavedMessage('')
@@ -224,9 +230,18 @@ export function ProfilePage() {
     mutationFn: (payload: UpdateUserDetailsRequest) => api.user.updateDetails(payload),
     onSuccess: (updated: UserDetails) => {
       // The PATCH response is the normalized truth: a trimmed name, a lowercased
-      // email. Nothing else is refetched, since no other view shows these.
+      // email, a canonical time zone.
       queryClient.setQueryData(queryKeys.userDetails, updated)
       setUserDetails(updated)
+
+      // A new time zone moves the calendar the backend answers in, so anything
+      // it dated is now stale: which day counts as today, and which decks are
+      // due. The rows themselves are untouched, so this is a refresh rather
+      // than a rebuild.
+      if (timeZoneChanged) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
+      }
       setPanel('summary')
       setFieldErrors({})
       setFormError('')
@@ -269,7 +284,10 @@ export function ProfilePage() {
   const normalizedEmail = email.trim().toLowerCase()
   const nameChanged = Boolean(profile) && trimmedName !== profile?.fullName
   const emailChanged = Boolean(profile) && normalizedEmail !== profile?.email.toLowerCase()
-  const hasChanges = nameChanged || emailChanged
+  // Guarded on a non-empty field: unlike the text inputs, an empty value here is
+  // not a validation message but a 400, so it must never reach the payload.
+  const timeZoneChanged = Boolean(profile) && Boolean(timeZoneField) && timeZoneField !== timeZone
+  const hasChanges = nameChanged || emailChanged || timeZoneChanged
 
   // Like the details form's `hasChanges`: the submit stays disabled until there
   // is something to send.
@@ -292,6 +310,7 @@ export function ProfilePage() {
     const payload = {
       ...(nameChanged ? { fullName: trimmedName } : {}),
       ...(emailChanged ? { email: normalizedEmail } : {}),
+      ...(timeZoneChanged ? { timeZone: timeZoneField } : {}),
     } as UpdateUserDetailsRequest
 
     save.mutate(payload)
@@ -422,6 +441,7 @@ export function ProfilePage() {
                   <div className="min-w-0">
                     <p className="truncate text-xl font-medium">{profile.fullName}</p>
                     <p className="truncate text-sm text-text-muted">{profile.email}</p>
+                    <p className="truncate text-xs text-text-muted">{timeZone}</p>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
@@ -489,6 +509,16 @@ export function ProfilePage() {
                 onChange={(event) => setEmail(event.target.value)}
               />
 
+              <SelectField
+                label="Time zone"
+                name="timeZone"
+                hint="Streak days, due dates, and every time shown are counted here. It stays put when you travel."
+                value={timeZoneField}
+                options={timeZoneOptions(timeZone)}
+                disabled={save.isPending}
+                onChange={(event) => setTimeZoneField(event.target.value)}
+              />
+
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
@@ -507,7 +537,7 @@ export function ProfilePage() {
                 </button>
                 {!hasChanges && !save.isPending && (
                   <span className="text-xs text-text-muted">
-                    Change your name or email to save.
+                    Change your name, email, or time zone to save.
                   </span>
                 )}
               </div>
@@ -792,7 +822,7 @@ export function ProfilePage() {
                     ) : reviewQueue.isError ? (
                       <span className="text-base text-text-muted">—</span>
                     ) : oldestDue ? (
-                      dueAgeLabel(oldestDue)
+                      dueAgeLabel(oldestDue, timeZone)
                     ) : (
                       'Up to date'
                     )}
@@ -868,7 +898,7 @@ export function ProfilePage() {
                       icon={<IconClock className="h-4 w-4" />}
                       hint="Most recent saved run."
                     >
-                      {quizzesPending ? <Bar /> : formatDate(lastAttemptAt) || '—'}
+                      {quizzesPending ? <Bar /> : formatDate(lastAttemptAt, timeZone) || '—'}
                     </Figure>
                   </dl>
                 )}
