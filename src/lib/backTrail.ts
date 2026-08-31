@@ -43,6 +43,7 @@ function describeRoute(pathname: string, search: string): BackTarget | null {
 
   if (path === '/dashboard') return { to: path, label: 'dashboard' }
   if (path === '/profile') return { to: path, label: 'your profile' }
+  if (path === '/analytics') return { to: path, label: 'your progress' }
 
   if (path === '/groups') return { to: path, label: 'your groups' }
 

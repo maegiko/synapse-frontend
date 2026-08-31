@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthProvider'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { ScrollToTop } from './components/ScrollToTop'
 import { StreakCelebrationProvider } from './components/StreakCelebration'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
 import { GroupDetailPage } from './pages/GroupDetailPage'
@@ -68,6 +69,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               }
             />
