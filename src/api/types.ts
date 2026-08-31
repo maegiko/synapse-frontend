@@ -15,6 +15,11 @@ export interface RegisterRequest {
   fullName: string
   email: string
   password: string
+  /**
+   * IANA identifier the account's calendar days are counted in. Optional: the
+   * backend falls back to `UTC` when it is absent or blank.
+   */
+  timeZone?: string
 }
 
 export interface LoginRequest {
@@ -46,6 +51,13 @@ export interface UserDetails {
    * profile is fetched. A deck review answers with the updated total.
    */
   totalFlashcardsReviewed?: number
+  /**
+   * The account's IANA time zone. Every calendar day the backend decides — streak
+   * days, deck due dates — is counted in it, and every stored timestamp is read
+   * back in it. Like `totalFlashcardsReviewed`, only `/api/user/details` sends it,
+   * so state seeded from login or register lacks it until the profile is fetched.
+   */
+  timeZone?: string
 }
 
 export interface StreakResponse {
@@ -55,9 +67,11 @@ export interface StreakResponse {
   lastActiveDate: LocalDateString | null
 }
 
+/** At least one property must be present; only supplied values change. */
 export type UpdateUserDetailsRequest =
-  | { fullName: string; email?: string }
-  | { fullName?: string; email: string }
+  | { fullName: string; email?: string; timeZone?: string }
+  | { fullName?: string; email: string; timeZone?: string }
+  | { fullName?: string; email?: string; timeZone: string }
 
 /**
  * Every list endpoint answers one page. `page` and `size` echo the request,

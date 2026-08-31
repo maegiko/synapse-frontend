@@ -1,6 +1,7 @@
 import { apiRequest } from './client'
 import { API_PATHS } from './config'
 import { setAccessToken } from './tokenStore'
+import { detectTimeZone } from '../lib/timeZone'
 import type {
   AuthResponse,
   ChangePasswordRequest,
@@ -11,6 +12,10 @@ import type {
 /**
  * DTO validation runs before the backend trims the email, so trim it here or a
  * padded address can fail @Email validation.
+ *
+ * The account's time zone is seeded from the device unless the caller names one.
+ * It is only a starting point: from here on the saved value is what counts, and
+ * it changes only when the user changes it in their profile.
  */
 export function register(payload: RegisterRequest): Promise<AuthResponse> {
   return apiRequest<AuthResponse>(API_PATHS.auth.register, {
@@ -20,6 +25,7 @@ export function register(payload: RegisterRequest): Promise<AuthResponse> {
       fullName: payload.fullName.trim(),
       email: payload.email.trim(),
       password: payload.password,
+      timeZone: payload.timeZone ?? detectTimeZone(),
     },
   })
 }
