@@ -67,6 +67,169 @@ export interface StreakResponse {
   lastActiveDate: LocalDateString | null
 }
 
+/** The only windows `GET /api/user/analytics` accepts; anything else is a 400. */
+export type AnalyticsPeriodDays = 7 | 30 | 90 | 365
+
+/** `from`/`to` are inclusive local dates, and `to` is always the user's today. */
+export interface AnalyticsPeriod {
+  days: AnalyticsPeriodDays
+  from: LocalDateString
+  to: LocalDateString
+}
+
+/**
+ * The window's headline figures. `totalStudySeconds` sums only the durations
+ * that were actually submitted, so it is study time *recorded* rather than time
+ * elapsed, and `lifetimeCardsReviewed` is the running total deletions never
+ * reduce — normally larger than the window's `cardsReviewed`.
+ */
+export interface AnalyticsOverview {
+  totalStudySeconds: number
+  activeDays: number
+  inactiveDays: number
+  /** Whole seconds, rounded, and `0` when there are no active days. */
+  averageSecondsPerActiveDay: number
+  cardsReviewed: number
+  lifetimeCardsReviewed: number
+  deckReviewSessions: number
+  quizAttempts: number
+  /** 0–100 over the window's attempts, or null when there were none. */
+  averageQuizPercentage: number | null
+}
+
+/** Only the days that had a review; `dailyActivity` is the gap-filled series. */
+export interface AnalyticsFlashcardDay {
+  date: LocalDateString
+  cardsReviewed: number
+  reviewSessions: number
+}
+
+/** The window's reviews counted by the rating they were given. */
+export interface AnalyticsRatingCounts {
+  again: number
+  hard: number
+  good: number
+  easy: number
+}
+
+/** Exactly seven entries starting at today, with the quiet days filled in. */
+export interface AnalyticsDueForecastDay {
+  date: LocalDateString
+  deckCount: number
+}
+
+/**
+ * Decks bucketed by their latest rating and current interval. A deck that has
+ * never been reviewed is in none of the three, so these need not sum to the
+ * deck count.
+ */
+export interface AnalyticsMastery {
+  struggling: number
+  learning: number
+  strong: number
+}
+
+/**
+ * `overdueDecks`, `dueTodayDecks`, `dueForecast`, and `mastery` describe the
+ * library as it stands now rather than the window, so they do not move with
+ * `period`.
+ */
+export interface AnalyticsFlashcards {
+  cardsReviewed: number
+  reviewSessions: number
+  perDay: AnalyticsFlashcardDay[]
+  ratings: AnalyticsRatingCounts
+  /** A 0–1 ratio, not a percentage. Null when the window has no reviews. */
+  retentionRate: number | null
+  overdueDecks: number
+  dueTodayDecks: number
+  dueForecast: AnalyticsDueForecastDay[]
+  mastery: AnalyticsMastery
+}
+
+/** Only the days that had an attempt; `dailyActivity` is the gap-filled series. */
+export interface AnalyticsQuizDay {
+  date: LocalDateString
+  attempts: number
+}
+
+/**
+ * One saved attempt inside the window. `totalQuestions` is the snapshot taken
+ * when the score was saved, so `percentage` stays meaningful after an edit, and
+ * `durationSeconds` is null for an attempt whose client did not time itself.
+ */
+export interface AnalyticsScoreHistoryItem {
+  id: PublicId
+  quizId: PublicId
+  quizTitle: string
+  score: number
+  totalQuestions: number
+  percentage: number
+  durationSeconds: number | null
+  createdAt: LocalDateTimeString
+}
+
+/**
+ * `scoreHistory` is every attempt in the window, **oldest first** — the opposite
+ * order to `GET /api/quiz/{quizId}/score/list`.
+ */
+export interface AnalyticsQuizzes {
+  attempts: number
+  distinctQuizzesAttempted: number
+  perDay: AnalyticsQuizDay[]
+  /** 0–100. Null when nothing scoreable was attempted. */
+  averagePercentage: number | null
+  bestPercentage: number | null
+  /** Averaged over the attempts that reported a duration only. */
+  averageDurationSeconds: number | null
+  scoreHistory: AnalyticsScoreHistoryItem[]
+  /**
+   * Mean of `latest - first` percentage points across the quizzes attempted at
+   * least twice in the window; positive is improvement. Null when no quiz was.
+   */
+  improvement: number | null
+}
+
+/**
+ * `currentStreak` and `longestStreak` are the streak endpoint's own figures.
+ * They count every qualifying activity, generation included, so they are not
+ * limited to the window and can exceed `period.days`.
+ */
+export interface AnalyticsConsistency {
+  currentStreak: number
+  longestStreak: number
+  activeDays: number
+  inactiveDays: number
+  /** A deck review and a quiz attempt each count as one session. */
+  averageSessionsPerActiveDay: number
+  /** Longest run of days inside the window with neither a review nor an attempt. */
+  longestInactivityGap: number
+}
+
+/** One entry for every day of the window, oldest first, empty days included. */
+export interface AnalyticsDailyActivity {
+  date: LocalDateString
+  studySeconds: number
+  cardsReviewed: number
+  deckReviews: number
+  quizAttempts: number
+}
+
+/**
+ * Counts and totals are `0` when nothing happened, but rates and averages with
+ * nothing to average are `null` rather than `0` — a retention rate of zero and
+ * no reviews at all are not the same thing. Render those as a no-data state.
+ */
+export interface AnalyticsResponse {
+  period: AnalyticsPeriod
+  overview: AnalyticsOverview
+  flashcards: AnalyticsFlashcards
+  quizzes: AnalyticsQuizzes
+  consistency: AnalyticsConsistency
+  /** Length always equals `period.days`, so a chart needs no gap filling. */
+  dailyActivity: AnalyticsDailyActivity[]
+}
+
 /** At least one property must be present; only supplied values change. */
 export type UpdateUserDetailsRequest =
   | { fullName: string; email?: string; timeZone?: string }
@@ -158,6 +321,17 @@ export interface FlashcardListResponse extends PageMetadata {
 
 /** Ordered easiest-to-recall last; the backend owns what each one does to the schedule. */
 export type ReviewRating = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
+
+/**
+ * `rating` is required. `durationSeconds` is optional: omit it, or send null,
+ * when the session was not timed — the review is saved with no duration rather
+ * than a guessed one, and still counts as a session and an active day. It must
+ * be a whole number of seconds within the API's allowed range.
+ */
+export interface ReviewDeckRequest {
+  rating: ReviewRating
+  durationSeconds?: number | null
+}
 
 /** The deck's new schedule, plus the user's updated lifetime review total. */
 export interface ReviewDeckResponse {
@@ -314,6 +488,17 @@ export interface CreatedQuestion {
   questionType: QuestionType
   answers: CreatedAnswer[]
   createdAt: LocalDateTimeString
+}
+
+/**
+ * `score` cannot exceed the quiz's current question count. `durationSeconds`
+ * follows the same rules as a deck review's: optional, whole seconds, and
+ * within the API's allowed range. An untimed attempt still counts as an
+ * attempt; it just contributes no study time.
+ */
+export interface SaveScoreRequest {
+  score: number
+  durationSeconds?: number | null
 }
 
 /** The only resource whose identifier is named `publicId` rather than `id`. */

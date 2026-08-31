@@ -1,6 +1,12 @@
 import { apiRequest } from './client'
-import { API_PATHS } from './config'
-import type { StreakResponse, UpdateUserDetailsRequest, UserDetails } from './types'
+import { analyticsPath, API_PATHS } from './config'
+import type {
+  AnalyticsPeriodDays,
+  AnalyticsResponse,
+  StreakResponse,
+  UpdateUserDetailsRequest,
+  UserDetails,
+} from './types'
 
 /** The source of truth for profile data; JWT display claims go stale. */
 export function getDetails(): Promise<UserDetails> {
@@ -24,4 +30,14 @@ export function updateDetails(payload: UpdateUserDetailsRequest): Promise<UserDe
 /** Current and longest study streaks, counted in calendar days of the user's saved time zone. */
 export function getStreak(): Promise<StreakResponse> {
   return apiRequest<StreakResponse>(API_PATHS.user.streak, { authenticated: true })
+}
+
+/**
+ * How the study is going over a window of whole calendar days ending on the
+ * user's today, counted in the account's saved time zone. The window moves at
+ * local midnight, and a submitted review or score changes it, so this is
+ * refetched after both rather than cached indefinitely.
+ */
+export function getAnalytics(period: AnalyticsPeriodDays): Promise<AnalyticsResponse> {
+  return apiRequest<AnalyticsResponse>(analyticsPath(period), { authenticated: true })
 }

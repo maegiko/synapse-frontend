@@ -4,7 +4,7 @@
  * else in the codebase should ever hard-code a URL.
  */
 
-import type { ListParams } from './types'
+import type { AnalyticsPeriodDays, ListParams } from './types'
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8080'
 
@@ -23,6 +23,7 @@ export const API_PATHS = {
   user: {
     details: '/api/user/details',
     streak: '/api/user/streak',
+    analytics: '/api/user/analytics',
   },
   notes: {
     list: '/api/notes/list',
@@ -66,6 +67,14 @@ export const API_PATHS = {
 
 /** The largest `size` a list endpoint accepts. */
 export const MAX_LIST_PAGE_SIZE = 100
+
+/**
+ * The analytics window. `period` is always sent explicitly rather than relying
+ * on the backend default, so the response's window matches the one on screen.
+ */
+export function analyticsPath(period: AnalyticsPeriodDays): string {
+  return `${API_PATHS.user.analytics}?period=${period}`
+}
 
 /**
  * Adds the optional search and paging parameters to a list path. Omitted values
