@@ -55,7 +55,7 @@ const RATINGS: {
 }[] = [
   {
     value: 'AGAIN',
-    label: 'Again',
+    label: 'Rough',
     hint: 'Hardly any of it stuck',
     tone: 'border-error-solid/25 bg-error-soft/60 hover:border-error-solid/60 hover:bg-error-soft',
     labelTone: 'text-error-solid',

@@ -393,7 +393,7 @@ function AnalyticsSections({
           emptyMessage="You have not rated a review in this period."
           items={[
             {
-              label: 'Again',
+              label: 'Rough',
               count: flashcards.ratings.again,
               fill: 'bg-error-solid',
               text: 'text-error-solid',

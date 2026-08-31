@@ -8,7 +8,7 @@ import { useUserTimeZone } from '../lib/queries'
 import type { ReviewQueueDeck, ReviewRating } from '../api'
 
 const RATING_BADGES: Record<ReviewRating, { label: string; className: string }> = {
-  AGAIN: { label: 'AGAIN', className: 'bg-error-soft text-error-solid' },
+  AGAIN: { label: 'ROUGH', className: 'bg-error-soft text-error-solid' },
   HARD: { label: 'HARD', className: 'bg-warning-soft text-warning-solid' },
   GOOD: { label: 'GOOD', className: 'bg-accent-soft text-accent-strong' },
   EASY: { label: 'EASY', className: 'bg-success-soft text-success-solid' },
