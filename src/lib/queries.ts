@@ -1,10 +1,13 @@
-import { useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
-import { api, type UserDetails } from '../api'
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { api, type AnalyticsPeriodDays, type UserDetails } from '../api'
 import { DEFAULT_TIME_ZONE } from './timeZone'
 
 export const queryKeys = {
   userDetails: ['user-details'] as const,
   streak: ['streak'] as const,
+  /** The prefix every window shares, so one invalidation refreshes them all. */
+  analytics: ['analytics'] as const,
+  analyticsPeriod: (period: AnalyticsPeriodDays) => ['analytics', period] as const,
   notes: ['notes'] as const,
   notesSearch: (query: string) => ['notes', 'search', query] as const,
   note: (noteId: string) => ['notes', noteId] as const,
@@ -65,6 +68,19 @@ export function useStreak() {
   return useQuery({ queryKey: queryKeys.streak, queryFn: api.user.getStreak })
 }
 
+/**
+ * The study analytics for one window. Each period is its own cache entry, and
+ * the previous one is held on screen while the next loads, so changing the
+ * period redraws the page rather than emptying it.
+ */
+export function useAnalytics(period: AnalyticsPeriodDays) {
+  return useQuery({
+    queryKey: queryKeys.analyticsPeriod(period),
+    queryFn: () => api.user.getAnalytics(period),
+    placeholderData: keepPreviousData,
+  })
+}
+
 /** Every note at once, for the counts, recents, and pickers built over the whole set. */
 export function useNotes() {
   return useQuery({ queryKey: queryKeys.notes, queryFn: api.notes.listAll })
@@ -121,7 +137,7 @@ export function useReviewQueue() {
   return useQuery({ queryKey: queryKeys.reviewQueue, queryFn: api.flashcards.reviewQueue })
 }
 
-/** Every quiz at once, for the counts, recents, and analytics built over the whole set. */
+/** Every quiz at once, for the counts, recents, and pickers built over the whole set. */
 export function useQuizzes() {
   return useQuery({ queryKey: queryKeys.quizzes, queryFn: api.quiz.listAll })
 }
@@ -154,33 +170,6 @@ export function useQuizScores(quizId: string | undefined) {
     queryKey: queryKeys.quizScores(quizId ?? ''),
     queryFn: () => api.quiz.scores(quizId ?? ''),
     enabled: Boolean(quizId),
-  })
-}
-
-/**
- * Attempt history for every quiz at once. The API has no cross-quiz score
- * endpoint, so profile analytics fan out over the quiz list. Each request shares
- * its cache entry with that quiz's own scores page, and one failure only costs
- * the attempts of the quiz it belongs to.
- */
-export function useAllQuizScores(quizIds: string[] | undefined) {
-  return useQueries({
-    queries: (quizIds ?? []).map((quizId) => ({
-      queryKey: queryKeys.quizScores(quizId),
-      queryFn: () => api.quiz.scores(quizId),
-    })),
-    combine: (results) => ({
-      scores: results.flatMap((result) => result.data ?? []),
-      /** Quizzes with at least one saved attempt, for "across N quizzes". */
-      quizzesAttempted: results.filter((result) => (result.data?.length ?? 0) > 0).length,
-      isPending: results.some((result) => result.isPending),
-      failedCount: results.filter((result) => result.isError).length,
-      retryFailed: () => {
-        for (const result of results) {
-          if (result.isError) void result.refetch()
-        }
-      },
-    }),
   })
 }
 

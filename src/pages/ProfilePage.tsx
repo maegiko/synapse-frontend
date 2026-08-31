@@ -19,7 +19,6 @@ import {
   IconCard,
   IconChart,
   IconCheck,
-  IconClock,
   IconDeck,
   IconNote,
   IconPlay,
@@ -39,18 +38,23 @@ import {
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
-import { calendarDaysFromToday, formatCalendarDate, formatDate } from '../lib/formatDate'
+import { formatCalendarDate } from '../lib/formatDate'
+import {
+  formatImprovement,
+  formatPercentage,
+  formatRatioAsPercentage,
+  NO_DATA_LABEL,
+} from '../lib/analytics'
 import { timeZoneOptions } from '../lib/timeZone'
 import { plural } from '../lib/plural'
 import { queryClient } from '../lib/queryClient'
 import {
   queryKeys,
-  useAllQuizScores,
+  useAnalytics,
   useFlashcardDecks,
   useNotes,
   useQuizzes,
   useUserTimeZone,
-  useReviewQueue,
   useStreak,
   useUserDetails,
 } from '../lib/queries'
@@ -155,19 +159,13 @@ const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
   { id: 'quizzes', label: 'Quizzes', icon: <IconQuiz className="h-4 w-4" /> },
 ]
 
-/** How overdue the queue's oldest deck is, phrased for a single stat cell. */
-function dueAgeLabel(date: string, timeZone: string): string {
-  const days = calendarDaysFromToday(date, timeZone)
-  if (days === null) return '—'
-  if (days >= 0) return 'Today'
-  if (days === -1) return 'Yesterday'
-  return `${-days} days ago`
-}
+/** The window the profile's compact snapshot reports on. The full page can widen it. */
+const SNAPSHOT_PERIOD = 30
 
 /**
- * Account details plus a read-only view of how the study is going. Every number
- * here is derived from data the backend already exposes; there is no analytics
- * endpoint.
+ * Account details plus a read-only view of how the study is going. The library
+ * counts are derived from the list endpoints; the performance snapshot comes
+ * straight from `GET /api/user/analytics`, which aggregates it server-side.
  */
 export function ProfilePage() {
   const { user, setUserDetails, logout } = useAuth()
@@ -176,8 +174,9 @@ export function ProfilePage() {
   const notes = useNotes()
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
-  const attempts = useAllQuizScores(quizzes.data?.map((quiz) => quiz.id))
-  const reviewQueue = useReviewQueue()
+  // One aggregate request for the whole Performance panel, rather than a score
+  // history request per quiz.
+  const analytics = useAnalytics(SNAPSHOT_PERIOD)
 
   const [panel, setPanel] = useState<Panel>('summary')
   const [perfTab, setPerfTab] = useState<PerfTab>('flashcards')
@@ -241,6 +240,9 @@ export function ProfilePage() {
       if (timeZoneChanged) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
+        // Analytics windows are whole local days, so a new zone moves both ends
+        // of every window and the day each session was grouped into.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
       }
       setPanel('summary')
       setFieldErrors({})
@@ -338,34 +340,7 @@ export function ProfilePage() {
 
   const cardTotal = decks.data?.reduce((sum, deck) => sum + deck.flashcards.length, 0) ?? 0
 
-  // Spaced-repetition figures. The only lifetime flashcard number the backend
-  // keeps is `totalFlashcardsReviewed`; everything else is derived from the
-  // current review queue (`GET /api/flashcards/review`), which lists only the
-  // decks due today or earlier, oldest due date first.
-  const reviewsCompleted = details.data?.totalFlashcardsReviewed ?? 0
-  // Auth state seeded from login/register has no review total until details load.
-  const reviewsLoading = details.isPending || details.data?.totalFlashcardsReviewed === undefined
-  const dueDeckCount = reviewQueue.data?.length ?? 0
-  const dueCardCount = reviewQueue.data?.reduce((sum, deck) => sum + deck.cardCount, 0) ?? 0
-  const oldestDue = reviewQueue.data?.[0]?.nextReviewDate ?? null
-
-  // Each attempt was scored against its own question count, so percentages are
-  // averaged rather than the raw scores.
-  const percentages = attempts.scores.map(
-    (score) => (score.score / Math.max(score.totalQuestions, 1)) * 100,
-  )
-  const averagePercent = percentages.length
-    ? percentages.reduce((sum, value) => sum + value, 0) / percentages.length
-    : 0
-  const bestPercent = percentages.length ? Math.max(...percentages) : 0
-  const lastAttemptAt = attempts.scores.reduce<string | null>(
-    (latest, score) => (latest === null || score.createdAt > latest ? score.createdAt : latest),
-    null,
-  )
-
-  const quizzesPending = quizzes.isPending || attempts.isPending
-  const hasAttempts = !quizzesPending && !quizzes.isError && attempts.scores.length > 0
-
+  const snapshot = analytics.data
   const streakUnavailable = streak.isError || (!streak.isPending && !streak.data)
   const flameSrc = streak.data?.activeToday ? streakFlame : streakFlameMuted
 
@@ -373,6 +348,18 @@ export function ProfilePage() {
   function count(query: { isPending: boolean; isError: boolean }, value: number): ReactNode {
     if (query.isPending) return <Bar />
     if (query.isError) return <span className="text-base text-text-muted">—</span>
+    return value
+  }
+
+  /**
+   * One analytics figure. A rate or an average the API sent as null says so in
+   * words, at text size, rather than being flattened into a zero it never meant.
+   */
+  function stat(value: string): ReactNode {
+    if (!snapshot) return <Bar />
+    if (value === NO_DATA_LABEL) {
+      return <span className="text-sm font-normal text-text-muted">{value}</span>
+    }
     return value
   }
 
@@ -770,104 +757,66 @@ export function ProfilePage() {
               </div>
             </fieldset>
 
-            {perfTab === 'flashcards' ? (
+            {analytics.isError ? (
+              <div className="mt-5 grid justify-items-start gap-2.5">
+                <p className="text-sm text-text-muted">
+                  We could not load your performance. {toFormMessage(analytics.error)}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void analytics.refetch()}
+                  className="text-sm font-bold text-accent-solid hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : perfTab === 'flashcards' ? (
               <div className="mt-5">
-                <p className="text-sm text-text-muted">How your review schedule is going.</p>
-
-                {reviewQueue.isError && (
-                  <div className="mt-4 grid justify-items-start gap-2.5">
-                    <p className="text-sm text-text-muted">
-                      Your review queue did not load, so the due figures are unavailable.{' '}
-                      {toFormMessage(reviewQueue.error)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => void reviewQueue.refetch()}
-                      className="text-sm font-bold text-accent-solid hover:underline"
-                    >
-                      Try again
-                    </button>
-                  </div>
-                )}
+                <p className="text-sm text-text-muted">
+                  Your deck reviews over the last {SNAPSHOT_PERIOD} days.
+                </p>
 
                 <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-6">
                   <Figure
-                    label="Reviews completed"
-                    icon={<IconCheck className="h-4 w-4" />}
-                    hint="Cards reviewed all-time."
-                  >
-                    {count({ isPending: reviewsLoading, isError: details.isError }, reviewsCompleted)}
-                  </Figure>
-                  <Figure
-                    label="Decks due"
-                    icon={<IconDeck className="h-4 w-4" />}
-                    hint="Ready to review now."
-                  >
-                    {count(reviewQueue, dueDeckCount)}
-                  </Figure>
-                  <Figure
-                    label="Cards due"
+                    label="Cards reviewed"
                     icon={<IconCard className="h-4 w-4" />}
-                    hint="Waiting in your queue."
+                    hint="In this period."
                   >
-                    {count(reviewQueue, dueCardCount)}
+                    {stat(String(snapshot?.flashcards.cardsReviewed ?? 0))}
                   </Figure>
                   <Figure
-                    label="Oldest due"
-                    icon={<IconClock className="h-4 w-4" />}
-                    hint="Oldest in your queue."
+                    label="Review sessions"
+                    icon={<IconDeck className="h-4 w-4" />}
+                    hint="A whole deck counts as one."
                   >
-                    {reviewQueue.isPending ? (
-                      <Bar />
-                    ) : reviewQueue.isError ? (
-                      <span className="text-base text-text-muted">—</span>
-                    ) : oldestDue ? (
-                      dueAgeLabel(oldestDue, timeZone)
-                    ) : (
-                      'Up to date'
-                    )}
+                    {stat(String(snapshot?.flashcards.reviewSessions ?? 0))}
+                  </Figure>
+                  <Figure
+                    label="Retention rate"
+                    icon={<IconCheck className="h-4 w-4" />}
+                    hint="Reviews you rated good or easy."
+                  >
+                    {stat(formatRatioAsPercentage(snapshot?.flashcards.retentionRate ?? null))}
+                  </Figure>
+                  <Figure
+                    label="Strong decks"
+                    icon={<IconStar className="h-4 w-4" />}
+                    hint="Rated well and on a long interval."
+                  >
+                    {stat(String(snapshot?.flashcards.mastery.strong ?? 0))}
                   </Figure>
                 </dl>
               </div>
             ) : (
               <div className="mt-5">
-                <p className="text-sm text-text-muted">Across every attempt you have saved.</p>
+                <p className="text-sm text-text-muted">
+                  Your quiz attempts over the last {SNAPSHOT_PERIOD} days.
+                </p>
 
-                {/* Attempt history is per quiz, so a failure here is partial: the
-                    numbers still hold for every quiz that did answer. */}
-                {attempts.failedCount > 0 && (
-                  <div className="mt-4 grid justify-items-start gap-2.5">
-                    <p className="text-sm text-text-muted">
-                      {plural(attempts.failedCount, 'quiz', 'quizzes')} could not be included, so
-                      these numbers are incomplete.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={attempts.retryFailed}
-                      className="text-sm font-bold text-accent-solid hover:underline"
-                    >
-                      Try again
-                    </button>
-                  </div>
-                )}
-
-                {quizzes.isError ? (
-                  <div className="mt-5 grid justify-items-start gap-2.5">
-                    <p className="text-sm text-text-muted">
-                      We could not load your quizzes. {toFormMessage(quizzes.error)}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => void quizzes.refetch()}
-                      className="text-sm font-bold text-accent-solid hover:underline"
-                    >
-                      Try again
-                    </button>
-                  </div>
-                ) : !quizzesPending && !hasAttempts ? (
+                {snapshot && snapshot.quizzes.attempts === 0 ? (
                   <p className="mt-5 max-w-[42ch] text-sm text-text-muted">
                     {quizzes.data?.length
-                      ? 'You have not saved a quiz attempt yet. Every run you save shows up here.'
+                      ? 'You have not saved a quiz attempt in this period. Every run you save shows up here.'
                       : 'Generate a quiz from a note, and every attempt you save shows up here.'}
                   </p>
                 ) : (
@@ -875,35 +824,48 @@ export function ProfilePage() {
                     <Figure
                       label="Attempts"
                       icon={<IconPlay className="h-4 w-4" />}
-                      hint={`Across ${plural(attempts.quizzesAttempted, 'quiz', 'quizzes')}.`}
+                      hint={
+                        snapshot
+                          ? `Across ${plural(
+                              snapshot.quizzes.distinctQuizzesAttempted,
+                              'quiz',
+                              'quizzes',
+                            )}.`
+                          : undefined
+                      }
                     >
-                      {quizzesPending ? <Bar /> : String(attempts.scores.length)}
+                      {stat(String(snapshot?.quizzes.attempts ?? 0))}
                     </Figure>
                     <Figure
                       label="Average score"
                       icon={<IconChart className="h-4 w-4" />}
-                      hint="Mean of every attempt."
+                      hint="Mean of this period's attempts."
                     >
-                      {quizzesPending ? <Bar /> : `${Math.round(averagePercent)}%`}
+                      {stat(formatPercentage(snapshot?.quizzes.averagePercentage ?? null))}
                     </Figure>
                     <Figure
                       label="Best score"
                       icon={<IconStar className="h-4 w-4" />}
                       hint="Your strongest run."
                     >
-                      {quizzesPending ? <Bar /> : `${Math.round(bestPercent)}%`}
+                      {stat(formatPercentage(snapshot?.quizzes.bestPercentage ?? null))}
                     </Figure>
                     <Figure
-                      label="Last attempt"
-                      icon={<IconClock className="h-4 w-4" />}
-                      hint="Most recent saved run."
+                      label="Improvement"
+                      icon={<IconQuiz className="h-4 w-4" />}
+                      hint="First to latest, for quizzes retaken."
                     >
-                      {quizzesPending ? <Bar /> : formatDate(lastAttemptAt, timeZone) || '—'}
+                      {stat(formatImprovement(snapshot?.quizzes.improvement ?? null))}
                     </Figure>
                   </dl>
                 )}
               </div>
             )}
+
+            <AppLink to="/analytics" className={`${cardLink} mt-6`}>
+              View detailed analytics
+              <IconArrowRight />
+            </AppLink>
           </section>
         </div>
       </main>
