@@ -89,6 +89,25 @@ h3 {
   letter-spacing: -0.01em;
 }
 
+/* Instrument Serif belongs only to the marketing page's main section titles.
+   Card headings and infographic labels keep the product display face. */
+.landing-page :where(h1, h2, .landing-step-title) {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 550;
+}
+.landing-page h1 {
+  font-size: clamp(3rem, 5vw, 4.25rem);
+  line-height: 1.02;
+}
+.landing-page h2 {
+  font-size: 2.25rem;
+  line-height: 1.08;
+}
+.landing-page .landing-step-title {
+  font-size: 1.25rem;
+  line-height: 1.15;
+}
+
 /* Dashboard-only hierarchy: lighter content without changing shared components. */
 .dashboard-typography {
   font-weight: 450;

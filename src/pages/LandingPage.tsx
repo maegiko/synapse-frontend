@@ -8,7 +8,7 @@ import {
   btnPrimarySm,
   shell,
 } from '../components/ui'
-import { IconChart, IconDeck, IconSummary, IconUpload } from '../components/icons'
+import { IconArrowRight, IconChart, IconDeck, IconSummary, IconUpload } from '../components/icons'
 
 const NAV_LINKS = [
   { href: '#how-it-works', label: 'How it works' },
@@ -87,12 +87,12 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main id="main">
+      <main id="main" className="landing-page">
         <section className="pt-18 pb-24">
           <div className={`${shell} grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-14 items-center`}>
             <div>
               <h1 className="mb-5.5 text-3xl md:text-4xl leading-[1.08]">
-                Turn your notes into a summary, deck, and quiz.
+                Turn your notes into summaries, flashcards and quizzes.
               </h1>
               <p className="mb-8.5 max-w-[46ch] text-lg text-text-muted">
                 Synapse turns your own lecture slides and course PDFs into study
@@ -104,13 +104,13 @@ export function LandingPage() {
                   Start studying free
                 </Link>
                 <a href="#how-it-works" className={btnGhostLg}>
-                  See how it works
+                  See it in action
                 </a>
               </div>
             </div>
 
             <div aria-hidden="true">
-              <SummaryCardMock />
+              <AppPreviewMock />
             </div>
           </div>
         </section>
@@ -128,7 +128,7 @@ export function LandingPage() {
                   <span className="mb-4 inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
                     {step.icon}
                   </span>
-                  <h3 className="mb-2 text-base font-medium">{step.title}</h3>
+                  <h3 className="landing-step-title mb-2 text-base font-medium">{step.title}</h3>
                   <p className="text-sm text-text-muted">{step.body}</p>
                 </li>
               ))}
@@ -229,49 +229,87 @@ export function LandingPage() {
   )
 }
 
-function SummaryCardMock() {
+/**
+ * A slice of the real signed-in app, not a generic document card: the Synapse
+ * chrome, the violet gradient dashboard hero, and the spaced-repetition review
+ * queue with its next-up deck. Built from the same tokens and patterns the
+ * product uses (see DashboardPage and ReviewQueue), so the landing page shows
+ * what the app actually looks like.
+ */
+function AppPreviewMock() {
   return (
     <div
-      className="mx-auto max-w-110 overflow-hidden rounded-lg border border-border bg-surface shadow-lg rotate-[1.2deg]"
+      className="mx-auto w-full max-w-120 overflow-hidden rounded-lg border border-border bg-background shadow-lg rotate-[1.2deg]"
       role="img"
-      aria-label="Example of an AI-generated note summary"
+      aria-label="A preview of the Synapse dashboard"
     >
-      <div className="flex items-center gap-1.5 border-b border-border bg-surface-alt px-4 py-3">
-        <span className="h-2 w-2 rounded-full bg-red-400" />
-        <span className="h-2 w-2 rounded-full bg-amber-400" />
-        <span className="h-2 w-2 rounded-full bg-green-400" />
-        <span className="ml-2 text-xs font-semibold text-text-muted">behavioural-modelling.pdf</span>
+      {/* App header */}
+      <div className="flex items-center gap-2.5 border-b border-border bg-surface px-5 py-3.5">
+        <img src={synapseLogo} alt="" width="34" height="34" decoding="async" />
+        <span className="translate-y-0.5 font-display text-lg font-medium text-text">Synapse</span>
+        <span className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong">
+          MO
+        </span>
       </div>
-      <div className="px-6 pt-5 pb-6">
-        <p className="mb-1.5 font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Overview</p>
-        <p className="text-sm leading-relaxed text-text">
-          Behavioural models simplify real systems into rules that predict how
-          actors respond to change.
-        </p>
-        <p className="mb-1.5 mt-4 font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Key points</p>
-        <ul className="grid gap-1 p-0 text-sm text-text">
-          <li className="flex items-start gap-2.5">
-            <span
-              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
-              aria-hidden="true"
-            />
-            <span>Models trade accuracy for tractability.</span>
-          </li>
-          <li className="flex items-start gap-2.5">
-            <span
-              className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
-              aria-hidden="true"
-            />
-            <span>State transitions capture behaviour over time.</span>
-          </li>
-        </ul>
-        <p className="mb-1.5 mt-4 font-display text-xs font-bold uppercase tracking-wide text-accent-solid">Terms</p>
-        <div className="flex flex-wrap gap-2">
-          {['state machine', 'invariant', 'transition'].map((term) => (
-            <span key={term} className="rounded-full bg-accent-soft px-2.5 py-1.5 text-xs font-bold text-accent-strong">
-              {term}
-            </span>
-          ))}
+
+      <div className="p-5">
+        {/* Dashboard hero — the app's signature violet gradient panel */}
+        <div className="rounded-md border border-accent-strong bg-[radial-gradient(circle_at_75%_20%,rgba(216,205,255,0.32)_0%,rgba(216,205,255,0)_40%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-5 py-5">
+          <p className="font-display text-lg text-on-accent">Ready to learn, Maya?</p>
+          <p className="mt-1.5 text-sm text-accent-soft">
+            You have 6 notes, 4 decks, and 3 quizzes in your library.
+          </p>
+          <span className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-on-accent px-3.5 py-2 text-sm font-bold text-accent-strong">
+            Continue learning
+            <IconArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+
+        {/* Review queue */}
+        <div className="mt-5">
+          <div className="mb-2.5 flex items-baseline gap-2">
+            <span className="font-display text-base font-medium text-text">Review queue</span>
+            <span className="text-sm text-text-muted">2 decks due</span>
+          </div>
+
+          <div className="flex items-stretch gap-3.5 overflow-hidden">
+            {/* Next-up deck — accent-tinted, with the timing + Review footer */}
+            <div className="flex shrink-0 basis-[70%] flex-col overflow-hidden rounded-md border border-accent-solid/40 bg-accent-soft/40">
+              <div className="flex-1 p-3.5">
+                <p className="rail-next-label mb-1.5 text-xs text-accent-strong">Next up</p>
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
+                    <IconDeck className="h-4.5 w-4.5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-text">Behavioural Modelling</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-xs text-text-muted">12 cards</span>
+                      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-strong">
+                        GOOD
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 border-t border-accent-solid/20 bg-accent-soft/70 px-3.5 py-2.5">
+                <span className="text-xs font-semibold text-accent-strong">Due today</span>
+                <span className="inline-flex items-center gap-1.5 rounded-sm bg-accent-medium px-3 py-1.5 text-xs font-bold text-on-accent">
+                  Review
+                  <IconArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+            </div>
+
+            {/* The next card in the rail, half in view — same cue the real queue gives */}
+            <div className="flex shrink-0 basis-[42%] flex-col rounded-md border border-border bg-surface p-3.5">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
+                <IconDeck className="h-4.5 w-4.5" />
+              </span>
+              <p className="mt-2 truncate text-sm font-medium text-text">Cell Biology</p>
+              <p className="mt-1 text-xs text-text-muted">8 cards</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
