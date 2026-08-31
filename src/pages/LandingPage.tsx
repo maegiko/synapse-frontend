@@ -258,14 +258,14 @@ function AppPreviewMock() {
         <img src={synapseLogo} alt="" width="34" height="34" decoding="async" />
         <span className="translate-y-0.5 font-display text-lg font-medium text-text">Synapse</span>
         <span className="ml-auto flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-strong">
-          MO
+          KK
         </span>
       </div>
 
       <div className="p-5">
         {/* Dashboard hero — the app's signature violet gradient panel */}
         <div className="rounded-md border border-accent-strong bg-[radial-gradient(circle_at_75%_20%,rgba(216,205,255,0.32)_0%,rgba(216,205,255,0)_40%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-5 py-5">
-          <p className="font-display text-lg text-on-accent">Ready to learn, Maya?</p>
+          <p className="font-display text-lg text-on-accent">Ready to learn?</p>
           <p className="mt-1.5 text-sm text-on-hero-muted">
             You have 6 notes, 4 decks, and 3 quizzes in your library.
           </p>
@@ -292,7 +292,7 @@ function AppPreviewMock() {
                     <IconDeck className="h-4.5 w-4.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-text">Behavioural Modelling</p>
+                    <p className="truncate text-sm font-medium text-text">Virtual Memory</p>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="text-xs text-text-muted">12 cards</span>
                       <span className="rounded-full bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent-strong">
@@ -316,7 +316,7 @@ function AppPreviewMock() {
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
                 <IconDeck className="h-4.5 w-4.5" />
               </span>
-              <p className="mt-2 truncate text-sm font-medium text-text">Cell Biology</p>
+              <p className="mt-2 truncate text-sm font-medium text-text">TLB Refill</p>
               <p className="mt-1 text-xs text-text-muted">8 cards</p>
             </div>
           </div>
