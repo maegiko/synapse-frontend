@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { AppLink } from './AppLink'
+import { IconArrowRight } from './icons'
 import { btnGhostSm } from './ui'
 import type { StreakResponse } from '../api'
 import streakFlame from '../assets/streak_flame.webp'
@@ -69,7 +71,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
 
   return (
     <section
-      className={`${cardClass} grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-center gap-x-3 sm:grid-cols-[2.75rem_minmax(0,1fr)_auto] sm:gap-x-5`}
+      className={`${cardClass} grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto] items-center gap-x-3 sm:grid-cols-[2.75rem_minmax(0,1fr)_auto_auto] sm:gap-x-5`}
       aria-labelledby="streak-heading"
     >
       <span
@@ -126,6 +128,18 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
           </span>
         </p>
       </div>
+
+      {/* Only offered once the card has real numbers on it: from the loading
+          and error states there is nothing here for the link to lead on from.
+          The label collapses to its arrow where the row is tightest. */}
+      <AppLink
+        to="/analytics"
+        className="inline-flex items-center gap-1.5 border-l border-border pl-3 text-xs font-bold whitespace-nowrap text-accent-solid no-underline hover:underline sm:pl-5"
+        aria-label="View progress"
+      >
+        <span className="hidden sm:inline">View progress</span>
+        <IconArrowRight className="h-3.5 w-3.5 shrink-0" />
+      </AppLink>
     </section>
   )
 }
