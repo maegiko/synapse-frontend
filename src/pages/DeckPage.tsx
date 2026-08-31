@@ -43,6 +43,7 @@ import { queryClient } from '../lib/queryClient'
 import { api } from '../api'
 import type {
   FlashcardDeck,
+  ReviewQueueDeck,
   SavedFlashcard,
   UpdateDeckRequest,
   UpdateFlashcardRequest,
@@ -253,7 +254,27 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     mutationFn: () => api.flashcards.remove(deck.deckId),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: queryKeys.flashcardDeck(deck.deckId) })
+
+      // A successful delete is definitive, so remove the deck from the cached
+      // queue before navigating. Invalidating alone would leave the stale row
+      // visible while the background refetch settles.
+      queryClient.setQueryData<ReviewQueueDeck[]>(queryKeys.reviewQueue, (current) =>
+        current?.filter((queuedDeck) => queuedDeck.deckId !== deck.deckId),
+      )
+
       void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue, exact: true })
+      // Mastery, overdue totals, and the due forecast all describe the deck
+      // library as it stands now.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
+
+      if (deck.groupId) {
+        // The group survives, but its contents and list-card count both lose
+        // this deck.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.group(deck.groupId) })
+        void queryClient.invalidateQueries({ queryKey: queryKeys.groups, exact: true })
+      }
+
       navigate('/library?type=decks', { replace: true })
     },
     onError: (error) => {
