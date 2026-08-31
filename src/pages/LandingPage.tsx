@@ -65,9 +65,16 @@ export function LandingPage() {
       </a>
 
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
-        <div className={`${shell} flex items-center gap-3 py-4 sm:gap-7`}>
+        <div className="mx-auto flex w-full max-w-280 items-center gap-2 px-3 py-4 sm:gap-7 sm:px-6">
           <Link to="/" className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline">
-            <img src={synapseLogo} alt="" width="48" height="48" decoding="async" />
+            <img
+              src={synapseLogo}
+              alt=""
+              width="48"
+              height="48"
+              decoding="async"
+              className="h-10 w-10 sm:h-12 sm:w-12"
+            />
             <span className="hidden translate-y-0.5 sm:inline">Synapse</span>
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-semibold" aria-label="Primary">
@@ -77,7 +84,7 @@ export function LandingPage() {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
             <Link to="/login" className={btnGhostSm}>
               Log in
