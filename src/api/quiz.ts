@@ -1,5 +1,6 @@
 import { apiRequest } from './client'
 import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
+import { toDurationSeconds } from './duration'
 import type {
   CreatedQuestion,
   CreateQuestionRequest,
@@ -10,6 +11,7 @@ import type {
   QuizListResponse,
   QuizScore,
   QuizScoreListResponse,
+  SaveScoreRequest,
   UpdateQuestionRequest,
   UpdateQuizRequest,
 } from './types'
@@ -128,11 +130,23 @@ export async function setDifficulty(quizId: PublicId, difficulty: number): Promi
 /**
  * Records one attempt. `totalQuestions` is snapshotted server-side, so the
  * saved row stays meaningful even if the quiz is edited afterwards.
+ *
+ * `durationSeconds` is how long the attempt took, with the same optional
+ * behaviour as a deck review's: an untimed attempt still counts as an attempt
+ * and simply contributes no study time.
  */
-export async function saveScore(quizId: PublicId, score: number): Promise<QuizScore> {
+export async function saveScore(
+  quizId: PublicId,
+  score: number,
+  durationSeconds?: number | null,
+): Promise<QuizScore> {
+  const body: SaveScoreRequest = { score }
+  const duration = toDurationSeconds(durationSeconds)
+  if (duration !== undefined) body.durationSeconds = duration
+
   return apiRequest<QuizScore>(API_PATHS.quiz.score(quizId), {
     method: 'POST',
-    json: { score },
+    json: body,
     authenticated: true,
   })
 }

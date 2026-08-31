@@ -1,5 +1,6 @@
 import { apiRequest } from './client'
 import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
+import { toDurationSeconds } from './duration'
 import type {
   AddFlashcardRequest,
   AddFlashcardResponse,
@@ -8,6 +9,7 @@ import type {
   FlashcardListResponse,
   ListParams,
   PublicId,
+  ReviewDeckRequest,
   ReviewDeckResponse,
   ReviewQueueDeck,
   ReviewQueueResponse,
@@ -134,14 +136,24 @@ export async function reviewQueue(): Promise<ReviewQueueDeck[]> {
  * This is not repeatable: every call moves the due date again and adds to the
  * lifetime review total, so send it once per completed run and never as a blind
  * retry. It also feeds the streak. A deck with no cards answers 400.
+ *
+ * `durationSeconds` is how long the session took. It is optional and left off
+ * the request when it is not supplied, so an untimed run is saved with no
+ * duration rather than a guessed one: it still counts as a session and an
+ * active day, and only contributes no study time to analytics.
  */
 export async function review(
   deckId: PublicId,
   rating: ReviewRating,
+  durationSeconds?: number | null,
 ): Promise<ReviewDeckResponse> {
+  const body: ReviewDeckRequest = { rating }
+  const duration = toDurationSeconds(durationSeconds)
+  if (duration !== undefined) body.durationSeconds = duration
+
   return apiRequest<ReviewDeckResponse>(API_PATHS.flashcards.review(deckId), {
     method: 'POST',
-    json: { rating },
+    json: body,
     authenticated: true,
   })
 }
