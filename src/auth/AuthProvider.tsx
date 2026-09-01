@@ -10,6 +10,7 @@ import {
 } from '../api'
 import { queryKeys } from '../lib/queries'
 import { clearQueryCache, queryClient } from '../lib/queryClient'
+import { migrateExistingUserToDark, skipDarkMigration } from '../lib/theme'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -28,6 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         setUser(details)
         setStatus('authenticated')
+        // A cookie this page load did not create: the account predates the
+        // visit, so it is one of the accounts the light default is not for.
+        migrateExistingUserToDark()
       } catch {
         if (cancelled) return
         setUser(null)
@@ -53,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const adoptSession = useCallback(({ accessToken, fullName, email }: AuthResponse) => {
+  const adopt = useCallback(({ accessToken, fullName, email }: AuthResponse) => {
     // Whatever was cached belonged to the session this one replaces. Confirming
     // a registration link can even swap accounts, so nothing is kept.
     clearQueryCache()
@@ -62,11 +66,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
   }, [])
 
+  // The only session that belongs to a brand-new account, and so the only one
+  // that settles the dark migration without moving the theme.
+  const adoptSession = useCallback(
+    (session: AuthResponse) => {
+      adopt(session)
+      skipDarkMigration()
+    },
+    [adopt],
+  )
+
   const login = useCallback(
     async (email: string, password: string) => {
-      adoptSession(await api.auth.login({ email, password }))
+      adopt(await api.auth.login({ email, password }))
+      // Signing in with a password means the account already existed.
+      migrateExistingUserToDark()
     },
-    [adoptSession],
+    [adopt],
   )
 
   const logout = useCallback(async () => {
