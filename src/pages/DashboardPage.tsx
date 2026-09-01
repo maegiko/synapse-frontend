@@ -59,6 +59,14 @@ const HERO_GREETINGS: ((name: string) => string)[] = [
 function drawGreeting(name: string): string {
   return HERO_GREETINGS[Math.floor(Math.random() * HERO_GREETINGS.length)](name)
 }
+
+/** "Continue learning" has no single destination, so it drops the user into one
+ *  of the "Start something new" flows, picked at random per dashboard visit. */
+const NEW_FLOWS = ['/notes/new', '/flashcards/new', '/quiz/new']
+
+function drawNewFlow(): string {
+  return NEW_FLOWS[Math.floor(Math.random() * NEW_FLOWS.length)]
+}
 // One icon treatment for every Library item: small, standalone, accent, no tile.
 const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-foreground'
 /** Row hairline is lighter than the section dividers; most of the separation is
@@ -144,6 +152,8 @@ export function DashboardPage() {
   const firstName = user?.fullName.trim().split(' ')[0] ?? 'there'
   // Drawn once per dashboard visit, so it does not reshuffle on every render.
   const [greeting] = useState(() => drawGreeting(firstName))
+  // Drawn once per visit too, so the hero button keeps one destination while here.
+  const [continueFlow] = useState(drawNewFlow)
 
   // Decks and quizzes are both generated from an existing note.
   const needsFirstNote = notes.isSuccess && notes.data.length === 0
@@ -165,7 +175,7 @@ export function DashboardPage() {
 
   const hero = needsFirstNote
     ? { to: '/notes/new', label: 'Upload your first note' }
-    : { to: '/quiz/new', label: 'Continue learning' }
+    : { to: continueFlow, label: 'Continue learning' }
 
   return (
     <>
