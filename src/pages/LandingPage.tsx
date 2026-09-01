@@ -497,7 +497,7 @@ function QuizMock() {
                   type="button"
                   onClick={() => setPicked(option.value)}
                   aria-pressed={isPicked}
-                  className={`flex w-full items-center gap-2.5 rounded-sm border px-3 py-2.25 text-left transition-colors duration-150 ${
+                  className={`flex w-full cursor-pointer items-center gap-2.5 rounded-sm border px-3 py-2.25 text-left transition-colors duration-150 ${
                     isPicked
                       ? 'border-success-solid bg-success-soft font-bold text-success-solid'
                       : 'border-border bg-surface text-text hover:border-text-muted'
