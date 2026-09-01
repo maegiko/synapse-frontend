@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Only the public landing page is intended for search results. These routes
+# contain account forms, one-time tokens, or user-owned application content.
+Disallow: /analytics
+Disallow: /dashboard
+Disallow: /flashcards
+Disallow: /forgot-password
+Disallow: /groups
+Disallow: /library
+Disallow: /login
+Disallow: /notes
+Disallow: /profile
+Disallow: /quiz
+Disallow: /register
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://studysynapse.app/sitemap.xml
