@@ -70,7 +70,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your Synapse account"
+      title="Create your account"
       subtitle="Upload your first note and turn it into a summary, a deck, or a quiz in the same sitting."
       asideTitle="From upload to quiz score, in one sitting."
       asideBullets={ASIDE_BULLETS}
