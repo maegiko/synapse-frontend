@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import 'country-flag-icons/3x2/flags.css'
 import {
   api,
   type ChangePasswordRequest,
@@ -46,6 +47,7 @@ import {
   NO_DATA_LABEL,
 } from '../lib/analytics'
 import { timeZoneOptions } from '../lib/timeZone'
+import { timeZoneLocation } from '../lib/timeZoneLocation'
 import { plural } from '../lib/plural'
 import { queryClient } from '../lib/queryClient'
 import {
@@ -195,6 +197,7 @@ export function ProfilePage() {
 
   const profile = details.data
   const timeZone = useUserTimeZone()
+  const location = timeZoneLocation(timeZone)
 
   function startEditing() {
     if (!profile) return
@@ -428,7 +431,26 @@ export function ProfilePage() {
                   <div className="min-w-0">
                     <p className="truncate text-xl font-medium">{profile.fullName}</p>
                     <p className="truncate text-sm text-text-muted">{profile.email}</p>
-                    <p className="truncate text-xs text-text-muted">{timeZone}</p>
+                    <p
+                      className="flex items-center gap-1.5 truncate text-xs text-text-muted"
+                      aria-label={location.accessibleLabel}
+                      title={timeZone}
+                    >
+                      {location.countryCode ? (
+                        <span
+                          className={`flag:${location.countryCode} shrink-0 rounded-[1px] shadow-[0_0_0_1px_rgba(255,255,255,0.14)]`}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span className="leading-none" aria-hidden="true">
+                          ◉
+                        </span>
+                      )}
+                      <span aria-hidden="true">•</span>
+                      <span className="truncate" aria-hidden="true">
+                        {location.city}
+                      </span>
+                    </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
