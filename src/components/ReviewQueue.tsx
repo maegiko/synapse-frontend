@@ -221,7 +221,10 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
               <IconDeck className="h-4.5 w-4.5" />
             </span>
             <div className="min-w-0">
-              <p className="recents-title truncate text-base text-text" title={deck.title}>
+              <p
+                className="recents-title line-clamp-2 min-h-[2.75rem] text-base leading-snug text-text"
+                title={deck.title}
+              >
                 {deck.title}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
