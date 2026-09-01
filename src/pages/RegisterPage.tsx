@@ -153,7 +153,7 @@ export function RegisterPage() {
           label="Full name"
           name="fullName"
           autoComplete="name"
-          placeholder="Kenneth Koon"
+          placeholder="Alex Taylor"
           value={fullName}
           error={fieldErrors.fullName}
           disabled={submitting}
