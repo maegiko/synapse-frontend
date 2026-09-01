@@ -623,7 +623,7 @@ export function ProfilePage() {
                     <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
                     <span>
                       Confirmation link sent to{' '}
-                      <span className="break-words">{pendingChange.pendingEmail}</span>.
+                      <span className="wrap-break-word">{pendingChange.pendingEmail}</span>.
                     </span>
                   </p>
                   <p className="text-sm text-text-muted">
