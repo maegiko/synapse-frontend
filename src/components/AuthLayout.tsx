@@ -22,7 +22,7 @@ export function AuthLayout({
   footer,
 }: AuthLayoutProps) {
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,35fr)_minmax(0,65fr)]">
       <main className="flex flex-col px-6 py-8 sm:px-10">
         <Link
           to="/"
