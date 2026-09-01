@@ -101,13 +101,13 @@ export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
     [days],
   )
 
-  /** The most recent day worth opening on, so the panel starts on something. */
-  const defaultIndex = useMemo(() => {
-    for (let index = days.length - 1; index >= 0; index--) {
-      if (hasActivity(days[index])) return index
-    }
-    return Math.max(days.length - 1, 0)
-  }, [days])
+  /**
+   * Analytics windows are gap-filled through the user's current calendar day
+   * in their saved time zone. Select that final day even when it has no
+   * activity; otherwise the selection outline looks like a misleading "today"
+   * marker on the most recent day they happened to study.
+   */
+  const defaultIndex = Math.max(days.length - 1, 0)
 
   // Only the initial value: within one window the visitor's own selection wins,
   // including across a refetch. A new period is a different set of days
