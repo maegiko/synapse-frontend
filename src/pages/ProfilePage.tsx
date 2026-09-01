@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import 'country-flag-icons/3x2/flags.css'
 import {
   api,
   type ChangePasswordRequest,
@@ -12,6 +11,7 @@ import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { Avatar } from '../components/Avatar'
+import { CountryFlag } from '../components/CountryFlag'
 import { FormAlert } from '../components/FormAlert'
 import { SelectField } from '../components/SelectField'
 import { TextField } from '../components/TextField'
@@ -436,16 +436,10 @@ export function ProfilePage() {
                       aria-label={location.accessibleLabel}
                       title={timeZone}
                     >
-                      {location.countryCode ? (
-                        <span
-                          className={`flag:${location.countryCode} shrink-0 rounded-[1px] shadow-[0_0_0_1px_rgba(255,255,255,0.14)]`}
-                          aria-hidden="true"
-                        />
-                      ) : (
-                        <span className="leading-none" aria-hidden="true">
-                          ◉
-                        </span>
-                      )}
+                      <CountryFlag
+                        code={location.countryCode}
+                        className="h-[1em] w-[1.5em] shrink-0 rounded-[1px] shadow-[0_0_0_1px_rgba(255,255,255,0.14)]"
+                      />
                       <span aria-hidden="true">•</span>
                       <span className="truncate" aria-hidden="true">
                         {location.city}
