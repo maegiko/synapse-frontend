@@ -63,6 +63,15 @@ const FAQS = [
   },
 ]
 
+/** How much of a block has to be in view before it enters. */
+const REVEAL_THRESHOLD = 0.12
+
+/**
+ * The share of the viewport its bottom edge is raised by for the reveal, so a
+ * block enters once it is properly in view rather than the moment it peeks in.
+ */
+const REVEAL_BOTTOM_BIAS = 0.08
+
 export function LandingPage() {
   useEffect(() => {
     const elements = document.querySelectorAll<HTMLElement>('.landing-reveal')
@@ -73,25 +82,51 @@ export function LandingPage() {
       return
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return
-          reveal(entry.target)
-          observer.unobserve(entry.target)
-        })
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+    const onIntersect = (entries: IntersectionObserverEntry[], self: IntersectionObserver) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return
+        reveal(entry.target)
+        self.unobserve(entry.target)
+      })
+    }
+
+    const observer = new IntersectionObserver(onIntersect, {
+      threshold: REVEAL_THRESHOLD,
+      rootMargin: `0px 0px -${REVEAL_BOTTOM_BIAS * 100}% 0px`,
+    })
+
+    // Raising the edge needs room below the block to raise it into, and the
+    // last block on the page has none: the footer sits inside the raised edge
+    // even at full scroll, so the biased observer never fires for it and it
+    // would stay at opacity 0 for good. Blocks in that position watch the true
+    // viewport edge instead.
+    const tailObserver = new IntersectionObserver(onIntersect, { threshold: REVEAL_THRESHOLD })
+    const lowestScrollTop = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
     )
+    const biasedEdge = window.innerHeight * (1 - REVEAL_BOTTOM_BIAS)
+
+    /** Whether scrolling to the end of the page can bring `rect` far enough in. */
+    const biasedObserverCanFire = (rect: DOMRect) => {
+      const top = rect.top + window.scrollY - lowestScrollTop
+      const shown = Math.min(top + rect.height, biasedEdge) - Math.max(top, 0)
+      return shown >= rect.height * REVEAL_THRESHOLD
+    }
 
     // Do not make the first screen depend on an asynchronous observer callback:
     // it should enter as soon as the page mounts, including in slower browsers.
     const initialBoundary = window.innerHeight
     elements.forEach((element) => {
-      if (element.getBoundingClientRect().top <= initialBoundary) reveal(element)
-      else observer.observe(element)
+      const rect = element.getBoundingClientRect()
+      if (rect.top <= initialBoundary) reveal(element)
+      else if (biasedObserverCanFire(rect)) observer.observe(element)
+      else tailObserver.observe(element)
     })
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      tailObserver.disconnect()
+    }
   }, [])
 
   return (
