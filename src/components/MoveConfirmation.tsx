@@ -27,7 +27,7 @@ export function MoveConfirmation({
   onCancel,
 }: MoveConfirmationProps) {
   return (
-    <div className="mt-6 grid gap-5">
+    <div className="app-content-in mt-6 grid gap-5">
       {errorMessage && <FormAlert message={errorMessage} />}
       <p className="max-w-[52ch] text-sm text-text-muted">{detail}</p>
       <div className="flex flex-wrap gap-3">

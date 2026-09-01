@@ -52,7 +52,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
 
   if (isError || !streak) {
     return (
-      <section className={`${cardClass} flex items-center gap-3`}>
+      <section className={`${cardClass} app-content-in flex items-center gap-3`}>
         <div className="min-w-0 flex-1">
           <h2 className="text-base">Your study streak is unavailable</h2>
           <p className="mt-1 truncate text-xs text-text-muted">
@@ -71,7 +71,7 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
 
   return (
     <section
-      className={`${cardClass} grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto] items-center gap-x-3 sm:grid-cols-[2.75rem_minmax(0,1fr)_auto_auto] sm:gap-x-5`}
+      className={`${cardClass} app-content-in grid grid-cols-[2.25rem_minmax(0,1fr)_auto_auto] items-center gap-x-3 sm:grid-cols-[2.75rem_minmax(0,1fr)_auto_auto] sm:gap-x-5`}
       aria-labelledby="streak-heading"
     >
       <span

@@ -47,7 +47,7 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           onClick={(event) => {
             if (onLeave && !onLeave()) event.preventDefault()
           }}
-          className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline"
+          className="brand mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline"
         >
           <img
             src={synapseLogo}
@@ -55,7 +55,7 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
             width="48"
             height="48"
             decoding="async"
-            className="h-10 w-10 sm:h-12 sm:w-12"
+            className="brand-mark h-10 w-10 sm:h-12 sm:w-12"
           />
           <span className="hidden translate-y-0.5 sm:inline">Synapse</span>
         </Link>

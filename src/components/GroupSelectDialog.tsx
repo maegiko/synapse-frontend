@@ -170,7 +170,7 @@ export function GroupSelectDialog({
           )}
 
           {visible.length > 0 && (
-            <ul className="grid list-none gap-2">
+            <ul className="app-content-in grid list-none gap-2">
               {visible.map((group) => {
                 const isCurrent = group.id === currentGroupId
                 return (

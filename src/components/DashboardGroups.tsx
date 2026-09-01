@@ -76,7 +76,7 @@ export function DashboardGroups() {
 
   if (groups.isError) {
     return (
-      <section className={`${COMPACT_CARD} flex items-center gap-3`}>
+      <section className={`${COMPACT_CARD} app-content-in flex items-center gap-3`}>
         <div className="min-w-0 flex-1">
           <h2 className="text-base">Your study groups are unavailable</h2>
           <p className="mt-1 truncate text-xs text-text-muted">
@@ -98,7 +98,7 @@ export function DashboardGroups() {
     return (
       <>
         <section
-          className={`${COMPACT_CARD} flex flex-wrap items-center gap-3 sm:gap-5`}
+          className={`${COMPACT_CARD} app-content-in flex flex-wrap items-center gap-3 sm:gap-5`}
           aria-labelledby="groups-heading"
         >
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-strong sm:h-11 sm:w-11">
@@ -124,7 +124,7 @@ export function DashboardGroups() {
 
   return (
     <>
-      <section className="mt-14" aria-labelledby="groups-heading">
+      <section className="app-content-in mt-14" aria-labelledby="groups-heading">
         <div className="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
           <h2 id="groups-heading" className="text-xl">
             Study groups

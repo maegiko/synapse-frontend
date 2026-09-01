@@ -72,7 +72,7 @@ export function RecentsCard({
         {isLoading && <Skeleton variant={variant} />}
 
         {isError && (
-          <div className="grid justify-items-start gap-2.5">
+          <div className="app-content-in grid justify-items-start gap-2.5">
             <p className="text-sm text-text-muted">We could not load these.</p>
             <button
               type="button"
@@ -85,12 +85,12 @@ export function RecentsCard({
         )}
 
         {!isLoading && !isError && isEmpty && (
-          <p className="text-sm text-text-muted">{emptyMessage}</p>
+          <p className="app-content-in text-sm text-text-muted">{emptyMessage}</p>
         )}
 
         {!isLoading && !isError && !isEmpty && (
           <ul
-            className={`grid min-w-0 p-0 ${
+            className={`app-content-in grid min-w-0 p-0 ${
               // `pt-4` gives the strip the same header-to-first-item gap the flat
               // lists get from their rows' own top padding.
               isStrip ? 'gap-4 pt-4 sm:grid-cols-3 sm:gap-x-0' : 'gap-0'

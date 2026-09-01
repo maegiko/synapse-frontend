@@ -72,7 +72,7 @@ export function QuizScoresPage() {
             {scores.isPending && <ScoresSkeleton />}
 
             {scores.isError && (
-              <div className={`${surfaceCard} max-w-150 p-8`}>
+              <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
                 <h2 className="text-xl">
                   {isMissing
                     ? 'We could not find that quiz'
@@ -103,13 +103,13 @@ export function QuizScoresPage() {
 
             {scores.isSuccess &&
               (scores.data.length === 0 ? (
-                <div className={`${surfaceCard} p-6`}>
+                <div className={`${surfaceCard} app-content-in p-6`}>
                   <p className={placeholderPanel}>
                     You have not saved an attempt at this quiz yet.
                   </p>
                 </div>
               ) : (
-                <section className={surfaceCard}>
+                <section className={`${surfaceCard} app-content-in`}>
                   <div className="flex items-center gap-3 border-b border-border px-6 py-4">
                     <h2 className="mr-auto text-base font-medium">All attempts</h2>
                     <span className={countPill}>{scores.data.length}</span>

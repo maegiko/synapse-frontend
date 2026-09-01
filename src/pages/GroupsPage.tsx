@@ -120,7 +120,7 @@ export function GroupsPage() {
               )}
 
               {groups.isError && (
-                <div className={`${surfaceCard} grid justify-items-start gap-2.5 p-6`}>
+                <div className={`${surfaceCard} app-content-in grid justify-items-start gap-2.5 p-6`}>
                   <p className="text-sm text-text-muted">
                     We could not load your groups. {toFormMessage(groups.error)}
                   </p>
@@ -139,7 +139,7 @@ export function GroupsPage() {
               )}
 
               {visible.length > 0 && (
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="app-content-in grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {visible.map((group) => (
                     <GroupCard key={group.id} group={group} />
                   ))}

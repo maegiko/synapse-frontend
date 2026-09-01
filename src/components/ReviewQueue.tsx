@@ -311,7 +311,7 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
 
   if (isError) {
     return (
-      <section className={`${COMPACT_CARD} flex items-center gap-3`}>
+      <section className={`${COMPACT_CARD} app-content-in flex items-center gap-3`}>
         <div className="min-w-0 flex-1">
           <h2 className="text-base">Your review queue is unavailable</h2>
           <p className="mt-1 truncate text-xs text-text-muted">
@@ -331,7 +331,7 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
 
     return (
       <section
-        className={`${COMPACT_CARD} flex items-center gap-3 sm:gap-5`}
+        className={`${COMPACT_CARD} app-content-in flex items-center gap-3 sm:gap-5`}
         aria-labelledby="review-queue-heading"
       >
         <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-success-soft text-success-solid sm:h-11 sm:w-11">
@@ -350,7 +350,7 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
   }
 
   return (
-    <section className="mt-10" aria-labelledby="review-queue-heading">
+    <section className="app-content-in mt-10" aria-labelledby="review-queue-heading">
       <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <h2 id="review-queue-heading" className="text-xl">
           Review queue

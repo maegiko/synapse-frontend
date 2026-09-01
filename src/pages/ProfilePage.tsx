@@ -489,7 +489,7 @@ export function ProfilePage() {
           )}
 
           {profile && panel === 'summary' && (
-            <>
+            <div className="app-content-in">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-4 sm:gap-5">
                   <Avatar fullName={profile.fullName} size="lg" />
@@ -553,11 +553,11 @@ export function ProfilePage() {
                   </dd>
                 </div>
               </dl>
-            </>
+            </div>
           )}
 
           {profile && panel === 'details' && (
-            <form className="grid gap-5" onSubmit={handleSubmit} noValidate>
+            <form className="app-content-in grid gap-5" onSubmit={handleSubmit} noValidate>
               {formError && <FormAlert message={formError} />}
 
               <TextField
@@ -606,7 +606,7 @@ export function ProfilePage() {
           )}
 
           {profile && panel === 'email' && (
-            <div className="grid gap-5">
+            <div className="app-content-in grid gap-5">
               <div>
                 <h2 className="text-base font-medium">Change your email address</h2>
                 <p className="mt-1 text-sm text-text-muted">
@@ -706,14 +706,14 @@ export function ProfilePage() {
 
           {profile && panel === 'password' && (
             changePassword.isSuccess ? (
-              <div className="grid gap-2" role="status">
+              <div className="app-content-in grid gap-2" role="status">
                 <h2 className="text-base font-medium">Password changed</h2>
                 <p className="text-sm text-text-muted">
                   Signing you out. Log in again with your new password.
                 </p>
               </div>
             ) : (
-              <form className="grid gap-5" onSubmit={handlePasswordSubmit} noValidate>
+              <form className="app-content-in grid gap-5" onSubmit={handlePasswordSubmit} noValidate>
                 <div>
                   <h2 className="text-base font-medium">Change your password</h2>
                   <p className="mt-1 text-sm text-text-muted">

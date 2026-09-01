@@ -26,9 +26,9 @@ export function AuthLayout({
       <main className="flex flex-col px-6 py-8 sm:px-10">
         <Link
           to="/"
-          className="inline-flex items-center gap-2.5 self-start font-display text-lg font-medium text-text no-underline lg:hidden"
+          className="brand inline-flex items-center gap-2.5 self-start font-display text-lg font-medium text-text no-underline lg:hidden"
         >
-          <img src={synapseLogo} alt="" width="44" height="44" decoding="async" />
+          <img src={synapseLogo} alt="" width="44" height="44" decoding="async" className="brand-mark" />
           <span>Synapse</span>
         </Link>
 
@@ -45,9 +45,9 @@ export function AuthLayout({
       <aside className="hidden bg-accent-panel px-12 py-8 text-on-accent lg:order-first lg:flex lg:flex-col">
         <Link
           to="/"
-          className="inline-flex items-center gap-2.5 self-start font-display text-lg font-medium text-on-accent no-underline"
+          className="brand inline-flex items-center gap-2.5 self-start font-display text-lg font-medium text-on-accent no-underline"
         >
-          <img src={synapseLogo} alt="" width="44" height="44" decoding="async" />
+          <img src={synapseLogo} alt="" width="44" height="44" decoding="async" className="brand-mark" />
           <span>Synapse</span>
         </Link>
 

@@ -2,7 +2,7 @@ import { toFormMessage } from '../lib/apiErrors'
 
 /** Reads as a gap waiting to be filled, matching the library's empty panels. */
 export const pickerPanel =
-  'rounded-md border border-dashed border-border bg-surface-alt px-5 py-6 text-center text-sm text-text-muted'
+  'rounded-md border border-dashed border-border bg-surface-alt px-5 py-6 text-center text-sm text-text-muted app-content-in'
 
 export function PickerSkeleton({ rows = 3 }: { rows?: number }) {
   return (

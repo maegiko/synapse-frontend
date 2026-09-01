@@ -386,7 +386,7 @@ export function GroupDetailPage() {
           {group.isPending && <GroupSkeleton />}
 
           {group.isError && (
-            <div className={`${surfaceCard} max-w-150 p-8`}>
+            <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
               <h1 className="text-3xl">
                 {isMissing ? 'We could not find that group' : 'We could not load that group'}
               </h1>
@@ -409,7 +409,11 @@ export function GroupDetailPage() {
             </div>
           )}
 
-          {group.isSuccess && <GroupContent group={group.data} />}
+          {group.isSuccess && (
+            <div className="app-content-in">
+              <GroupContent group={group.data} />
+            </div>
+          )}
         </div>
       </main>
     </>

@@ -651,7 +651,7 @@ export function DeckPage() {
           {deck.isPending && <DeckSkeleton />}
 
           {deck.isError && (
-            <div className={`${surfaceCard} max-w-150 p-8`}>
+            <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
               <h1 className="text-3xl">
                 {isMissing ? 'We could not find that deck' : 'We could not load that deck'}
               </h1>
@@ -674,7 +674,11 @@ export function DeckPage() {
             </div>
           )}
 
-          {deck.isSuccess && <DeckContent deck={deck.data} />}
+          {deck.isSuccess && (
+            <div className="app-content-in">
+              <DeckContent deck={deck.data} />
+            </div>
+          )}
         </div>
       </main>
     </>

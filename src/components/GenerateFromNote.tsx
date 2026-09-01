@@ -235,7 +235,7 @@ export function GenerateFromNote({
               {notes.isPending && <NoteListSkeleton />}
 
               {notes.isError && (
-                <div className="grid justify-items-start gap-2.5 rounded-md border border-border bg-surface-alt p-5">
+                <div className="app-content-in grid justify-items-start gap-2.5 rounded-md border border-border bg-surface-alt p-5">
                   <p className="text-sm text-text-muted">
                     We could not load your notes. {toFormMessage(notes.error)}
                   </p>
@@ -250,7 +250,7 @@ export function GenerateFromNote({
               )}
 
               {hasNoNotes && (
-                <div className="rounded-md border border-dashed border-border bg-surface-alt px-6 py-10 text-center">
+                <div className="app-content-in rounded-md border border-dashed border-border bg-surface-alt px-6 py-10 text-center">
                   <span className={`${iconChip} mx-auto`} aria-hidden="true">
                     <IconNote />
                   </span>
@@ -269,7 +269,7 @@ export function GenerateFromNote({
               )}
 
               {notes.isSuccess && notes.data.length > 0 && (
-                <fieldset ref={fieldsetRef} className="m-0 min-w-0 border-0 p-0" disabled={isBusy}>
+                <fieldset ref={fieldsetRef} className="app-content-in m-0 min-w-0 border-0 p-0" disabled={isBusy}>
                   <legend className="sr-only">Choose a note</legend>
 
                   {notes.data.length > SEARCH_THRESHOLD && (

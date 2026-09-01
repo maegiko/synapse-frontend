@@ -213,7 +213,7 @@ export function GroupContentPickerDialog({
           )}
 
           {visible.length > 0 && (
-            <ul className="grid list-none gap-2">
+            <ul className="app-content-in grid list-none gap-2">
               {visible.map((item) => {
                 const Icon = TAB_ICONS[kind]
                 const isHere = item.groupId === groupId

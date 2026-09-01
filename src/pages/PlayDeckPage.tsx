@@ -423,7 +423,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   return (
     <>
       <AppHeader onLeave={() => guardLeaving('/dashboard')} />
-      <main className={`${shell} pt-10 pb-20`}>
+      <main className={`${shell} app-content-in pt-10 pb-20`}>
         <div className="mx-auto max-w-200">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm font-bold text-text tabular-nums">
@@ -534,7 +534,7 @@ export function PlayDeckPage() {
         {deck.isPending && <PlaySkeleton />}
 
         {deck.isError && (
-          <div className={`${surfaceCard} max-w-150 p-8`}>
+          <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
             <h1 className="text-3xl">
               {isMissing ? 'We could not find that deck' : 'We could not load that deck'}
             </h1>
@@ -555,7 +555,7 @@ export function PlayDeckPage() {
         )}
 
         {isEmpty && (
-          <div className={`${surfaceCard} max-w-150 p-8`}>
+          <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
             <h1 className="text-3xl">There is nothing to play yet</h1>
             <p className="mt-3 text-base text-text-muted">
               “{deck.data.title}” has no cards. Add one and it will be waiting here.

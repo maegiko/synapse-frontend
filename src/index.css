@@ -222,10 +222,11 @@ h3 {
   transition-delay: 300ms;
 }
 
-.landing-brand-mark {
+/* The wordmark lift, shared by the landing header and the signed-in one. */
+.brand-mark {
   transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
-.landing-brand:hover .landing-brand-mark {
+.brand:hover .brand-mark {
   transform: translateY(-2px) rotate(-3deg) scale(1.04);
 }
 .landing-nav-link {
@@ -470,6 +471,40 @@ h3 {
   animation: dialog-panel-in 180ms ease-out;
 }
 
+/* App-side motion, kept deliberately apart from the landing page's: each of
+   these fires on a state change the user asked for or waited on, never on its
+   own. Short, small, and one movement each. */
+@keyframes app-alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.app-alert-in {
+  animation: app-alert-in 150ms ease-out;
+}
+
+@keyframes app-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.app-card-in {
+  animation: app-card-in 200ms ease-out;
+}
+
+/* Data landing where a skeleton was. Opacity only: the skeleton already put the
+   layout in place, so moving it now would undo the point of having one. */
+@keyframes app-content-in {
+  from {
+    opacity: 0;
+  }
+}
+.app-content-in {
+  animation: app-content-in 180ms ease-out;
+}
+
 /* Streak celebration: the existing muted flame gives way to the lit asset. */
 @keyframes streak-flame-muted-out {
   0%,
@@ -529,7 +564,10 @@ h3 {
   .landing-app-preview-float,
   .streak-flame-celebration__muted,
   .streak-flame-celebration__lit,
-  .streak-day-count {
+  .streak-day-count,
+  .app-alert-in,
+  .app-card-in,
+  .app-content-in {
     animation: none;
   }
 
@@ -541,14 +579,14 @@ h3 {
     transition: none;
   }
 
-  .landing-brand-mark,
+  .brand-mark,
   .landing-interactive-card,
   .landing-nav-link::after,
   .flashcard-face {
     transition: none;
   }
 
-  .landing-brand:hover .landing-brand-mark,
+  .brand:hover .brand-mark,
   .landing-interactive-card:hover,
   .landing-interactive-card:focus-within {
     transform: none;

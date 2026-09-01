@@ -48,7 +48,7 @@ export function ErrorPageShell({
           <span className="translate-y-0.5">Synapse</span>
         </div>
 
-        <div className={`${surfaceCard} mt-6 px-6 py-9 text-center sm:px-10 sm:py-11`}>
+        <div className={`${surfaceCard} app-card-in mt-6 px-6 py-9 text-center sm:px-10 sm:py-11`}>
           <div {...(announce ? { role: 'alert' } : {})}>
             <span className={`${iconChip} h-12 w-12`} aria-hidden="true">
               {icon}

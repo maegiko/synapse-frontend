@@ -474,7 +474,7 @@ export function NotePage() {
           {note.isPending && <NoteSkeleton />}
 
           {note.isError && (
-            <div className={`${surfaceCard} max-w-150 p-8`}>
+            <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
               <h1 className="text-3xl">{isMissing ? 'We could not find that note' : 'We could not load that note'}</h1>
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
@@ -495,7 +495,11 @@ export function NotePage() {
             </div>
           )}
 
-          {note.isSuccess && <NoteContent note={note.data} />}
+          {note.isSuccess && (
+            <div className="app-content-in">
+              <NoteContent note={note.data} />
+            </div>
+          )}
         </div>
       </main>
     </>

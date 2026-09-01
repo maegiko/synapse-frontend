@@ -876,7 +876,7 @@ export function QuizPage() {
           {quiz.isPending && <QuizSkeleton />}
 
           {quiz.isError && (
-            <div className={`${surfaceCard} max-w-150 p-8`}>
+            <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
               <h1 className="text-3xl">
                 {isMissing ? 'We could not find that quiz' : 'We could not load that quiz'}
               </h1>
@@ -899,7 +899,11 @@ export function QuizPage() {
             </div>
           )}
 
-          {quiz.isSuccess && <QuizContent quiz={quiz.data} />}
+          {quiz.isSuccess && (
+            <div className="app-content-in">
+              <QuizContent quiz={quiz.data} />
+            </div>
+          )}
         </div>
       </main>
     </>

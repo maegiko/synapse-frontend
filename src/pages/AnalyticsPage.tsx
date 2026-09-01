@@ -267,7 +267,7 @@ export function AnalyticsPage() {
         )}
 
         {analytics.isError && !data && (
-          <div className={`${surfaceCard} mt-8 max-w-150 p-8`}>
+          <div className={`${surfaceCard} app-content-in mt-8 max-w-150 p-8`}>
             <h2 className="text-xl">We could not load your progress</h2>
             <p className="mt-3 text-base text-text-muted">{toFormMessage(analytics.error)}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -288,7 +288,11 @@ export function AnalyticsPage() {
 
         {!data && analytics.isPending && <PageSkeleton />}
 
-        {data && <AnalyticsSections data={data} timeZone={timeZone} />}
+        {data && (
+          <div className="app-content-in">
+            <AnalyticsSections data={data} timeZone={timeZone} />
+          </div>
+        )}
       </main>
     </>
   )

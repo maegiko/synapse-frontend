@@ -37,15 +37,15 @@ export const fieldInput =
   'w-full rounded-sm border border-border bg-surface px-3.5 py-2.75 text-base text-text transition-colors duration-150 placeholder:text-text-muted hover:border-accent-solid disabled:cursor-not-allowed disabled:bg-surface-alt disabled:text-text-muted'
 export const fieldInputInvalid = 'border-error-solid bg-error-soft hover:border-error-solid'
 export const fieldHint = 'mt-1.5 text-xs text-text-muted'
-export const fieldError = 'mt-1.5 text-xs font-bold text-error-solid'
+export const fieldError = 'mt-1.5 text-xs font-bold text-error-solid app-alert-in'
 
 export const formAlert =
-  'flex items-start gap-2.5 rounded-sm border border-error-solid bg-error-soft px-4 py-3 text-sm font-semibold text-error-solid'
+  'flex items-start gap-2.5 rounded-sm border border-error-solid bg-error-soft px-4 py-3 text-sm font-semibold text-error-solid app-alert-in'
 
 export const successAlert =
-  'flex items-start gap-2.5 rounded-sm border border-success-solid bg-success-soft px-4 py-3 text-sm font-semibold text-success-solid'
+  'flex items-start gap-2.5 rounded-sm border border-success-solid bg-success-soft px-4 py-3 text-sm font-semibold text-success-solid app-alert-in'
 
-export const authCard = 'rounded-lg border border-border bg-surface p-8 shadow-md sm:p-9'
+export const authCard = 'rounded-lg border border-border bg-surface p-8 shadow-md sm:p-9 app-card-in'
 
 export const surfaceCard = 'rounded-md border border-border bg-surface shadow-sm'
 export const iconChip =

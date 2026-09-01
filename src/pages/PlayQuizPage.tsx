@@ -223,14 +223,14 @@ function QuestionCard({
         </fieldset>
 
         {error && (
-          <p className="mt-4 text-sm font-bold text-error-solid" role="alert">
+          <p className="app-alert-in mt-4 text-sm font-bold text-error-solid" role="alert">
             {error}
           </p>
         )}
 
         {submitted && (
           <p
-            className={`mt-6 rounded-md px-4.5 py-3.5 text-sm font-bold ${
+            className={`app-alert-in mt-6 rounded-md px-4.5 py-3.5 text-sm font-bold ${
               wasCorrect
                 ? 'bg-success-soft text-success-solid'
                 : 'bg-error-soft text-error-solid'
@@ -410,7 +410,7 @@ function Runner({
     <>
       <AppHeader onLeave={() => guardLeaving('/dashboard')} />
 
-      <main className={`${shell} pt-10 pb-20`}>
+      <main className={`${shell} app-content-in pt-10 pb-20`}>
         {phase === 'playing' && (
           <QuestionCard
             // Remounting per question resets the selection and the reveal.
@@ -558,7 +558,7 @@ export function PlayQuizPage() {
         {quiz.isPending && <PlaySkeleton />}
 
         {quiz.isError && (
-          <div className={`${surfaceCard} max-w-150 p-8`}>
+          <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
             <h1 className="text-3xl">
               {isMissing ? 'We could not find that quiz' : 'We could not load that quiz'}
             </h1>
@@ -579,7 +579,7 @@ export function PlayQuizPage() {
         )}
 
         {isEmpty && (
-          <div className={`${surfaceCard} max-w-150 p-8`}>
+          <div className={`${surfaceCard} app-content-in max-w-150 p-8`}>
             <h1 className="text-3xl">There is nothing to answer yet</h1>
             <p className="mt-3 text-base text-text-muted">
               “{quiz.data.title}” has no questions. Add one and it will be waiting here.

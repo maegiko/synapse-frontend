@@ -163,7 +163,7 @@ function Section({
       )}
 
       {query.isError && (
-        <div className={`${surfaceCard} grid justify-items-start gap-2.5 p-6`}>
+        <div className={`${surfaceCard} app-content-in grid justify-items-start gap-2.5 p-6`}>
           <p className="text-sm text-text-muted">
             We could not load these. {toFormMessage(query.error)}
           </p>
@@ -178,9 +178,13 @@ function Section({
       )}
 
       {/* Nothing saved and nothing matched read differently, so they say different things. */}
-      {isSettled && total === 0 && <p className={placeholderPanel}>{emptyMessage}</p>}
+      {isSettled && total === 0 && (
+        <p className={`${placeholderPanel} app-content-in`}>{emptyMessage}</p>
+      )}
 
-      {shown > 0 && <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{children}</div>}
+      {shown > 0 && (
+        <div className="app-content-in grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{children}</div>
+      )}
 
       {/* Paged by hand rather than on scroll, so nothing loads that was not asked for. */}
       {isSettled && showLoadMore && (
@@ -425,6 +429,7 @@ export function LibraryPage() {
               <>
                 {showNotes && (
                   <Section
+                    key={`notes-${kind}-${pinnedOnly}`}
                     title="Notes"
                     query={notes}
                     total={noteCount}
@@ -453,6 +458,7 @@ export function LibraryPage() {
 
                 {showDecks && (
                   <Section
+                    key={`decks-${kind}-${pinnedOnly}`}
                     title="Flashcard decks"
                     query={decks}
                     total={deckCount}
@@ -478,6 +484,7 @@ export function LibraryPage() {
 
                 {showQuizzes && (
                   <Section
+                    key={`quizzes-${kind}-${pinnedOnly}`}
                     title="Quizzes"
                     query={quizzes}
                     total={quizCount}
