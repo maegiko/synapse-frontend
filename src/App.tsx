@@ -23,6 +23,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { ErrorTestRoute } from './dev/ErrorTestRoute'
 import { queryClient } from './lib/queryClient'
 
@@ -58,6 +59,12 @@ function App() {
                 </GuestRoute>
               }
             />
+            {/*
+              Public, and behind no guard on purpose. The visitor arriving from
+              their inbox is normally signed out, and a signed-in one confirming
+              an email change must not be bounced to the dashboard.
+            */}
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route
               path="/dashboard"
               element={

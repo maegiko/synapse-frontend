@@ -19,9 +19,17 @@ export const API_PATHS = {
     refresh: '/api/auth/refresh',
     logout: '/api/auth/logout',
     password: '/api/auth/password',
+    /**
+     * The two email endpoints are public. Registration verification may set a
+     * refresh-token cookie, while resending remains cookie-free.
+     */
+    verifyEmail: '/api/auth/email/verify',
+    resendVerification: '/api/auth/email/resend',
   },
   user: {
     details: '/api/user/details',
+    /** The only route an account's email address changes through. */
+    emailChange: '/api/user/email-change',
     streak: '/api/user/streak',
     analytics: '/api/user/analytics',
   },

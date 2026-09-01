@@ -32,6 +32,71 @@ export interface ChangePasswordRequest {
   newPassword: string
 }
 
+/**
+ * What `POST /api/auth/register` answers with now. There is no token and no
+ * refresh cookie: the account exists but cannot log in until the emailed link
+ * is confirmed, so registration ends in a check-your-email state.
+ */
+export interface RegisterResponse {
+  /** The normalized address the verification link was sent to. */
+  email: string
+  /** The backend's own instruction to check that inbox. */
+  message: string
+}
+
+/** The raw token from the `token` query parameter of an emailed link. */
+export interface VerifyEmailRequest {
+  token: string
+}
+
+/**
+ * The `200` body of `POST /api/auth/email/verify`. One endpoint confirms both
+ * kinds of link and only one of them mints a session, so `kind` is what the
+ * caller branches on. Never guess the kind from local auth state: somebody
+ * signed into one account can open a registration link for another.
+ */
+export type VerifyEmailResponse = VerifiedRegistration | VerifiedEmailChange
+
+/**
+ * A registration link: the address is confirmed and the account is now signed
+ * in. The refresh cookie was set by this call, replacing whatever session the
+ * browser held before it.
+ */
+export interface VerifiedRegistration {
+  kind: 'REGISTRATION'
+  fullName: string
+  email: string
+  accessToken: string
+}
+
+/**
+ * An email-change link: the account now uses `email`. No token and no cookie,
+ * and any existing session carries on untouched.
+ */
+export interface VerifiedEmailChange {
+  kind: 'EMAIL_CHANGE'
+  email: string
+}
+
+export interface ResendVerificationRequest {
+  email: string
+}
+
+export interface ChangeEmailRequest {
+  email: string
+}
+
+/**
+ * The `202` body of `POST /api/user/email-change`. The account still uses its
+ * old address: nothing changes until the link sent to `pendingEmail` is
+ * confirmed. A `204` instead means the address was already the current one.
+ */
+export interface EmailChangeResponse {
+  pendingEmail: string
+  /** When the pending request lapses. UTC, like every other timestamp. */
+  expiresAt: LocalDateTimeString
+}
+
 export interface AuthResponse {
   fullName: string
   email: string
@@ -230,11 +295,14 @@ export interface AnalyticsResponse {
   dailyActivity: AnalyticsDailyActivity[]
 }
 
-/** At least one property must be present; only supplied values change. */
+/**
+ * At least one property must be present. The email address is deliberately not
+ * here: it moves only through `POST /api/user/email-change`, so a name or time
+ * zone save can never depend on an email send succeeding.
+ */
 export type UpdateUserDetailsRequest =
-  | { fullName: string; email?: string; timeZone?: string }
-  | { fullName?: string; email: string; timeZone?: string }
-  | { fullName?: string; email?: string; timeZone: string }
+  | { fullName: string; timeZone?: string }
+  | { fullName?: string; timeZone: string }
 
 /**
  * Every list endpoint answers one page. `page` and `size` echo the request,

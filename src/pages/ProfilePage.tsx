@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import {
   api,
   type ChangePasswordRequest,
+  type EmailChangeResponse,
   type UpdateUserDetailsRequest,
   type UserDetails,
 } from '../api'
@@ -37,9 +38,10 @@ import {
   successAlert,
 } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, retryAfterSeconds, toEmailSendMessage, toFormMessage } from '../lib/apiErrors'
+import { useCooldown } from '../lib/useCooldown'
 import { DASHBOARD_BACK } from '../lib/backTrail'
-import { formatCalendarDate } from '../lib/formatDate'
+import { formatCalendarDate, formatDateTime } from '../lib/formatDate'
 import {
   formatImprovement,
   formatPercentage,
@@ -142,7 +144,6 @@ function LibraryRow({
 
 interface FieldErrors {
   fullName?: string
-  email?: string
 }
 
 interface PasswordErrors {
@@ -152,7 +153,7 @@ interface PasswordErrors {
 }
 
 /** Which editor the profile card is showing. */
-type Panel = 'summary' | 'details' | 'password'
+type Panel = 'summary' | 'details' | 'email' | 'password'
 
 /** Which set of numbers the Performance panel is showing. */
 type PerfTab = 'flashcards' | 'quizzes'
@@ -183,11 +184,23 @@ export function ProfilePage() {
   const [panel, setPanel] = useState<Panel>('summary')
   const [perfTab, setPerfTab] = useState<PerfTab>('flashcards')
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
   const [timeZoneField, setTimeZoneField] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState('')
   const [savedMessage, setSavedMessage] = useState('')
+
+  const [newEmail, setNewEmail] = useState('')
+  const [emailFieldError, setEmailFieldError] = useState('')
+  const [emailFormError, setEmailFormError] = useState('')
+  /**
+   * The address a confirmation link has just gone to, or null. It is only ever
+   * *pending*: the account keeps its current address until the link in that
+   * inbox is opened, so nothing here replaces what the profile shows.
+   */
+  const [pendingChange, setPendingChange] = useState<EmailChangeResponse | null>(null)
+  /** Set when the proposed address was already the account's own (a 204). */
+  const [emailUnchanged, setEmailUnchanged] = useState(false)
+  const emailCooldown = useCooldown()
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -202,12 +215,21 @@ export function ProfilePage() {
   function startEditing() {
     if (!profile) return
     setFullName(profile.fullName)
-    setEmail(profile.email)
     setTimeZoneField(timeZone)
     setFieldErrors({})
     setFormError('')
     setSavedMessage('')
     setPanel('details')
+  }
+
+  function startChangingEmail() {
+    setNewEmail('')
+    setEmailFieldError('')
+    setEmailFormError('')
+    setPendingChange(null)
+    setEmailUnchanged(false)
+    setSavedMessage('')
+    setPanel('email')
   }
 
   function startChangingPassword() {
@@ -224,6 +246,8 @@ export function ProfilePage() {
     setPanel('summary')
     setFieldErrors({})
     setFormError('')
+    setEmailFieldError('')
+    setEmailFormError('')
     setPasswordErrors({})
     setPasswordFormError('')
   }
@@ -231,8 +255,9 @@ export function ProfilePage() {
   const save = useMutation({
     mutationFn: (payload: UpdateUserDetailsRequest) => api.user.updateDetails(payload),
     onSuccess: (updated: UserDetails) => {
-      // The PATCH response is the normalized truth: a trimmed name, a lowercased
-      // email, a canonical time zone.
+      // The PATCH response is the normalized truth: a trimmed name and a
+      // canonical time zone. The address it carries is the account's current
+      // one, which this endpoint no longer changes.
       queryClient.setQueryData(queryKeys.userDetails, updated)
       setUserDetails(updated)
 
@@ -253,13 +278,41 @@ export function ProfilePage() {
       setSavedMessage('Your details have been saved.')
     },
     onError: (error) => {
-      if (isStatus(error, 409)) {
-        setFieldErrors({ email: 'Another account already uses that email address.' })
-        setFormError('')
-        return
-      }
       setFieldErrors({})
       setFormError(toFormMessage(error))
+    },
+  })
+
+  /**
+   * The only route an address changes through. A `202` means a confirmation
+   * link is on its way to the proposed address and nothing has changed yet; a
+   * `204` means that address was already this account's own, which is a
+   * successful no-op rather than a failure.
+   */
+  const changeEmail = useMutation({
+    mutationFn: (address: string) => api.user.requestEmailChange(address),
+    onSuccess: (pending: EmailChangeResponse | null) => {
+      setEmailFieldError('')
+      setEmailFormError('')
+      // Deliberately no cache or auth-state write: the account still uses the
+      // address it had until the emailed link is confirmed.
+      setPendingChange(pending)
+      setEmailUnchanged(pending === null)
+    },
+    onError: (error) => {
+      emailCooldown.start(retryAfterSeconds(error))
+      if (isStatus(error, 409)) {
+        setEmailFieldError('Another account already uses that email address.')
+        setEmailFormError('')
+        return
+      }
+      if (isStatus(error, 400)) {
+        setEmailFieldError('Enter a valid email address.')
+        setEmailFormError('')
+        return
+      }
+      setEmailFieldError('')
+      setEmailFormError(toEmailSendMessage(error))
     },
   })
 
@@ -286,13 +339,11 @@ export function ProfilePage() {
   // Compared against the saved values so an unchanged form cannot be submitted:
   // the API rejects a PATCH with no properties in it.
   const trimmedName = fullName.trim()
-  const normalizedEmail = email.trim().toLowerCase()
   const nameChanged = Boolean(profile) && trimmedName !== profile?.fullName
-  const emailChanged = Boolean(profile) && normalizedEmail !== profile?.email.toLowerCase()
   // Guarded on a non-empty field: unlike the text inputs, an empty value here is
   // not a validation message but a 400, so it must never reach the payload.
   const timeZoneChanged = Boolean(profile) && Boolean(timeZoneField) && timeZoneField !== timeZone
-  const hasChanges = nameChanged || emailChanged || timeZoneChanged
+  const hasChanges = nameChanged || timeZoneChanged
 
   // Like the details form's `hasChanges`: the submit stays disabled until there
   // is something to send.
@@ -305,20 +356,34 @@ export function ProfilePage() {
 
     const errors: FieldErrors = {
       fullName: nameChanged ? (validateFullName(fullName) ?? undefined) : undefined,
-      email: emailChanged ? (validateEmail(email) ?? undefined) : undefined,
     }
     setFieldErrors(errors)
     setFormError('')
     if (Object.values(errors).some(Boolean)) return
 
-    // Only changed properties are sent; the backend leaves the rest alone.
+    // Only changed properties are sent; the backend leaves the rest alone. The
+    // email address is never one of them: this endpoint ignores it, and a name
+    // change must not ride on an email send.
     const payload = {
       ...(nameChanged ? { fullName: trimmedName } : {}),
-      ...(emailChanged ? { email: normalizedEmail } : {}),
       ...(timeZoneChanged ? { timeZone: timeZoneField } : {}),
     } as UpdateUserDetailsRequest
 
     save.mutate(payload)
+  }
+
+  function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (changeEmail.isPending || emailCooldown.remaining > 0) return
+
+    const invalid = validateEmail(newEmail)
+    setEmailFieldError(invalid ?? '')
+    setEmailFormError('')
+    setPendingChange(null)
+    setEmailUnchanged(false)
+    if (invalid) return
+
+    changeEmail.mutate(newEmail)
   }
 
   function handlePasswordSubmit(event: FormEvent<HTMLFormElement>) {
@@ -447,9 +512,14 @@ export function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
+                {/* Free to shrink, so a third action wraps onto its own line on a
+                    narrow screen rather than pushing the card sideways. */}
+                <div className="flex flex-wrap gap-2">
                   <button type="button" className={btnGhostSm} onClick={startEditing}>
                     Edit profile
+                  </button>
+                  <button type="button" className={btnGhostSm} onClick={startChangingEmail}>
+                    Change email
                   </button>
                   <button type="button" className={btnGhostSm} onClick={startChangingPassword}>
                     Change password
@@ -500,18 +570,6 @@ export function ProfilePage() {
                 onChange={(event) => setFullName(event.target.value)}
               />
 
-              <TextField
-                label="Email"
-                type="email"
-                name="email"
-                autoComplete="email"
-                hint="Changing this changes the address you log in with."
-                value={email}
-                error={fieldErrors.email}
-                disabled={save.isPending}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-
               <SelectField
                 label="Time zone"
                 name="timeZone"
@@ -540,11 +598,110 @@ export function ProfilePage() {
                 </button>
                 {!hasChanges && !save.isPending && (
                   <span className="text-xs text-text-muted">
-                    Change your name, email, or time zone to save.
+                    Change your name or time zone to save.
                   </span>
                 )}
               </div>
             </form>
+          )}
+
+          {profile && panel === 'email' && (
+            <div className="grid gap-5">
+              <div>
+                <h2 className="text-base font-medium">Change your email address</h2>
+                <p className="mt-1 text-sm text-text-muted">
+                  We send a confirmation link to the new address. You keep logging in with{' '}
+                  <span className="font-bold text-text">{profile.email}</span> until you open it.
+                </p>
+              </div>
+
+              {pendingChange ? (
+                // Deliberately not "your email has changed": nothing has, and it
+                // will not until the link in the *new* inbox is opened.
+                <div className="grid gap-4" role="status">
+                  <p className={successAlert}>
+                    <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                    <span>
+                      Confirmation link sent to{' '}
+                      <span className="break-words">{pendingChange.pendingEmail}</span>.
+                    </span>
+                  </p>
+                  <p className="text-sm text-text-muted">
+                    Open that link to finish the change. It expires on{' '}
+                    {formatDateTime(pendingChange.expiresAt, timeZone)}, and asking again replaces
+                    it with a newer one. Until then {profile.email} stays the address on your
+                    account.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className={btnPrimarySm} onClick={closePanel}>
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      className={btnGhostSm}
+                      onClick={() => {
+                        setPendingChange(null)
+                        setNewEmail('')
+                      }}
+                    >
+                      Use a different address
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form className="grid gap-5" onSubmit={handleEmailSubmit} noValidate>
+                  {emailFormError && <FormAlert message={emailFormError} />}
+
+                  {emailUnchanged && (
+                    <p className={successAlert} role="status">
+                      <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                      <span>That is already the email address on your account.</span>
+                    </p>
+                  )}
+
+                  <TextField
+                    label="New email address"
+                    type="email"
+                    name="newEmail"
+                    autoComplete="email"
+                    placeholder="you@university.edu"
+                    hint="Check that you can open mail sent to this address before you send the link."
+                    value={newEmail}
+                    error={emailFieldError || undefined}
+                    disabled={changeEmail.isPending}
+                    onChange={(event) => {
+                      setNewEmail(event.target.value)
+                      setEmailUnchanged(false)
+                    }}
+                  />
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="submit"
+                      className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+                      disabled={
+                        changeEmail.isPending || !newEmail.trim() || emailCooldown.remaining > 0
+                      }
+                    >
+                      {changeEmail.isPending ? 'Sending…' : 'Send confirmation link'}
+                    </button>
+                    <button
+                      type="button"
+                      className={btnGhostSm}
+                      onClick={closePanel}
+                      disabled={changeEmail.isPending}
+                    >
+                      Cancel
+                    </button>
+                    <span className="text-xs text-text-muted" aria-live="polite">
+                      {emailCooldown.remaining > 0
+                        ? `You can try again in ${emailCooldown.remaining}s.`
+                        : ''}
+                    </span>
+                  </div>
+                </form>
+              )}
+            </div>
           )}
 
           {profile && panel === 'password' && (

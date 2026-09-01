@@ -5,9 +5,11 @@ import {
   refreshAccessToken,
   setAccessToken,
   subscribeToAccessToken,
+  type AuthResponse,
   type UserDetails,
 } from '../api'
-import { clearQueryCache } from '../lib/queryClient'
+import { queryKeys } from '../lib/queries'
+import { clearQueryCache, queryClient } from '../lib/queryClient'
 import { AuthContext, type AuthContextValue, type AuthStatus } from './AuthContext'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -51,23 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const login = useCallback(async (email: string, password: string) => {
-    const { accessToken, fullName, email: userEmail } = await api.auth.login({ email, password })
+  const adoptSession = useCallback(({ accessToken, fullName, email }: AuthResponse) => {
+    // Whatever was cached belonged to the session this one replaces. Confirming
+    // a registration link can even swap accounts, so nothing is kept.
+    clearQueryCache()
     setAccessToken(accessToken)
-    setUser({ fullName, email: userEmail })
+    setUser({ fullName, email })
     setStatus('authenticated')
   }, [])
 
-  const register = useCallback(async (fullName: string, email: string, password: string) => {
-    const {
-      accessToken,
-      fullName: userFullName,
-      email: userEmail,
-    } = await api.auth.register({ fullName, email, password })
-    setAccessToken(accessToken)
-    setUser({ fullName: userFullName, email: userEmail })
-    setStatus('authenticated')
-  }, [])
+  const login = useCallback(
+    async (email: string, password: string) => {
+      adoptSession(await api.auth.login({ email, password }))
+    },
+    [adoptSession],
+  )
 
   const logout = useCallback(async () => {
     try {
@@ -84,9 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // profile edit, so React state is updated from the PATCH response instead.
   const setUserDetails = useCallback((details: UserDetails) => setUser(details), [])
 
+  // Same quirk, without a response to read it from: a confirmed email change
+  // happens on a page of its own, so the profile is fetched again afterwards.
+  const refreshUser = useCallback(async () => {
+    const details = await api.user.getDetails()
+    setUser(details)
+    queryClient.setQueryData(queryKeys.userDetails, details)
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, register, logout, setUserDetails }),
-    [status, user, login, register, logout, setUserDetails],
+    () => ({ status, user, login, adoptSession, logout, setUserDetails, refreshUser }),
+    [status, user, login, adoptSession, logout, setUserDetails, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
