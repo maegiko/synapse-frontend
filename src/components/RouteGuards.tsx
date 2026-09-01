@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 
 /** Shown for the one refresh call the app makes on boot. */
-function AuthBootScreen() {
+export function AuthBootScreen() {
   return (
     <div className="grid min-h-screen place-items-center" role="status" aria-live="polite">
       <p className="text-sm font-semibold text-text-muted">Loading Synapse…</p>

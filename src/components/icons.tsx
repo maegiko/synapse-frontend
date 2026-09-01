@@ -249,3 +249,13 @@ export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & 
     </svg>
   )
 }
+
+/** Something went wrong, matching the circle-and-bar mark the form alerts use. */
+export function IconAlert({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5.5M12 16.4v.1" strokeLinecap="round" />
+    </svg>
+  )
+}

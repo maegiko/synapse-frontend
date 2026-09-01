@@ -15,6 +15,7 @@ import { LoginPage } from './pages/LoginPage'
 import { NewDeckPage } from './pages/NewDeckPage'
 import { NewNotePage } from './pages/NewNotePage'
 import { NewQuizPage } from './pages/NewQuizPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { NotePage } from './pages/NotePage'
 import { PlayDeckPage } from './pages/PlayDeckPage'
 import { PlayQuizPage } from './pages/PlayQuizPage'
@@ -22,6 +23,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ErrorTestRoute } from './dev/ErrorTestRoute'
 import { queryClient } from './lib/queryClient'
 
 function App() {
@@ -200,7 +202,19 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/*
+              Development-only check for the error boundary: a route that
+              throws while rendering. `import.meta.env.DEV` is replaced with
+              `false` at build time, so this branch and the module behind it
+              are dropped from production output.
+            */}
+            {import.meta.env.DEV && <Route path="/__error-test" element={<ErrorTestRoute />} />}
+            {/*
+              Anything that matches no route above. A missing note, deck, quiz
+              or group is not this: those addresses are real, so they stay on
+              their own page and show its resource-specific not-found state.
+            */}
+            <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </StreakCelebrationProvider>
         </AuthProvider>
