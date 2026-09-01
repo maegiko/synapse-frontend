@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
+import { ProtectedPageTitle } from './components/ProtectedPageTitle'
 import { ScrollToTop } from './components/ScrollToTop'
 import { StreakCelebrationProvider } from './components/StreakCelebration'
 import { AnalyticsPage } from './pages/AnalyticsPage'
@@ -34,6 +35,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ScrollToTop />
+        <ProtectedPageTitle />
         <AuthProvider>
           <StreakCelebrationProvider>
             <Routes>
