@@ -8,6 +8,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
   VerifyEmailResponse,
 } from './types'
 
@@ -87,6 +88,40 @@ export async function logout(): Promise<void> {
   } finally {
     setAccessToken(null)
   }
+}
+
+/**
+ * Asks for a password-reset link. It answers `204` for an unknown address, an
+ * unverified one, a live one, and a backend whose email provider failed alike,
+ * so the caller must show one generic confirmation whatever was typed: this
+ * response cannot reveal whether an account exists. A `429` counts unknown
+ * addresses too, so it proves nothing either and must keep the same wording.
+ *
+ * Sets no cookie, so unlike the reset below it does not need the cookie flag.
+ */
+export function forgotPassword(email: string): Promise<void> {
+  return apiRequest<void>(API_PATHS.auth.forgotPassword, {
+    method: 'POST',
+    json: { email: email.trim() },
+  })
+}
+
+/**
+ * Sets a new password from an emailed link. It signs nobody in — no token comes
+ * back — but it revokes every refresh token of that account and clears the
+ * caller's refresh cookie, which is why it needs the cookie flag.
+ *
+ * Every unusable token — unknown, expired, replaced by a newer request, or
+ * already used — answers the same `400`, so the caller cannot and should not
+ * tell those apart. The token is a credential: it belongs in this request and
+ * nowhere else, so it is never logged, stored, or left in the address bar.
+ */
+export function resetPassword(payload: ResetPasswordRequest): Promise<void> {
+  return apiRequest<void>(API_PATHS.auth.resetPassword, {
+    method: 'POST',
+    withRefreshCookie: true,
+    json: payload,
+  })
 }
 
 /** Revokes every session, so the caller must sign out locally and route to login. */

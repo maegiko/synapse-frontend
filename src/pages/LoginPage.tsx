@@ -133,6 +133,15 @@ export function LoginPage() {
           onChange={(event) => setPassword(event.target.value)}
         />
 
+        <p className="-mt-2 text-sm">
+          <Link
+            to="/forgot-password"
+            className="font-bold text-accent-foreground no-underline hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        </p>
+
         <button type="submit" className={btnSubmit} disabled={submitting}>
           {submitting ? 'Logging in…' : 'Log in'}
         </button>

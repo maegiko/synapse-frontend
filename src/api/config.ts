@@ -20,6 +20,13 @@ export const API_PATHS = {
     logout: '/api/auth/logout',
     password: '/api/auth/password',
     /**
+     * The forgotten-password pair, both public. Neither takes a bearer token:
+     * a user who cannot log in has nothing to authenticate with. Reset clears
+     * the refresh cookie, so it is the one of the two that needs the cookie.
+     */
+    forgotPassword: '/api/auth/password/forgot',
+    resetPassword: '/api/auth/password/reset',
+    /**
      * The two email endpoints are public. Registration verification may set a
      * refresh-token cookie, while resending remains cookie-free.
      */

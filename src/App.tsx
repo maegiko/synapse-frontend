@@ -7,6 +7,7 @@ import { StreakCelebrationProvider } from './components/StreakCelebration'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { GroupDetailPage } from './pages/GroupDetailPage'
 import { GroupsPage } from './pages/GroupsPage'
 import { LandingPage } from './pages/LandingPage'
@@ -23,6 +24,7 @@ import { ProfilePage } from './pages/ProfilePage'
 import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { ErrorTestRoute } from './dev/ErrorTestRoute'
 import { queryClient } from './lib/queryClient'
@@ -65,6 +67,16 @@ function App() {
               an email change must not be bounced to the dashboard.
             */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            {/*
+              The forgotten-password pair, both public and behind no guard. The
+              visitor opening a reset link is signed out, and a signed-in one
+              must not be bounced to the dashboard: the reset applies to the
+              account the token belongs to, not to the session this browser
+              happens to hold. `/reset-password` is the address the emailed
+              link points at, so the path is fixed by the backend.
+            */}
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
               path="/dashboard"
               element={

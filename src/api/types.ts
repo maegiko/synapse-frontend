@@ -50,6 +50,27 @@ export interface VerifyEmailRequest {
 }
 
 /**
+ * `POST /api/auth/password/forgot`. It answers `204` for every address it is
+ * given — unknown, unverified, live, and even one its email provider could not
+ * be reached for — so there is no response body and nothing to branch on.
+ */
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+/**
+ * `POST /api/auth/password/reset`. It answers `204`, mints no token and signs
+ * nobody in. The backend has no confirmation field: the two typed passwords are
+ * compared in the form.
+ */
+export interface ResetPasswordRequest {
+  /** The raw token from the reset link's `token` query parameter. */
+  token: string
+  /** 8-64 characters, the same rule as registration and a password change. */
+  newPassword: string
+}
+
+/**
  * The `200` body of `POST /api/auth/email/verify`. One endpoint confirms both
  * kinds of link and only one of them mints a session, so `kind` is what the
  * caller branches on. Never guess the kind from local auth state: somebody
