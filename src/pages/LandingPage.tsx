@@ -329,7 +329,7 @@ function AppPreviewMock() {
         <div className="rounded-md border border-accent-strong bg-[radial-gradient(circle_at_75%_20%,rgba(216,205,255,0.32)_0%,rgba(216,205,255,0)_40%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-5 py-5">
           <p className="font-display text-lg text-on-accent">Ready to learn?</p>
           <p className="mt-1.5 text-sm text-on-hero-muted">
-            You have 6 notes, 4 decks, and 3 quizzes in your library.
+            You have 6 notes, 4 decks and 3 quizzes in your library.
           </p>
           <span className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-on-accent px-3.5 py-2 text-sm font-bold text-accent-on-light">
             Continue learning

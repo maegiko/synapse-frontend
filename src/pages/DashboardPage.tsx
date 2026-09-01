@@ -160,7 +160,7 @@ export function DashboardPage() {
     summary = `You have ${plural(notes.data.length, 'note')}, ${plural(
       decks.data.length,
       'deck',
-    )}, and ${plural(quizzes.data.length, 'quiz', 'quizzes')} in your library.`
+    )} and ${plural(quizzes.data.length, 'quiz', 'quizzes')} in your library.`
   }
 
   const hero = needsFirstNote
