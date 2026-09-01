@@ -471,7 +471,7 @@ function AppPreviewMock() {
  */
 function SummaryMock() {
   return (
-    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+    <div className="landing-interactive-card flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
       <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Summary</p>
       <div className="flex flex-1 flex-col gap-2.5 rounded-md bg-surface-alt p-4.5">
         <div>
