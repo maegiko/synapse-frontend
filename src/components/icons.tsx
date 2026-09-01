@@ -207,6 +207,19 @@ export function IconCircleDashed({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
+/**
+ * A pushpin, for the pinned state. Filled is the pinned indicator; outlined is
+ * the "not pinned yet" control, matching {@link IconStar}'s two-state shape.
+ */
+export function IconPin({ className = 'h-4 w-4', filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <path d="M9.4 3.5h5.2a1.4 1.4 0 0 1 0 2.8h-.4v3.9l2.6 2.9a1.15 1.15 0 0 1-.86 1.92H8.06a1.15 1.15 0 0 1-.86-1.92l2.6-2.9V6.3h-.4a1.4 1.4 0 0 1 0-2.8Z" strokeLinejoin="round" />
+      <path d="M12 15.02V20.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 /** Whole stars only, so this is either filled or outlined — never partial. */
 export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & { filled?: boolean }) {
   return (

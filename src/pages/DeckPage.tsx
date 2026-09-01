@@ -9,6 +9,7 @@ import { CardEditDialog } from '../components/CardEditDialog'
 import { DeckEditDialog } from '../components/DeckEditDialog'
 import { FormAlert } from '../components/FormAlert'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
+import { PinToggle } from '../components/PinToggle'
 import {
   IconArrowRight,
   IconPencil,
@@ -35,6 +36,7 @@ import {
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
+import { usePinDeck } from '../lib/pinMutations'
 import { plural } from '../lib/plural'
 import { useFlashcardDeck, queryKeys } from '../lib/queries'
 import { PlaybackModeControl } from '../components/PlaybackModeControl'
@@ -250,6 +252,8 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     },
   })
 
+  const pinDeck = usePinDeck(deck.deckId)
+
   const deleteDeck = useMutation({
     mutationFn: () => api.flashcards.remove(deck.deckId),
     onSuccess: () => {
@@ -292,7 +296,8 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     deleteCard.isPending ||
     deleteDeck.isPending ||
     updateDeck.isPending ||
-    updateCard.isPending
+    updateCard.isPending ||
+    pinDeck.isPending
 
   // Matches the profile form: the submit only lights up once both fields hold
   // something to send.
@@ -382,6 +387,23 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             {isAdding ? <IconX /> : <IconPlus />}
             {isAdding ? 'Close card form' : 'Add a card'}
           </button>
+          <PinToggle
+            pinned={deck.pinned}
+            noun="deck"
+            isPending={pinDeck.isPending}
+            disabled={isBusy || isConfirmingDeck}
+            onToggle={(next) => {
+              setActionError('')
+              pinDeck.mutate(next, {
+                onError: (error) =>
+                  setActionError(
+                    isStatus(error, 404)
+                      ? 'This deck no longer exists. It may have just been deleted.'
+                      : `We could not ${next ? 'pin' : 'unpin'} this deck. ${toFormMessage(error)}`,
+                  ),
+              })
+            }}
+          />
           <button
             type="button"
             className={btnGhostSm}

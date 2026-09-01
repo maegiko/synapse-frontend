@@ -9,13 +9,19 @@ export const queryKeys = {
   analytics: ['analytics'] as const,
   analyticsPeriod: (period: AnalyticsPeriodDays) => ['analytics', period] as const,
   notes: ['notes'] as const,
+  /** The prefix every note search shares, so one invalidation refreshes them all. */
+  notesSearches: ['notes', 'search'] as const,
   notesSearch: (query: string) => ['notes', 'search', query] as const,
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
+  /** The prefix every deck search shares, so one invalidation refreshes them all. */
+  flashcardDecksSearches: ['flashcard-decks', 'search'] as const,
   flashcardDecksSearch: (query: string) => ['flashcard-decks', 'search', query] as const,
   flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
   reviewQueue: ['flashcard-decks', 'review-queue'] as const,
   quizzes: ['quizzes'] as const,
+  /** The prefix every quiz search shares, so one invalidation refreshes them all. */
+  quizzesSearches: ['quizzes', 'search'] as const,
   quizzesSearch: (query: string) => ['quizzes', 'search', query] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
   quizScores: (quizId: string) => ['quizzes', quizId, 'scores'] as const,

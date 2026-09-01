@@ -11,6 +11,7 @@ import { DifficultyStars } from '../components/DifficultyStars'
 import { StarRating } from '../components/StarRating'
 import { FormAlert } from '../components/FormAlert'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
+import { PinToggle } from '../components/PinToggle'
 import { QuestionEditDialog } from '../components/QuestionEditDialog'
 import { QuizEditDialog } from '../components/QuizEditDialog'
 import {
@@ -40,6 +41,7 @@ import {
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
+import { usePinQuiz } from '../lib/pinMutations'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz, useQuizScores, useUserTimeZone } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
@@ -360,6 +362,8 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     onError: (error) => setActionError(`We could not set the difficulty. ${toFormMessage(error)}`),
   })
 
+  const pinQuiz = usePinQuiz(quiz.id)
+
   const deleteQuiz = useMutation({
     mutationFn: () => api.quiz.remove(quiz.id),
     onSuccess: () => {
@@ -383,7 +387,8 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     setDifficulty.isPending ||
     deleteQuiz.isPending ||
     updateQuiz.isPending ||
-    updateQuestion.isPending
+    updateQuestion.isPending ||
+    pinQuiz.isPending
 
   // Matches the profile form: the submit only lights up once the question and
   // every answer the current type needs are filled in.
@@ -505,6 +510,23 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             {isAdding ? <IconX /> : <IconPlus />}
             {isAdding ? 'Close question form' : 'Add a question'}
           </button>
+          <PinToggle
+            pinned={quiz.pinned}
+            noun="quiz"
+            isPending={pinQuiz.isPending}
+            disabled={isBusy || isConfirmingQuiz}
+            onToggle={(next) => {
+              setActionError('')
+              pinQuiz.mutate(next, {
+                onError: (error) =>
+                  setActionError(
+                    isStatus(error, 404)
+                      ? 'This quiz no longer exists. It may have just been deleted.'
+                      : `We could not ${next ? 'pin' : 'unpin'} this quiz. ${toFormMessage(error)}`,
+                  ),
+              })
+            }}
+          />
           <button
             type="button"
             className={btnGhostSm}

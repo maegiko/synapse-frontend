@@ -60,3 +60,11 @@ export const countPill =
 export const btnPrimaryMdInverted = `${btnBase} bg-on-accent text-accent-on-light shadow-sm px-5.5 py-3 text-base hover:bg-inverted-hover hover:shadow-md hover:-translate-y-px`
 export const cardLink =
   'inline-flex items-center gap-1.5 text-sm font-bold text-accent-foreground no-underline hover:underline'
+
+/**
+ * The pinned state's one colour, shared by the card indicator and the detail
+ * pages' pin control. Gold rather than the accent purple, so a pin never reads
+ * as the link affordance beside it, and `warning-solid` specifically because it
+ * is the ramp step that stays legible on `surface` and `control` in both themes.
+ */
+export const pinnedTone = 'text-warning-solid'

@@ -9,6 +9,7 @@ import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import { NoteEditDialog } from '../components/NoteEditDialog'
+import { PinToggle } from '../components/PinToggle'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
   IconArrowRight,
@@ -31,6 +32,7 @@ import {
 } from '../components/ui'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
+import { usePinNote } from '../lib/pinMutations'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys, useNote } from '../lib/queries'
 import { api } from '../api'
@@ -172,6 +174,8 @@ function NoteContent({ note }: { note: NoteSummary }) {
     },
   })
 
+  const pinNote = usePinNote(note.id)
+
   const deleteNote = useMutation({
     mutationFn: () => api.notes.remove(note.id),
     onSuccess: () => {
@@ -190,7 +194,8 @@ function NoteContent({ note }: { note: NoteSummary }) {
   })
 
   const generatingNoun = makeDeck.isPending ? 'deck' : makeQuiz.isPending ? 'quiz' : null
-  const isBusy = generatingNoun !== null || deleteNote.isPending || updateNote.isPending
+  const isBusy =
+    generatingNoun !== null || deleteNote.isPending || updateNote.isPending || pinNote.isPending
 
   // The narration step only advances while a generate call is in flight; it is
   // reset when a run is started (below), like the other generate flows.
@@ -261,6 +266,23 @@ function NoteContent({ note }: { note: NoteSummary }) {
           </button>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <PinToggle
+            pinned={note.pinned}
+            noun="note"
+            isPending={pinNote.isPending}
+            disabled={isBusy || confirming !== null}
+            onToggle={(next) => {
+              setActionError('')
+              pinNote.mutate(next, {
+                onError: (error) =>
+                  setActionError(
+                    isStatus(error, 404)
+                      ? 'This note no longer exists. It may have just been deleted.'
+                      : `We could not ${next ? 'pin' : 'unpin'} this note. ${toFormMessage(error)}`,
+                  ),
+              })
+            }}
+          />
           <button
             type="button"
             className={btnGhostSm}

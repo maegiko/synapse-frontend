@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { FormAlert } from '../components/FormAlert'
 import { GroupContentPickerDialog } from '../components/GroupContentPickerDialog'
 import { GroupFormDialog } from '../components/GroupFormDialog'
+import { PinnedIndicator } from '../components/PinnedIndicator'
 import {
   IconArrowRight,
   IconDeck,
@@ -31,6 +32,7 @@ import {
 import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { useDeleteGroup, useRemoveFromGroup, useUpdateGroup } from '../lib/groupMutations'
 import { formatRelative } from '../lib/formatDate'
+import { pinnedFirst } from '../lib/pinned'
 import { plural } from '../lib/plural'
 import { useGroup, useUserTimeZone } from '../lib/queries'
 import type { GroupContentKind, StudyGroupContentItem, StudyGroupDetail } from '../api'
@@ -68,6 +70,10 @@ function GroupSkeleton() {
  * card through a stretched overlay and the remove button is lifted above it —
  * the whole card still opens the resource, and each control keeps its own
  * accessible name.
+ *
+ * The pinned mark sits between the two: a static indicator under the stretched
+ * link, so the only things that can be clicked here are still the resource and
+ * the remove button.
  */
 function ContentCard({
   item,
@@ -110,6 +116,7 @@ function ContentCard({
           Created {formatRelative(item.createdAt, timeZone)}
         </span>
       </span>
+      {item.pinned && <PinnedIndicator className="shrink-0" />}
       <IconArrowRight
         className="h-4 w-4 shrink-0 text-accent-foreground transition-transform duration-150 group-hover:translate-x-0.5"
         aria-hidden="true"
@@ -171,7 +178,9 @@ function ContentSection({
         <p className={placeholderPanel}>{emptyMessage}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => (
+          {/* The backend already leads each list with its pinned items; this is
+              only a stable fallback, so a correctly ordered list is untouched. */}
+          {pinnedFirst(items).map((item) => (
             <ContentCard
               key={item.id}
               item={item}

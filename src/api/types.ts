@@ -275,6 +275,8 @@ export interface NoteSummary {
   importantTerms: string[]
   /** The study group holding this note, or null while it is ungrouped. */
   groupId: PublicId | null
+  /** Pinned notes sort before unpinned ones in list responses. New notes are false. */
+  pinned: boolean
 }
 
 export interface NoteListResponse extends PageMetadata {
@@ -284,10 +286,13 @@ export interface NoteListResponse extends PageMetadata {
 /**
  * At least one property must be present and non-null; only supplied values
  * change. The structured keypoints, concepts, and terms cannot be edited.
+ * `pinned` pins or unpins the note, and a body carrying only `pinned` is valid,
+ * so an edit that leaves it off never disturbs the pin state.
  */
 export type UpdateNoteRequest =
-  | { title: string; overview?: string }
-  | { title?: string; overview: string }
+  | { title: string; overview?: string; pinned?: boolean }
+  | { title?: string; overview: string; pinned?: boolean }
+  | { title?: string; overview?: string; pinned: boolean }
 
 /** Generation responses carry no card IDs; fetch the deck when IDs are needed. */
 export interface GeneratedFlashcard {
@@ -297,6 +302,8 @@ export interface GeneratedFlashcard {
 
 export interface FlashcardGenerateResponse {
   deckId: PublicId
+  /** Always false for a freshly generated deck. */
+  pinned: boolean
   flashcards: GeneratedFlashcard[]
 }
 
@@ -313,6 +320,8 @@ export interface FlashcardDeck {
   flashcards: SavedFlashcard[]
   /** The study group holding this deck, or null while it is ungrouped. */
   groupId: PublicId | null
+  /** Pinned decks sort before unpinned ones in list responses. New decks are false. */
+  pinned: boolean
 }
 
 export interface FlashcardListResponse extends PageMetadata {
@@ -366,9 +375,14 @@ export interface AddFlashcardRequest {
   answer: string
 }
 
-/** Renaming is the only deck edit; a missing or blank title is rejected. */
+/**
+ * At least one property must be present; only supplied values change. A blank
+ * `title` is rejected, and a body carrying only `pinned` is valid, so a rename
+ * that leaves `pinned` off never disturbs the pin state.
+ */
 export interface UpdateDeckRequest {
-  title: string
+  title?: string
+  pinned?: boolean
 }
 
 /**
@@ -415,6 +429,8 @@ export interface Quiz {
   createdAt: LocalDateTimeString
   /** The study group holding this quiz, or null while it is ungrouped. */
   groupId: PublicId | null
+  /** Pinned quizzes sort before unpinned ones in list responses. New quizzes are false. */
+  pinned: boolean
 }
 
 /** List items carry question previews only: no answers and no questionType. */
@@ -434,6 +450,8 @@ export interface QuizListItem {
   createdAt: LocalDateTimeString
   /** The study group holding this quiz, or null while it is ungrouped. */
   groupId: PublicId | null
+  /** Pinned quizzes sort before unpinned ones in list responses. */
+  pinned: boolean
 }
 
 export interface QuizListResponse extends PageMetadata {
@@ -458,8 +476,9 @@ export interface CreateQuestionRequest {
  * it back to null. Difficulty is set through its own endpoint, not here.
  */
 export type UpdateQuizRequest =
-  | { title: string; description?: string | null }
-  | { title?: string; description: string | null }
+  | { title: string; description?: string | null; pinned?: boolean }
+  | { title?: string; description: string | null; pinned?: boolean }
+  | { title?: string; description?: string | null; pinned: boolean }
 
 /**
  * At least one property must be present and non-null; only supplied values
@@ -551,6 +570,8 @@ export interface StudyGroupContentItem {
   id: PublicId
   title: string
   createdAt: LocalDateTimeString
+  /** Pinned items sort before unpinned ones within each of the group's lists. */
+  pinned: boolean
 }
 
 export interface StudyGroupDetail {
