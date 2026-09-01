@@ -200,17 +200,23 @@ export function LandingPage() {
 
       <footer className="border-t border-border py-7">
         <div className={`${shell} flex flex-wrap items-center justify-between gap-4`}>
-          <Link to="/" className="inline-flex items-center gap-2.5 text-base text-text-muted no-underline">
-            <img
-              src={synapseLogo}
-              alt=""
-              width="34"
-              height="34"
-              loading="lazy"
-              decoding="async"
-            />
-            <span>Synapse</span>
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2.5 text-base text-text-muted no-underline"
+            >
+              <img
+                src={synapseLogo}
+                alt=""
+                width="34"
+                height="34"
+                loading="lazy"
+                decoding="async"
+              />
+              <span>Synapse</span>
+            </Link>
+            <p className="text-xs text-text-muted">Built by Kenneth Koon</p>
+          </div>
           <div className="flex gap-5 text-sm font-semibold">
             <Link to="/login" className="text-text-muted no-underline hover:text-accent-foreground">
               Log in
