@@ -161,8 +161,8 @@ function dueLabel(nextReviewDate: string, timeZone: string): string {
   if (days === null) return 'Due now'
   if (days > 0) return `Due ${formatCalendarDate(nextReviewDate)}`
   if (days === 0) return 'Due today'
-  if (days === -1) return 'Due yesterday'
-  return `Due ${-days} days ago`
+  if (days === -1) return '1 day overdue'
+  return `${-days} days overdue`
 }
 
 /**
@@ -186,8 +186,11 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
   const isEmpty = deck.cardCount === 0
   const to = isEmpty ? `/flashcards/${deck.deckId}` : `/flashcards/${deck.deckId}/play`
   const action = isEmpty ? 'Add cards' : isNext ? 'Review now' : 'Review'
-  const isDueNow = (calendarDaysFromToday(deck.nextReviewDate, timeZone) ?? 0) <= 0
-  const timing = isNext && isDueNow ? 'Due now' : dueLabel(deck.nextReviewDate, timeZone)
+  const daysFromToday = calendarDaysFromToday(deck.nextReviewDate, timeZone)
+  const isOverdue = daysFromToday !== null && daysFromToday < 0
+  // "Due now" makes today's first action immediate, but an overdue deck keeps
+  // its age visible rather than having lateness flattened into the same label.
+  const timing = isNext && daysFromToday === 0 ? 'Due now' : dueLabel(deck.nextReviewDate, timeZone)
   const lastRating = deck.lastRating ? RATING_BADGES[deck.lastRating] : null
 
   return (
@@ -241,12 +244,20 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
             group the timing with the control that acts on it. */}
         <div
           className={`flex items-center justify-between gap-2 border-t px-4 py-2.5 ${
-            isNext ? 'border-accent-solid/20 bg-accent-soft/70' : 'border-border bg-surface-alt/50'
+            isOverdue
+              ? 'review-overdue-footer border-error-solid/25 bg-error-soft/60'
+              : isNext
+                ? 'border-accent-solid/20 bg-accent-soft/70'
+                : 'border-border bg-surface-alt/50'
           }`}
         >
           <span
             className={`min-w-0 truncate text-xs tabular-nums ${
-              isNext && isDueNow ? 'rail-due-now text-accent-strong' : 'text-text-muted'
+              isOverdue
+                ? 'font-semibold text-error-solid'
+                : isNext && daysFromToday === 0
+                  ? 'rail-due-now text-accent-strong'
+                  : 'text-text-muted'
             }`}
           >
             {timing}

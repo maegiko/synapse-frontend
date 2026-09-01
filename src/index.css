@@ -252,6 +252,13 @@ h3 {
   font-weight: 600;
 }
 
+/* The standard error wash is deliberately strong for destructive surfaces.
+   An overdue queue footer is only an urgency cue, so dark mode eases it back. */
+:root[data-theme='dark'] .review-overdue-footer {
+  border-color: color-mix(in srgb, var(--color-error-solid) 16%, transparent);
+  background-color: color-mix(in srgb, var(--color-error-soft) 35%, transparent);
+}
+
 /* The review-queue CTA sits one ramp step lighter than a standard primary
    button so it feels less dominant; hover still darkens it by one step. */
 .rail-review-btn {
