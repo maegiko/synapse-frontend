@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import synapseLogo from '../assets/synapse_logo.webp'
 import {
@@ -64,6 +64,36 @@ const FAQS = [
 ]
 
 export function LandingPage() {
+  useEffect(() => {
+    const elements = document.querySelectorAll<HTMLElement>('.landing-reveal')
+    const reveal = (element: Element) => element.classList.add('landing-reveal-visible')
+
+    if (!('IntersectionObserver' in window)) {
+      elements.forEach(reveal)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          reveal(entry.target)
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' },
+    )
+
+    // Do not make the first screen depend on an asynchronous observer callback:
+    // it should enter as soon as the page mounts, including in slower browsers.
+    const initialBoundary = window.innerHeight
+    elements.forEach((element) => {
+      if (element.getBoundingClientRect().top <= initialBoundary) reveal(element)
+      else observer.observe(element)
+    })
+    return () => observer.disconnect()
+  }, [])
+
   return (
     <>
       <a
@@ -73,22 +103,22 @@ export function LandingPage() {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
+      <header className="landing-header-enter sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-280 items-center gap-2 px-3 py-4 sm:gap-7 sm:px-6">
-          <Link to="/" className="mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline">
+          <Link to="/" className="landing-brand mr-auto inline-flex items-center gap-2.5 font-display text-lg font-medium text-text no-underline">
             <img
               src={synapseLogo}
               alt=""
               width="48"
               height="48"
               decoding="async"
-              className="h-10 w-10 sm:h-12 sm:w-12"
+              className="landing-brand-mark h-10 w-10 sm:h-12 sm:w-12"
             />
             <span className="hidden translate-y-0.5 sm:inline">Synapse</span>
           </Link>
           <nav className="hidden md:flex gap-6 text-sm font-semibold" aria-label="Primary">
             {NAV_LINKS.map((link) => (
-              <a key={link.href} href={link.href} className="text-text-muted no-underline hover:text-text">
+              <a key={link.href} href={link.href} className="landing-nav-link text-text-muted no-underline hover:text-text">
                 {link.label}
               </a>
             ))}
@@ -109,14 +139,14 @@ export function LandingPage() {
         <section className="pt-18 pb-24">
           <div className={`${shell} grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] gap-14 items-center`}>
             <div>
-              <h1 className="mb-5.5 text-3xl md:text-4xl leading-[1.08]">
+              <h1 className="landing-reveal mb-5.5 text-3xl md:text-4xl leading-[1.08]">
                 Turn your <em className="mr-[0.08em]">notes</em> into summaries, flashcards and
                 quizzes.
               </h1>
-              <p className="mb-8.5 max-w-[46ch] text-lg text-text-muted">
+              <p className="landing-reveal landing-delay-1 mb-8.5 max-w-[46ch] text-lg text-text-muted">
                 Synapse makes studying easier by turning your lecture slides, course notes and PDFs into clear summaries, flashcard decks and quizzes.
               </p>
-              <div className="flex flex-wrap gap-3.5">
+              <div className="landing-reveal landing-delay-2 flex flex-wrap gap-3.5">
                 <Link to="/register" className={btnPrimaryLg}>
                   Start studying free
                 </Link>
@@ -126,7 +156,7 @@ export function LandingPage() {
               </div>
             </div>
 
-            <div aria-hidden="true">
+            <div className="landing-reveal landing-reveal-side landing-preview-delay" aria-hidden="true">
               <AppPreviewMock />
             </div>
           </div>
@@ -134,18 +164,20 @@ export function LandingPage() {
 
         <section id="how-it-works" className="py-22 bg-surface border-y border-border">
           <div className={shell}>
-            <h2 className="max-w-[32ch] text-2xl">From upload to quiz score, four steps</h2>
-            <p className="mt-3 max-w-[56ch] text-base text-text-muted">
+            <h2 className="landing-reveal max-w-[32ch] text-2xl">From upload to quiz score, four steps</h2>
+            <p className="landing-reveal landing-delay-1 mt-3 max-w-[56ch] text-base text-text-muted">
               Your library is built from your uploads. Nothing is public or shared.
             </p>
-            <ol className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 list-none p-0">
+            <ol className="landing-stagger mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 list-none p-0">
               {STEPS.map((step) => (
-                <li key={step.title} className="rounded-md border border-border bg-background p-6">
-                  <span className="mb-4 inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
-                    {step.icon}
-                  </span>
-                  <h3 className="landing-step-title mb-2 text-base font-medium">{step.title}</h3>
-                  <p className="text-sm text-text-muted">{step.body}</p>
+                <li key={step.title} className="landing-reveal">
+                  <div className="h-full rounded-md border border-border bg-background p-6">
+                    <span className="landing-step-icon mb-4 inline-flex h-10.5 w-10.5 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
+                      {step.icon}
+                    </span>
+                    <h3 className="landing-step-title mb-2 text-base font-medium">{step.title}</h3>
+                    <p className="text-sm text-text-muted">{step.body}</p>
+                  </div>
                 </li>
               ))}
             </ol>
@@ -154,24 +186,30 @@ export function LandingPage() {
 
         <section className="py-22">
           <div className={shell}>
-            <h2 className="max-w-[32ch] text-2xl">What comes out the other side</h2>
-            <p className="mt-3 max-w-[56ch] text-base text-text-muted">
+            <h2 className="landing-reveal max-w-[32ch] text-2xl">What comes out the other side</h2>
+            <p className="landing-reveal landing-delay-1 mt-3 max-w-[56ch] text-base text-text-muted">
               No abstract promises. Here’s what Synapse actually gives you to study with.
             </p>
-            <div className="mt-11 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-              <SummaryMock />
-              <FlashcardDeckMock />
-              <QuizMock />
+            <div className="landing-stagger mt-11 grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              <div className="landing-reveal h-full">
+                <SummaryMock />
+              </div>
+              <div className="landing-reveal h-full">
+                <FlashcardDeckMock />
+              </div>
+              <div className="landing-reveal h-full">
+                <QuizMock />
+              </div>
             </div>
           </div>
         </section>
 
         <section id="faq" className="py-20 bg-surface border-y border-border">
           <div className={shell}>
-            <h2 className="max-w-[32ch] text-2xl">Questions worth answering upfront</h2>
-            <dl className="mt-9 grid gap-6">
+            <h2 className="landing-reveal max-w-[32ch] text-2xl">Questions worth answering upfront</h2>
+            <dl className="landing-stagger mt-9 grid gap-6">
               {FAQS.map((item) => (
-                <div className="border-b border-border pb-5.5" key={item.q}>
+                <div className="landing-reveal border-b border-border pb-5.5" key={item.q}>
                   <dt className="mb-2 text-base font-bold">{item.q}</dt>
                   <dd className="m-0 max-w-[68ch] text-sm text-text-muted">{item.a}</dd>
                 </div>
@@ -182,7 +220,7 @@ export function LandingPage() {
 
         <section className="pt-22 pb-24">
           <div className={shell}>
-            <div className="relative grid justify-items-center gap-7 overflow-hidden rounded-lg bg-accent-solid px-10 py-14 text-center text-on-accent">
+            <div className="landing-reveal landing-reveal-scale relative grid justify-items-center gap-7 overflow-hidden rounded-lg bg-accent-solid px-10 py-14 text-center text-on-accent">
               <CtaDecorations />
               <h2 className="relative z-10 max-w-[34ch] text-2xl text-on-accent">
                 Turn your notes into study material you’ll actually remember.
@@ -196,7 +234,7 @@ export function LandingPage() {
       </main>
 
       <footer className="border-t border-border py-7">
-        <div className={`${shell} flex flex-wrap items-center justify-between gap-4`}>
+        <div className={`${shell} landing-reveal flex flex-wrap items-center justify-between gap-4`}>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link
               to="/"
@@ -314,7 +352,7 @@ function CtaDecorations() {
 function AppPreviewMock() {
   return (
     <div
-      className="mx-auto w-full max-w-120 overflow-hidden rounded-lg border border-border bg-background shadow-lg rotate-[1.2deg]"
+      className="landing-app-preview-float mx-auto w-full max-w-120 overflow-hidden rounded-lg border border-border bg-background shadow-lg"
       role="img"
       aria-label="A preview of the Synapse dashboard"
     >
@@ -329,7 +367,7 @@ function AppPreviewMock() {
 
       <div className="p-5">
         {/* Dashboard hero — the app's signature violet gradient panel */}
-        <div className="rounded-md border border-accent-strong bg-[radial-gradient(circle_at_75%_20%,rgba(216,205,255,0.32)_0%,rgba(216,205,255,0)_40%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-5 py-5">
+        <div className="landing-preview-hero rounded-md border border-accent-strong px-5 py-5">
           <p className="font-display text-lg text-on-accent">Ready to learn?</p>
           <p className="mt-1.5 text-sm text-on-hero-muted">
             You have 6 notes, 4 decks and 3 quizzes in your library.
@@ -441,7 +479,7 @@ function SummaryMock() {
  */
 function FlashcardDeckMock() {
   return (
-    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+    <div className="landing-interactive-card flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
       <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Flashcard deck</p>
       <div className="flex flex-1 items-center justify-center">
         <div className="relative h-48 w-full">
@@ -481,7 +519,7 @@ function QuizMock() {
   const [picked, setPicked] = useState<(typeof QUIZ_OPTIONS)[number]['value']>('true')
 
   return (
-    <div className="flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
+    <div className="landing-interactive-card flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
       <p className="font-display text-xs font-bold uppercase tracking-wide text-accent-foreground">Quiz - question 3 of 10</p>
       <div className="flex flex-1 flex-col justify-center gap-3.5 rounded-md bg-surface-alt p-4.5">
         <p className="text-sm font-bold">A sequence diagram represents interactions over time.</p>

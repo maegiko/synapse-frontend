@@ -172,6 +172,132 @@ h3 {
   line-height: 1.15;
 }
 
+/* Landing motion follows one rhythm: content enters once as it becomes useful,
+   then only genuinely interactive pieces keep responding to the visitor. */
+@keyframes landing-header-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.landing-header-enter {
+  animation: landing-header-enter 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.landing-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 680ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-reveal-side {
+  transform: translate3d(24px, 10px, 0) scale(0.985);
+}
+.landing-reveal-scale {
+  transform: translateY(14px) scale(0.985);
+}
+.landing-reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+.landing-delay-1 {
+  transition-delay: 90ms;
+}
+.landing-delay-2 {
+  transition-delay: 180ms;
+}
+.landing-preview-delay {
+  transition-delay: 340ms;
+}
+.landing-stagger > .landing-reveal:nth-child(2) {
+  transition-delay: 75ms;
+}
+.landing-stagger > .landing-reveal:nth-child(3) {
+  transition-delay: 150ms;
+}
+.landing-stagger > .landing-reveal:nth-child(4) {
+  transition-delay: 225ms;
+}
+.landing-stagger > .landing-reveal:nth-child(5) {
+  transition-delay: 300ms;
+}
+
+.landing-brand-mark {
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-brand:hover .landing-brand-mark {
+  transform: translateY(-2px) rotate(-3deg) scale(1.04);
+}
+.landing-nav-link {
+  position: relative;
+  transition: color 180ms ease;
+}
+.landing-nav-link::after {
+  position: absolute;
+  right: 0;
+  bottom: -0.35rem;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-accent-solid);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.landing-nav-link:hover::after,
+.landing-nav-link:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+@keyframes landing-step-icon-settle {
+  from {
+    opacity: 0.35;
+    transform: translateY(8px) scale(0.88);
+  }
+}
+.landing-reveal-visible .landing-step-icon {
+  animation: landing-step-icon-settle 520ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.landing-interactive-card {
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .landing-interactive-card:hover {
+    border-color: color-mix(in srgb, var(--color-accent-solid) 45%, var(--color-border));
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+  }
+}
+.landing-interactive-card:focus-within {
+  border-color: color-mix(in srgb, var(--color-accent-solid) 45%, var(--color-border));
+  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+}
+
+@keyframes landing-preview-hero-shift {
+  0%,
+  100% {
+    background-position: 80% 20%, 0% 50%;
+  }
+  50% {
+    background-position: 64% 28%, 100% 50%;
+  }
+}
+.landing-preview-hero {
+  background:
+    radial-gradient(circle at 75% 20%, rgb(216 205 255 / 0.32) 0%, rgb(216 205 255 / 0) 40%),
+    linear-gradient(115deg, #4c326f 0%, #704aa0 50%, #8c65bc 100%);
+  background-position: 80% 20%, 0% 50%;
+  background-size: 130% 130%, 160% 160%;
+  animation: landing-preview-hero-shift 9s ease-in-out infinite;
+}
+
 /* Decorative line-art on the CTA panel. Brighter on the deeper light-mode
    purple; eased back on the lighter dark-mode purple so it doesn't shout. */
 .cta-decor {
@@ -179,6 +305,22 @@ h3 {
 }
 :root[data-theme='dark'] .cta-decor {
   color: rgb(255 255 255 / 0.16);
+}
+@keyframes landing-cta-drift-left {
+  50% {
+    transform: translate3d(7px, -4px, 0);
+  }
+}
+@keyframes landing-cta-drift-right {
+  50% {
+    transform: translate3d(-7px, 4px, 0);
+  }
+}
+.cta-decor svg:first-child {
+  animation: landing-cta-drift-left 11s ease-in-out infinite;
+}
+.cta-decor svg:last-child {
+  animation: landing-cta-drift-right 13s ease-in-out infinite;
 }
 
 /* Dashboard-only hierarchy: lighter content without changing shared components. */
@@ -291,6 +433,24 @@ h3 {
   transform: rotateY(0deg);
 }
 
+/* A slow, shallow drift keeps the landing preview alive without competing with
+   the hero copy. The rotation is included here so the animation owns one
+   transform instead of fighting a separate utility class. */
+@keyframes landing-app-preview-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(1.2deg);
+  }
+  50% {
+    transform: translate3d(0, -17px, 0) rotate(-0.45deg);
+  }
+}
+.landing-app-preview-float {
+  animation: landing-app-preview-float 5.8s ease-in-out infinite;
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+
 /* Dialog entrance — Tailwind ships no enter-animation utilities. */
 @keyframes dialog-overlay-in {
   from {
@@ -360,12 +520,42 @@ h3 {
   animation: streak-day-tick 320ms ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
+  .landing-header-enter,
+  .landing-preview-hero,
+  .landing-reveal-visible .landing-step-icon,
+  .cta-decor svg,
   .dialog-overlay,
   .dialog-panel,
+  .landing-app-preview-float,
   .streak-flame-celebration__muted,
   .streak-flame-celebration__lit,
   .streak-day-count {
     animation: none;
+  }
+
+  .landing-reveal,
+  .landing-reveal-side,
+  .landing-reveal-scale {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .landing-brand-mark,
+  .landing-interactive-card,
+  .landing-nav-link::after,
+  .flashcard-face {
+    transition: none;
+  }
+
+  .landing-brand:hover .landing-brand-mark,
+  .landing-interactive-card:hover,
+  .landing-interactive-card:focus-within {
+    transform: none;
+  }
+
+  .landing-app-preview-float {
+    transform: rotate(1.2deg);
   }
 
   .streak-flame-celebration__muted {
