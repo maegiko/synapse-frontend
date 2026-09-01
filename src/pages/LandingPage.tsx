@@ -210,9 +210,9 @@ export function LandingPage() {
                 loading="lazy"
                 decoding="async"
               />
-              <span>Synapse</span>
+              <span className="leading-none">Synapse</span>
             </Link>
-            <p className="text-xs text-text-muted">Built by Kenneth Koon</p>
+            <p className="text-xs leading-none text-text-muted">Built by Kenneth Koon</p>
           </div>
           <div className="flex gap-5 text-sm font-semibold">
             <Link to="/login" className="text-text-muted no-underline hover:text-accent-foreground">
