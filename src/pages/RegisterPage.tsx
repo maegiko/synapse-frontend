@@ -16,9 +16,9 @@ import {
 } from '../lib/validation'
 
 const ASIDE_BULLETS = [
-  'Upload a PDF, DOCX, TXT, or Markdown note, up to 10 MB.',
-  'Get a summary, a flashcard deck, or a 10-question quiz from it.',
-  'Track every quiz score, so revision starts the day you read, not the week before the exam.',
+  'Upload a PDF, DOCX, TXT or Markdown note up to 10 MB.',
+  'Get a summary, a flashcard deck or a 10-question quiz from it.',
+  'Keep everything in one place, with your quiz scores saved so you can track what’s sticking.',
 ]
 
 interface FieldErrors {
@@ -137,11 +137,6 @@ export function RegisterPage() {
         <button type="submit" className={btnSubmit} disabled={submitting}>
           {submitting ? 'Creating account…' : 'Create account'}
         </button>
-
-        <p className="text-xs text-text-muted">
-          Synapse only ever works from files you upload. Nothing you add is shared with
-          anyone else.
-        </p>
       </form>
     </AuthLayout>
   )
