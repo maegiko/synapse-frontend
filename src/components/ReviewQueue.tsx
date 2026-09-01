@@ -222,7 +222,7 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
             </span>
             <div className="min-w-0">
               <p
-                className="recents-title line-clamp-2 min-h-[2.75rem] text-base leading-snug text-text"
+                className="recents-title line-clamp-2 min-h-11 not-last:text-base leading-snug text-text"
                 title={deck.title}
               >
                 {deck.title}
