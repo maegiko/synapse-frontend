@@ -114,9 +114,7 @@ export function LandingPage() {
                 quizzes.
               </h1>
               <p className="mb-8.5 max-w-[46ch] text-lg text-text-muted">
-                Synapse turns your own lecture slides and course PDFs into study
-                material in the same sitting you read them, so revision starts the
-                same day, not the week before the exam.
+                Synapse makes studying easier by turning your lecture slides, course notes and PDFs into clear summaries, flashcard decks and quizzes.
               </p>
               <div className="flex flex-wrap gap-3.5">
                 <Link to="/register" className={btnPrimaryLg}>
@@ -138,8 +136,7 @@ export function LandingPage() {
           <div className={shell}>
             <h2 className="max-w-[32ch] text-2xl">From upload to quiz score, four steps</h2>
             <p className="mt-3 max-w-[56ch] text-base text-text-muted">
-              Nothing here happens until you upload something. There’s no library to
-              browse and no content that isn’t yours.
+              Your library is built from your uploads. Nothing is public or shared.
             </p>
             <ol className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 list-none p-0">
               {STEPS.map((step) => (

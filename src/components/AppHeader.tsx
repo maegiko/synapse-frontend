@@ -1,11 +1,20 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { AppLink } from './AppLink'
 import synapseLogo from '../assets/synapse_logo.webp'
 import { useAuth } from '../auth/useAuth'
 import { Avatar } from './Avatar'
 import { ThemeToggle } from './ThemeToggle'
+import { IconChart, IconGroup, IconHome, IconLibrary } from './icons'
 import { btnGhostSm, shell } from './ui'
+
+/** The main sections a signed-in visitor jumps between from any page. */
+const navSections = [
+  { to: '/dashboard', label: 'Dashboard', Icon: IconHome },
+  { to: '/library', label: 'Library', Icon: IconLibrary },
+  { to: '/groups', label: 'Groups', Icon: IconGroup },
+  { to: '/analytics', label: 'Analytics', Icon: IconChart },
+]
 
 interface AppHeaderProps {
   /**
@@ -50,6 +59,30 @@ export function AppHeader({ onLeave }: AppHeaderProps = {}) {
           />
           <span className="hidden translate-y-0.5 sm:inline">Synapse</span>
         </Link>
+        {user && (
+          <nav aria-label="Sections" className="flex items-center gap-0.5">
+            {navSections.map(({ to, label, Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                onClick={(event) => {
+                  if (onLeave && !onLeave()) event.preventDefault()
+                }}
+                title={label}
+                aria-label={label}
+                className={({ isActive }) =>
+                  `inline-flex h-8 w-8 items-center justify-center rounded-sm no-underline transition-colors duration-150 ${
+                    isActive
+                      ? 'bg-accent-soft text-accent-strong'
+                      : 'text-text-muted hover:bg-surface-alt hover:text-text'
+                  }`
+                }
+              >
+                <Icon className="h-4.5 w-4.5" />
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <div className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
           {user && (

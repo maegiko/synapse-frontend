@@ -10,9 +10,9 @@ import { isStatus, toFormMessage } from '../lib/apiErrors'
 import { validateEmail, validatePassword } from '../lib/validation'
 
 const ASIDE_BULLETS = [
-  'Your notes, summaries, decks, and quizzes are exactly where you left them.',
-  'Every quiz attempt is saved, so you can see what is actually sticking.',
-  'Nothing is shared with anyone else. You only ever see your own material.',
+  'Your notes, summaries, decks and quizzes are exactly where you left them.',
+  'Your review progress and quiz scores are saved automatically.',
+  'Your library stays organised, so you can get straight back to studying.',
 ]
 
 export function LoginPage() {
@@ -55,7 +55,7 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Log in to Synapse"
-      subtitle="Pick up where you left off, with every note and deck still in place."
+      subtitle="Sign in and get back to what you were studying."
       asideTitle="Your study material is waiting."
       asideBullets={ASIDE_BULLETS}
       footer={

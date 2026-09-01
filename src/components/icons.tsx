@@ -41,6 +41,27 @@ export function IconCard({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
+export function IconHome({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <path d="M4 10.5 12 4l8 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19v-8.5Z" strokeLinejoin="round" />
+      <path d="M9.5 20.5v-6h5v6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** The library: a couple of books stood on a shelf. */
+export function IconLibrary({ className = 'h-5.5 w-5.5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
+      <rect x="4.5" y="4" width="4" height="14" rx="1" />
+      <rect x="9.5" y="4" width="4" height="14" rx="1" />
+      <path d="m15.4 5.6 3.4.9 2.6 9.7-3.4-.9z" strokeLinejoin="round" />
+      <path d="M4 20h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconChart({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
