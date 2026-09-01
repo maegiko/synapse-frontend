@@ -9,7 +9,7 @@ import { ReviewQueue } from '../components/ReviewQueue'
 import { StreakCard } from '../components/StreakCard'
 import { IconArrowRight, IconDeck, IconNote, IconQuiz } from '../components/icons'
 import { DifficultyStars } from '../components/DifficultyStars'
-import dashboardHero from '../assets/dashboard_hero.webp'
+import dashboardHero from '../assets/dashboard_hero_v2.webp'
 import deckSplash from '../assets/deck_splash.webp'
 import noteSplash from '../assets/note_splash.webp'
 import quizSplash from '../assets/quiz_splash.webp'
@@ -183,16 +183,13 @@ export function DashboardPage() {
 
       <section className={`${shell} dashboard-typography pt-6`}>
         <div className="relative overflow-hidden rounded-lg border border-accent-strong bg-[radial-gradient(circle_at_72%_22%,rgba(216,205,255,0.34)_0%,rgba(216,205,255,0)_36%),linear-gradient(115deg,#4c326f_0%,#704aa0_50%,#8c65bc_100%)] px-6 py-14 lg:px-12 lg:py-16">
-          {/* The artwork carries transparent padding of its own (~21% vertically,
-              ~7.5% on the right), so it is oversized and pulled right to make the
-              visible art sit close to the panel edge. */}
           <img
             src={dashboardHero}
             alt=""
-            width="960"
-            height="640"
+            width="768"
+            height="768"
             decoding="async"
-            className="pointer-events-none absolute top-1/2 -right-3 hidden h-[112%] w-auto -translate-y-1/2 drop-shadow-[0_18px_22px_rgba(15,5,30,0.45)] lg:block"
+            className="pointer-events-none absolute top-1/2 right-4 hidden h-[102%] w-auto -translate-y-1/2 drop-shadow-[0_18px_22px_rgba(15,5,30,0.45)] lg:block"
           />
           <div className="relative max-w-[54ch]">
             <h1 className="text-2xl text-on-accent">{greeting}</h1>
