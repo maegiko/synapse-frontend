@@ -1,24 +1,15 @@
 import { AppLink } from './AppLink'
 import { IconArrowRight, IconGroup } from './icons'
-import { iconChip, surfaceCard } from './ui'
+import { countPill, iconChip, surfaceCard } from './ui'
 import { plural } from '../lib/plural'
 import type { StudyGroupListItem } from '../api'
 
-/**
- * One study group in a folder grid, on the dashboard and the groups page. The
- * three counts are the group's whole story at this size, so they are the only
- * metadata: the contents themselves live on the detail page.
- *
- * The trail label is the group's own name, so a note opened from inside it
- * offers "Back to Biology" rather than a generic route label.
- */
 export function GroupCard({ group }: { group: StudyGroupListItem }) {
   const isEmpty = group.noteCount + group.deckCount + group.quizCount === 0
 
   return (
     <AppLink
       to={`/groups/${group.id}`}
-      trailLabel={group.name}
       className={`${surfaceCard} group flex min-w-0 flex-col p-5 no-underline transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent-solid hover:shadow-md`}
     >
       <div className="flex items-start gap-3.5">
@@ -39,19 +30,14 @@ export function GroupCard({ group }: { group: StudyGroupListItem }) {
 
       <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
         {isEmpty ? (
-          <span className="inline-flex h-6.5 items-center rounded-full bg-surface-alt px-2 text-xs text-text-muted">
-            Nothing in here yet
-          </span>
+          <span className={countPill}>Nothing in here yet</span>
         ) : (
           [
             plural(group.noteCount, 'note'),
             plural(group.deckCount, 'deck'),
             plural(group.quizCount, 'quiz', 'quizzes'),
           ].map((fact) => (
-            <span
-              key={fact}
-              className="inline-flex h-6.5 items-center rounded-full bg-surface-alt px-2 text-xs text-text-muted tabular-nums"
-            >
+            <span key={fact} className={countPill}>
               {fact}
             </span>
           ))

@@ -8,26 +8,19 @@ import { useRemoveFromGroup } from '../lib/groupMutations'
 import { useGroups } from '../lib/queries'
 import type { GroupContentKind } from '../api'
 
-/** Quiet, chip-sized actions, so group controls sit beside the metadata pills. */
 const CHIP_ACTION =
   'inline-flex h-6.5 cursor-pointer items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 text-xs font-bold text-text-muted transition-colors duration-150 hover:border-accent-solid hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60'
 
 interface GroupMembershipControlProps {
   kind: GroupContentKind
   resourceId: string
-  /** Named in the move confirmation, so it must be the resource's own title. */
   resourceTitle: string
-  /** The resource's `groupId`: null while it is ungrouped. */
   groupId: string | null
 }
 
 /**
- * Group context for one note, deck, or quiz: which group holds it, and the one
- * move that changes that. Every resource page uses this rather than repeating
- * membership behaviour, so add, move, and remove work identically everywhere.
- *
- * Removing only clears membership. The note, deck, or quiz is never deleted
- * here — that is the page's own delete action, which is kept well away.
+ * Which group holds a resource, and the one move that changes that. Removing
+ * only clears membership; deleting the resource is the page's own action.
  */
 export function GroupMembershipControl({
   kind,
@@ -58,15 +51,12 @@ export function GroupMembershipControl({
           <>
             <AppLink
               to={`/groups/${groupId}`}
-              trailLabel={group?.name}
               className="inline-flex h-6.5 items-center gap-1.5 rounded-full bg-accent-soft px-2.5 text-xs font-bold text-accent-strong no-underline transition-colors duration-150 hover:bg-accent-soft/70 hover:underline"
             >
               <IconGroup className="h-3.5 w-3.5" />
               {group ? (
                 group.name
               ) : groups.isPending ? (
-                // The name is one request away; a shimmer keeps the row from
-                // reflowing when it lands.
                 <span
                   className="inline-block h-2.5 w-16 animate-pulse rounded-full bg-accent-strong/25"
                   aria-label="Loading group name"
