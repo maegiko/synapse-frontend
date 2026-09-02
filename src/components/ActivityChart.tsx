@@ -10,14 +10,9 @@ import {
 } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
-/**
- * Above this many days a column per day is too thin to aim at, so the same data
- * is laid out as a week grid instead: a calendar reads a quarter or a year at a
- * glance where a bar chart would only read as noise.
- */
+/** Past this, a column per day is too thin to aim at, so weeks are drawn instead. */
 const MAX_BAR_DAYS = 31
 
-/** Weekday rows, Sunday first, matching `calendarWeekday`. */
 const WEEKDAY_ROWS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 /** Only alternate rows are labelled; seven labels would crowd the gutter. */
 const LABELLED_WEEKDAYS = [1, 3, 5]
@@ -26,15 +21,9 @@ function hasActivity(day: AnalyticsDailyActivity): boolean {
   return day.deckReviews > 0 || day.quizAttempts > 0 || day.cardsReviewed > 0
 }
 
-/**
- * One day in words, for the accessible name of its column and for the panel
- * beneath the chart.
- */
 function describeDay(day: AnalyticsDailyActivity): string {
   if (!hasActivity(day)) return 'No activity'
   return [
-    // Left out rather than stated as a zero on the rare day that carries no
-    // duration; the counts beside it already say the day was studied.
     ...(day.studySeconds > 0 ? [`${formatStudyDuration(day.studySeconds)} studied`] : []),
     `${plural(day.cardsReviewed, 'card')} reviewed`,
     plural(day.deckReviews, 'deck review'),
@@ -43,10 +32,8 @@ function describeDay(day: AnalyticsDailyActivity): string {
 }
 
 /**
- * Which fill a day gets. `0` is a day with nothing on it; `1` to `4` step up
- * with study time, measured against the window's own busiest day. A studied day
- * always reaches at least `1`, so it reads as studied even on the rare occasion
- * it carries no duration.
+ * 0 for a day with nothing on it, then 1 to 4 by study time against the window's
+ * busiest day. A studied day always reaches 1, even with no duration recorded.
  */
 function intensity(day: AnalyticsDailyActivity, busiestSeconds: number): number {
   if (!hasActivity(day)) return 0
@@ -65,7 +52,6 @@ const FILLS = [
   'bg-accent-solid',
 ]
 
-/** Everything one day's control needs; built once and spread onto the element. */
 interface DayButtonProps {
   ref: (element: HTMLButtonElement | null) => void
   type: 'button'
@@ -78,20 +64,13 @@ interface DayButtonProps {
 
 interface ActivityChartProps {
   days: AnalyticsDailyActivity[]
-  /** Named in the summary sentence, e.g. "the last 30 days". */
   periodDescription: string
 }
 
 /**
- * The window's `dailyActivity`, drawn with CSS boxes rather than a charting
- * dependency. Every day is a real control: it can be reached with the arrow
- * keys, it carries its own figures in its accessible name, and selecting one
- * spells them out underneath — so nothing here is available only to someone who
- * can see the shape.
- *
- * <p>Height and shade both mean one thing, study time in seconds. The other
- * three figures live in the day's details rather than being drawn against a
- * scale they do not share.</p>
+ * The window's `dailyActivity`, drawn with CSS boxes. Every day is a real
+ * control: reachable by arrow key, named with its own figures, and selectable to
+ * spell them out underneath. Height and shade both mean study time.
  */
 export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
   const asGrid = days.length > MAX_BAR_DAYS
@@ -101,22 +80,11 @@ export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
     [days],
   )
 
-  /**
-   * Analytics windows are gap-filled through the user's current calendar day
-   * in their saved time zone. Select that final day even when it has no
-   * activity; otherwise the selection outline looks like a misleading "today"
-   * marker on the most recent day they happened to study.
-   */
   const defaultIndex = Math.max(days.length - 1, 0)
 
-  // Only the initial value: within one window the visitor's own selection wins,
-  // including across a refetch. A new period is a different set of days
-  // entirely, so the page remounts this on the period rather than reconciling
-  // an index that no longer points at the same day.
   const [selected, setSelected] = useState(defaultIndex)
 
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
-  /** Focus is only moved in response to a key press, never on a plain render. */
   const shouldFocus = useRef(false)
 
   useEffect(() => {
@@ -132,9 +100,6 @@ export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
     setSelected(next)
   }
 
-  // A roving tab stop: the whole chart is one stop, and the arrows step within
-  // it. In the grid a column is a week, so left and right move by seven days
-  // and up and down move by one, which is what the layout looks like.
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     const step = asGrid ? 7 : 1
     if (event.key === 'ArrowRight') move(selected + step)
@@ -164,11 +129,6 @@ export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
 
   const day = days[selected]
 
-  /**
-   * The chart's text equivalent. Not shown: the Overview above states these same
-   * totals, so on screen it would only say them twice — but a screen reader
-   * reaches the chart without that context, so it is still announced here.
-   */
   const summary =
     totals.activeDays === 0
       ? `Nothing was recorded in ${periodDescription}.`
@@ -186,12 +146,10 @@ export function ActivityChart({ days, periodDescription }: ActivityChartProps) {
     tabIndex: index === selected ? 0 : -1,
     'aria-pressed': index === selected,
     'aria-label': `${formatCalendarDate(days[index].date)}. ${describeDay(days[index])}`,
-    title: `${formatCalendarDate(days[index].date)} — ${describeDay(days[index])}`,
+    title: `${formatCalendarDate(days[index].date)}. ${describeDay(days[index])}`,
     onClick: () => setSelected(index),
   })
 
-  // The API always sends one entry per day of the window, so this is a guard
-  // against a truncated payload rather than a state the page expects.
   if (days.length === 0) {
     return (
       <p className="text-sm text-text-muted">
@@ -261,17 +219,12 @@ interface LayoutProps {
   dayProps: (index: number) => DayButtonProps
 }
 
-/** The gap between bars and between grid cells, in pixels. */
 const CELL_GAP = 3
 
-/** A column per day, for the windows short enough to give each one real width. */
 function DayBars({ days, selected, busiestSeconds, dayProps }: LayoutProps) {
-  // Roughly six labels, whatever the window, so they never collide.
   const labelEvery = days.length <= 10 ? 1 : Math.ceil(days.length / 6)
 
   return (
-    // Bars share the width they are given, down to a floor that keeps each one
-    // aimable; past that the chart scrolls rather than the page.
     <div className="overflow-x-auto pb-1">
       <div style={{ minWidth: days.length * 10 }}>
         <div
@@ -280,8 +233,6 @@ function DayBars({ days, selected, busiestSeconds, dayProps }: LayoutProps) {
         >
           {days.map((day, index) => {
             const level = intensity(day, busiestSeconds)
-            // A studied day keeps a visible floor, so a short session is still
-            // something you can see and aim at.
             const share = Math.round((day.studySeconds / Math.max(busiestSeconds, 1)) * 100)
 
             return (
@@ -317,18 +268,14 @@ function DayBars({ days, selected, busiestSeconds, dayProps }: LayoutProps) {
 }
 
 /**
- * A cell per day laid out in weeks, for the quarter and year windows. Cells are
- * a fixed size rather than a share of the width, so the weekday gutter lines up
- * with the rows it labels and a year never collapses into slivers; the chart
- * scrolls sideways on a narrow screen instead.
+ * A cell per day laid out in weeks. Cells are a fixed size rather than a share of
+ * the width, so a year never collapses into slivers; the chart scrolls instead.
  */
 function WeekGrid({ days, selected, busiestSeconds, dayProps }: LayoutProps) {
   const startWeekday = calendarWeekday(days[0]?.date) ?? 0
   const weeks = Math.ceil((startWeekday + days.length) / 7)
-  // Big enough to aim at on a quarter, small enough that a year fits a laptop.
   const cell = Math.max(11, Math.min(22, Math.floor(780 / Math.max(weeks, 1))))
 
-  // One label per month, above the week its first listed day falls in.
   const monthLabels = useMemo(() => {
     const labels = new Map<number, string>()
     let previous = ''
