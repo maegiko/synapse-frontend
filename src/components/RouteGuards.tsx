@@ -9,7 +9,7 @@ export function AuthBootScreen() {
     <div className="grid min-h-screen place-items-center" role="status" aria-live="polite">
       <div className="flex flex-col items-center gap-3.5">
         <IconSpinner className="h-8 w-8 text-accent-strong" />
-        <p className="text-base font-semibold text-text-muted">Loading Synapse…</p>
+        <p className="boot-label text-base font-semibold text-text-muted">Loading Synapse…</p>
       </div>
     </div>
   )

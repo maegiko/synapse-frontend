@@ -530,6 +530,29 @@ h3 {
   animation: app-content-in 180ms ease-out;
 }
 
+/* The boot screen's label, while the app waits on its first request. Opacity
+   and tone move together on one slow cycle: the text lifts a little out of
+   `text-muted` towards `text` and settles back, which reads as waiting rather
+   than as a second spinner competing with the one above it.
+   Both ends are deliberately shallow. The dim end is the accessibility floor —
+   0.9 keeps the label at 4.86:1 on `background` in light mode, where a deeper
+   fade drops it under 4.5:1 — and the bright end stops well short of full
+   `text`, which at this size flashes rather than breathes. */
+@keyframes boot-label-pulse {
+  0%,
+  100% {
+    color: var(--color-text-muted);
+    opacity: 0.9;
+  }
+  50% {
+    color: color-mix(in oklab, var(--color-text) 35%, var(--color-text-muted));
+    opacity: 1;
+  }
+}
+.boot-label {
+  animation: boot-label-pulse 2s ease-in-out infinite;
+}
+
 /* Streak celebration: the existing muted flame gives way to the lit asset. */
 @keyframes streak-flame-muted-out {
   0%,
@@ -592,7 +615,8 @@ h3 {
   .streak-day-count,
   .app-alert-in,
   .app-card-in,
-  .app-content-in {
+  .app-content-in,
+  .boot-label {
     animation: none;
   }
 
