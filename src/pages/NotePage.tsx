@@ -399,7 +399,10 @@ function NoteContent({ note }: { note: NoteSummary }) {
                     className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
                     aria-hidden="true"
                   />
-                  <span className="max-w-[72ch]">{point}</span>
+                  {/* `min-w-0`: a flex item will not shrink below its longest
+                      word without it, so one unbroken term would push the row
+                      past the card. */}
+                  <span className="min-w-0 max-w-[72ch]">{point}</span>
                 </li>
               ))}
             </ul>
@@ -430,7 +433,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
               {note.importantTerms.map((term) => (
                 <li
                   key={term}
-                  className="list-none rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-strong"
+                  className="min-w-0 list-none rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-strong"
                 >
                   {term}
                 </li>

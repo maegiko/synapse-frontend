@@ -215,7 +215,7 @@ function QuestionCard({
                     {showAsCorrect && <IconCheck className="h-3.5 w-3.5" />}
                     {showAsWrong && <span className="text-xs leading-none font-bold">✕</span>}
                   </span>
-                  <span className="max-w-[56ch]">{answer.text}</span>
+                  <span className="min-w-0 max-w-[56ch]">{answer.text}</span>
                 </label>
               )
             })}

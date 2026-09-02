@@ -355,6 +355,31 @@ h3 {
   }
 }
 
+/* A `grid` with no `grid-cols-*` places its items in an implicit column sized
+   `auto`, and an auto track's floor is its content's min-content width — for a
+   `truncate` title, the whole unwrapped string. The track then outgrows the
+   container and the row spills out of its card, which is why a long note title
+   or file name used to run past the surface it sits on. Tailwind's
+   `grid-cols-*` already ship `minmax(0, 1fr)`; this gives every implicit column
+   the same zero floor, so single-column stacks truncate instead of blowing out.
+   Anything that opts into `auto-cols-*` still wins: this sits in `base`. */
+@layer base {
+  .grid {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  /* Titles, overviews, group names and file names are all user supplied, and one
+     long unbroken run of characters (a filename, a URL, an email) is otherwise
+     laid out as a single unbreakable word that overruns its container and gives
+     the whole page a horizontal scrollbar. `break-word` only breaks a word that
+     would not fit on a line of its own, so ordinary copy still wraps normally.
+     Deliberately not `anywhere`: that would also shrink intrinsic min-content
+     sizes and let tight flex rows wrap labels mid-word. */
+  body {
+    overflow-wrap: break-word;
+  }
+}
+
 :focus-visible {
   outline: 2.5px solid var(--color-accent-solid);
   outline-offset: 2px;

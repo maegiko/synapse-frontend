@@ -460,7 +460,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-lg border border-border bg-surface-alt p-8 text-center shadow-sm transition-transform duration-500 sm:p-10"
               aria-hidden={isRevealed}
             >
-              <p className="max-w-[36ch] text-xl font-semibold text-balance text-text sm:text-2xl">
+              <p className="min-w-0 max-w-[36ch] text-xl font-semibold text-balance text-text sm:text-2xl">
                 {card.title}
               </p>
             </div>
@@ -468,7 +468,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               className="flashcard-face flashcard-face--back absolute inset-0 flex items-center justify-center rounded-lg bg-accent-solid p-8 text-center shadow-md transition-transform duration-500 sm:p-10"
               aria-hidden={!isRevealed}
             >
-              <p className="max-w-[40ch] text-lg font-semibold text-balance text-on-accent sm:text-xl">
+              <p className="min-w-0 max-w-[40ch] text-lg font-semibold text-balance text-on-accent sm:text-xl">
                 {card.answer}
               </p>
             </div>
