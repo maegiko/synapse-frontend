@@ -38,7 +38,13 @@ import {
   successAlert,
 } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
-import { isStatus, retryAfterSeconds, toEmailSendMessage, toFormMessage } from '../lib/apiErrors'
+import {
+  isStatus,
+  retryAfterSeconds,
+  toEmailSendMessage,
+  toFormMessage,
+  toReasonMessage,
+} from '../lib/apiErrors'
 import { useCooldown } from '../lib/useCooldown'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatCalendarDate, formatDateTime } from '../lib/formatDate'
@@ -68,9 +74,9 @@ import {
   validateEmail,
   validateFullName,
   validatePassword,
+  validateTimeZone,
 } from '../lib/validation'
 
-/** Placeholder that lets a single figure keep loading while its neighbours resolve. */
 function Bar() {
   return (
     <span
@@ -80,7 +86,6 @@ function Bar() {
   )
 }
 
-/** A number rendered by typography alone — no card, no border, no tint. */
 function Figure({
   label,
   icon,
@@ -108,7 +113,6 @@ function Figure({
   )
 }
 
-/** One library resource as a content row rather than a stat card. */
 function LibraryRow({
   to,
   icon,
@@ -144,6 +148,7 @@ function LibraryRow({
 
 interface FieldErrors {
   fullName?: string
+  timeZone?: string
 }
 
 interface PasswordErrors {
@@ -152,10 +157,8 @@ interface PasswordErrors {
   confirmNewPassword?: string
 }
 
-/** Which editor the profile card is showing. */
 type Panel = 'summary' | 'details' | 'email' | 'password'
 
-/** Which set of numbers the Performance panel is showing. */
 type PerfTab = 'flashcards' | 'quizzes'
 const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
   { id: 'flashcards', label: 'Flashcards', icon: <IconDeck className="h-4 w-4" /> },
@@ -167,8 +170,8 @@ const SNAPSHOT_PERIOD = 30
 
 /**
  * Account details plus a read-only view of how the study is going. The library
- * counts are derived from the list endpoints; the performance snapshot comes
- * straight from `GET /api/user/analytics`, which aggregates it server-side.
+ * counts come from the list endpoints; the performance snapshot is aggregated
+ * server-side by `GET /api/user/analytics`.
  */
 export function ProfilePage() {
   const { user, setUserDetails, logout } = useAuth()
@@ -177,8 +180,6 @@ export function ProfilePage() {
   const notes = useNotes()
   const decks = useFlashcardDecks()
   const quizzes = useQuizzes()
-  // One aggregate request for the whole Performance panel, rather than a score
-  // history request per quiz.
   const analytics = useAnalytics(SNAPSHOT_PERIOD)
 
   const [panel, setPanel] = useState<Panel>('summary')
@@ -193,12 +194,10 @@ export function ProfilePage() {
   const [emailFieldError, setEmailFieldError] = useState('')
   const [emailFormError, setEmailFormError] = useState('')
   /**
-   * The address a confirmation link has just gone to, or null. It is only ever
-   * *pending*: the account keeps its current address until the link in that
-   * inbox is opened, so nothing here replaces what the profile shows.
+   * The address a confirmation link has gone to, or null. Only ever pending: the
+   * account keeps its current address until that link is opened.
    */
   const [pendingChange, setPendingChange] = useState<EmailChangeResponse | null>(null)
-  /** Set when the proposed address was already the account's own (a 204). */
   const [emailUnchanged, setEmailUnchanged] = useState(false)
   const emailCooldown = useCooldown()
 
@@ -255,21 +254,12 @@ export function ProfilePage() {
   const save = useMutation({
     mutationFn: (payload: UpdateUserDetailsRequest) => api.user.updateDetails(payload),
     onSuccess: (updated: UserDetails) => {
-      // The PATCH response is the normalized truth: a trimmed name and a
-      // canonical time zone. The address it carries is the account's current
-      // one, which this endpoint no longer changes.
       queryClient.setQueryData(queryKeys.userDetails, updated)
       setUserDetails(updated)
 
-      // A new time zone moves the calendar the backend answers in, so anything
-      // it dated is now stale: which day counts as today, and which decks are
-      // due. The rows themselves are untouched, so this is a refresh rather
-      // than a rebuild.
       if (timeZoneChanged) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.streak })
         void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
-        // Analytics windows are whole local days, so a new zone moves both ends
-        // of every window and the day each session was grouped into.
         void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
       }
       setPanel('summary')
@@ -283,19 +273,11 @@ export function ProfilePage() {
     },
   })
 
-  /**
-   * The only route an address changes through. A `202` means a confirmation
-   * link is on its way to the proposed address and nothing has changed yet; a
-   * `204` means that address was already this account's own, which is a
-   * successful no-op rather than a failure.
-   */
   const changeEmail = useMutation({
     mutationFn: (address: string) => api.user.requestEmailChange(address),
     onSuccess: (pending: EmailChangeResponse | null) => {
       setEmailFieldError('')
       setEmailFormError('')
-      // Deliberately no cache or auth-state write: the account still uses the
-      // address it had until the emailed link is confirmed.
       setPendingChange(pending)
       setEmailUnchanged(pending === null)
     },
@@ -319,13 +301,10 @@ export function ProfilePage() {
   const changePassword = useMutation({
     mutationFn: (payload: ChangePasswordRequest) => api.auth.changePassword(payload),
     onSuccess: () => {
-      // The backend has revoked every session for the account, so local auth is
-      // now stale. Clearing it lets the route guard send us to the login page.
       void logout()
     },
     onError: (error) => {
-      // For this endpoint a 401 is a wrong current password, not an expired
-      // access token — the request helper already retried that case.
+      // Here a 401 is a wrong current password, not an expired access token.
       if (isStatus(error, 401)) {
         setPasswordErrors({ currentPassword: 'That password is not correct.' })
         setPasswordFormError('')
@@ -336,17 +315,11 @@ export function ProfilePage() {
     },
   })
 
-  // Compared against the saved values so an unchanged form cannot be submitted:
-  // the API rejects a PATCH with no properties in it.
   const trimmedName = fullName.trim()
   const nameChanged = Boolean(profile) && trimmedName !== profile?.fullName
-  // Guarded on a non-empty field: unlike the text inputs, an empty value here is
-  // not a validation message but a 400, so it must never reach the payload.
   const timeZoneChanged = Boolean(profile) && Boolean(timeZoneField) && timeZoneField !== timeZone
   const hasChanges = nameChanged || timeZoneChanged
 
-  // Like the details form's `hasChanges`: the submit stays disabled until there
-  // is something to send.
   const passwordFilled =
     currentPassword.length > 0 && newPassword.length > 0 && confirmNewPassword.length > 0
 
@@ -356,14 +329,12 @@ export function ProfilePage() {
 
     const errors: FieldErrors = {
       fullName: nameChanged ? (validateFullName(fullName) ?? undefined) : undefined,
+      timeZone: timeZoneChanged ? (validateTimeZone(timeZoneField) ?? undefined) : undefined,
     }
     setFieldErrors(errors)
     setFormError('')
     if (Object.values(errors).some(Boolean)) return
 
-    // Only changed properties are sent; the backend leaves the rest alone. The
-    // email address is never one of them: this endpoint ignores it, and a name
-    // change must not ride on an email send.
     const payload = {
       ...(nameChanged ? { fullName: trimmedName } : {}),
       ...(timeZoneChanged ? { timeZone: timeZoneField } : {}),
@@ -412,17 +383,18 @@ export function ProfilePage() {
   const streakUnavailable = streak.isError || (!streak.isPending && !streak.data)
   const flameSrc = streak.data?.activeToday ? streakFlame : streakFlameMuted
 
-  /** A count for the summary strip: a bar while loading, an em dash on failure. */
   function count(query: { isPending: boolean; isError: boolean }, value: number): ReactNode {
     if (query.isPending) return <Bar />
-    if (query.isError) return <span className="text-base text-text-muted">—</span>
+    if (query.isError) {
+      return (
+        <span className="text-base text-text-muted" aria-label="Not available">
+          &ndash;
+        </span>
+      )
+    }
     return value
   }
 
-  /**
-   * One analytics figure. A rate or an average the API sent as null says so in
-   * words, at text size, rather than being flattened into a zero it never meant.
-   */
   function stat(value: string): ReactNode {
     if (!snapshot) return <Bar />
     if (value === NO_DATA_LABEL) {
@@ -452,10 +424,6 @@ export function ProfilePage() {
           </p>
         )}
 
-        {/* Profile summary — the anchor of the page. Identity, the edit action,
-            and a strip of the numbers worth seeing at a glance. */}
-        {/* The shared surfaceCard classes minus its shadow-sm, so the card can
-            carry a slightly deeper drop shadow as the page's anchor. */}
         <section
           className="mt-8 rounded-md border border-border bg-surface px-6 py-6 shadow-sm sm:px-8 sm:py-7"
         >
@@ -464,8 +432,8 @@ export function ProfilePage() {
               <FormAlert
                 message={
                   profile
-                    ? `These details may be out of date. ${toFormMessage(details.error)}`
-                    : `We could not load your details. ${toFormMessage(details.error)}`
+                    ? `These details may be out of date. ${toReasonMessage(details.error)}`
+                    : `We could not load your details. ${toReasonMessage(details.error)}`
                 }
               />
               <button
@@ -512,8 +480,6 @@ export function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                {/* Free to shrink, so a third action wraps onto its own line on a
-                    narrow screen rather than pushing the card sideways. */}
                 <div className="flex flex-wrap gap-2">
                   <button type="button" className={btnGhostSm} onClick={startEditing}>
                     Edit profile
@@ -576,6 +542,7 @@ export function ProfilePage() {
                 hint="Streak days, due dates, and every time shown are counted here. It stays put when you travel."
                 value={timeZoneField}
                 options={timeZoneOptions(timeZone)}
+                error={fieldErrors.timeZone}
                 disabled={save.isPending}
                 onChange={(event) => setTimeZoneField(event.target.value)}
               />
@@ -616,8 +583,6 @@ export function ProfilePage() {
               </div>
 
               {pendingChange ? (
-                // Deliberately not "your email has changed": nothing has, and it
-                // will not until the link in the *new* inbox is opened.
                 <div className="grid gap-4" role="status">
                   <p className={successAlert}>
                     <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
@@ -785,9 +750,6 @@ export function ProfilePage() {
           )}
         </section>
 
-        {/* Learning activity — the streak, told with columns and a divider
-            rather than three tinted boxes. Everything below the profile card is
-            inset on desktop so the card stays the dominant full-width anchor. */}
         <section className="mt-12 border-t border-border/60 pt-8 lg:mx-12">
           <h2 className="text-base font-medium">Learning activity</h2>
           <p className="mt-1 text-sm text-text-muted">How consistent your studying has been.</p>
@@ -795,7 +757,7 @@ export function ProfilePage() {
           {streakUnavailable ? (
             <div className="mt-5 grid justify-items-start gap-2.5">
               <p className="text-sm text-text-muted">
-                We could not load your streak. {toFormMessage(streak.error)}
+                We could not load your streak. {toReasonMessage(streak.error)}
               </p>
               <button
                 type="button"
@@ -856,9 +818,6 @@ export function ProfilePage() {
           )}
         </section>
 
-        {/* Library and quiz performance: content on the left, analytics on the
-            right. They sit side by side where there is room, and stack cleanly
-            where there is not. */}
         <div className="mt-12 grid grid-cols-1 gap-y-10 border-t border-border pt-8 lg:mx-12 lg:grid-cols-2 lg:gap-x-14 lg:gap-y-0">
           <section>
             <h2 className="text-base font-medium">Library</h2>
@@ -897,9 +856,6 @@ export function ProfilePage() {
           <section className="border-t border-border pt-8 [&_dd]:text-accent-foreground lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-14">
             <h2 className="text-base font-medium">Performance</h2>
 
-            {/* An `sr-only` radio group styled as underline tabs — the same
-                pattern as PlaybackModeControl, so arrow-key navigation and the
-                single tab stop come for free. */}
             <fieldset className="m-0 mt-3 border-0 p-0">
               <legend className="sr-only">Which performance metrics to show</legend>
               <div className="flex gap-5 border-b border-border">
@@ -933,7 +889,7 @@ export function ProfilePage() {
             {analytics.isError ? (
               <div className="mt-5 grid justify-items-start gap-2.5">
                 <p className="text-sm text-text-muted">
-                  We could not load your performance. {toFormMessage(analytics.error)}
+                  We could not load your performance. {toReasonMessage(analytics.error)}
                 </p>
                 <button
                   type="button"
