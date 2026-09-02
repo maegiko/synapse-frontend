@@ -59,12 +59,28 @@ export function currentTheme(): Theme {
   return isTheme(applied) ? applied : (storedTheme() ?? DEFAULT_THEME)
 }
 
+/**
+ * Repaints the browser chrome behind the page: on iOS that is the strip the
+ * notch and the clock sit in, above the viewport.
+ *
+ * The tag is replaced rather than edited. iOS Safari reads `theme-color` when
+ * the tag is parsed and does not reliably notice a later `content` change, so
+ * editing it in place left that strip on the previous theme's colour until the
+ * page was reloaded. Every other browser treats the swap as an ordinary update.
+ */
+function paintBrowserChrome(theme: Theme): void {
+  const replacement = document.createElement('meta')
+  replacement.name = 'theme-color'
+  replacement.content = THEME_COLOR[theme]
+
+  document.querySelector('meta[name="theme-color"]')?.remove()
+  document.head.append(replacement)
+}
+
 /** Paints `theme` now, without saving it. */
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', THEME_COLOR[theme])
+  paintBrowserChrome(theme)
   for (const listener of listeners) listener(theme)
 }
 
