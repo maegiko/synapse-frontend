@@ -22,7 +22,10 @@ export function ProductAnalyticsProvider({ children }: { children: ReactNode }) 
         capture_pageview: false,
         capture_pageleave: false,
         capture_exceptions: false,
+        capture_dead_clicks: false,
+        capture_heatmaps: false,
         disable_session_recording: true,
+        disable_external_dependency_loading: true,
         person_profiles: 'never',
       }}
     >
