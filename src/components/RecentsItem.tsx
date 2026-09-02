@@ -1,24 +1,18 @@
 import type { ReactNode } from 'react'
 import { AppLink } from './AppLink'
+import { countPill } from './ui'
 
 interface RecentsItemProps {
   icon: ReactNode
   title: string
-  /** When provided, the whole row navigates to the resource detail page. */
   to?: string
-  /** Optional second line, e.g. a note overview or the first card's question. */
   preview?: string | null
-  /** Compact facts displayed separately from the descriptive preview. */
   metadata: string[]
-  /** Renders the metadata as one quiet inline line instead of pill badges. */
   quietMeta?: boolean
-  /** Only shown for resources the API timestamps. */
   timestamp?: string
-  /** Removes the stacked-row treatment when items share a horizontal strip. */
   compact?: boolean
 }
 
-/** One row in a quick-view card, optionally linked when its detail screen exists. */
 export function RecentsItem({
   icon,
   title,
@@ -52,10 +46,7 @@ export function RecentsItem({
         ) : (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {metadata.map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
-              >
+              <span key={item} className={countPill}>
                 {item}
               </span>
             ))}

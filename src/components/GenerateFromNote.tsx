@@ -13,13 +13,14 @@ import {
   cardLink,
   creationAside,
   creationLayout,
+  countPill,
   fieldInput,
   iconChip,
   shell,
   surfaceCard,
 } from './ui'
 import type { NoteSummary } from '../api'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toFormMessage, toReasonMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { plural } from '../lib/plural'
 import { useNotes } from '../lib/queries'
@@ -32,17 +33,12 @@ export interface GenerationStep {
 interface GenerateFromNoteProps {
   heading: string
   intro: string
-  /** Lowercase noun for the thing being generated, used throughout the copy. */
   noun: string
   submitLabel: string
   busyLabel: string
-  /** Narration for the wait, which is one opaque call. */
   steps: GenerationStep[]
   tips: string[]
-  /**
-   * Generates from a saved note, invalidates whatever list it added to, and
-   * returns the path of the resource's own page to send the user to.
-   */
+  /** Generates, invalidates the list it added to, and returns where to go next. */
   onGenerate: (note: NoteSummary) => Promise<string>
 }
 
@@ -72,10 +68,8 @@ function NoteListSkeleton() {
 }
 
 /**
- * Both AI generators work the same way: pick one saved note and generate from
- * it. Only the copy and the one generate call differ, so the flow, its error
- * handling, and its states live here. On success the user is sent straight to
- * the new deck or quiz.
+ * Both AI generators work the same way: pick one saved note and generate from it.
+ * Only the copy and the generate call differ.
  */
 export function GenerateFromNote({
   heading,
@@ -87,8 +81,6 @@ export function GenerateFromNote({
   tips,
   onGenerate,
 }: GenerateFromNoteProps) {
-  // This page replaces itself with the deck or quiz it produces, so what it
-  // made inherits the trail rather than pointing back at a page that is gone.
   const navigate = useTrailNavigate()
   const notes = useNotes()
   const fieldsetRef = useRef<HTMLFieldSetElement>(null)
@@ -101,7 +93,6 @@ export function GenerateFromNote({
 
   const hasNoNotes = notes.isSuccess && notes.data.length === 0
 
-  /** Failures of the generate call itself. */
   function messageForFailure(error: unknown): string {
     if (isStatus(error, 404)) {
       return 'That note no longer exists. Reload your notes and pick another one.'
@@ -120,14 +111,12 @@ export function GenerateFromNote({
     onSuccess: (to) => navigate(to, { replace: true }),
     onError: (error) => {
       setFormError(messageForFailure(error))
-      // A note that vanished underneath us: reload the list so it stops showing.
       if (isStatus(error, 404)) void notes.refetch()
     },
   })
 
   const isBusy = generate.isPending
 
-  // The step only advances while the request is in flight; reset on submit.
   useEffect(() => {
     if (!isBusy) return
     const timers = steps
@@ -145,13 +134,6 @@ export function GenerateFromNote({
     )
   }, [notes.data, search])
 
-  /**
-   * Sizes the list to whatever the viewport has left, so a long list stops
-   * pushing the page into a scroll and swallowing the card's bottom padding.
-   * Measured rather than hard-coded: the space above the list changes with the
-   * viewport width, since the heading and intro wrap. Writes to the node
-   * directly instead of through state, so it cannot cause a render loop.
-   */
   useLayoutEffect(() => {
     const list = listRef.current
     if (!list) return
@@ -166,7 +148,6 @@ export function GenerateFromNote({
         return
       }
 
-      // Measure unconstrained, so `below` is the button and padding only.
       element.style.maxHeight = ''
       const listTop = element.getBoundingClientRect().top
       const below = form.getBoundingClientRect().bottom - element.getBoundingClientRect().bottom
@@ -175,16 +156,11 @@ export function GenerateFromNote({
       const target = Math.round(Math.min(LIST_MAX_HEIGHT, Math.max(LIST_MIN_HEIGHT, available)))
       element.style.maxHeight = `${target}px`
 
-      // One corrective pass, since applying the height can rewrap text or add
-      // the list's own scrollbar in ways the first measurement cannot predict.
       const overshoot = document.documentElement.scrollHeight - window.innerHeight
       if (overshoot <= 0) return
 
       element.style.maxHeight = `${Math.max(LIST_MIN_HEIGHT, target - overshoot)}px`
       if (document.documentElement.scrollHeight > window.innerHeight) {
-        // Something else is the tallest thing on the page (on a short viewport
-        // the sidebar outgrows the card), so a shorter list buys no less
-        // scrolling. Keep the taller list instead of paying for nothing.
         element.style.maxHeight = `${target}px`
       }
     }
@@ -196,7 +172,6 @@ export function GenerateFromNote({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // Guards a second submit while the first request is still running.
     if (isBusy) return
     setFormError('')
 
@@ -237,7 +212,7 @@ export function GenerateFromNote({
               {notes.isError && (
                 <div className="app-content-in grid justify-items-start gap-2.5 rounded-md border border-border bg-surface-alt p-5">
                   <p className="text-sm text-text-muted">
-                    We could not load your notes. {toFormMessage(notes.error)}
+                    We could not load your notes. {toReasonMessage(notes.error)}
                   </p>
                   <button
                     type="button"
@@ -294,10 +269,6 @@ export function GenerateFromNote({
                         return (
                           <li key={note.id} className="list-none">
                             <label
-                              // `relative` matters: the sr-only radio is absolutely
-                              // positioned, so without a positioned ancestor its
-                              // containing block is the page itself and it stretches
-                              // the document past the scrolling list.
                               className={`relative flex cursor-pointer items-start gap-3.5 rounded-md border p-4 transition-colors duration-150 has-[input:focus-visible]:outline has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent-solid ${
                                 selected
                                   ? 'border-accent-solid bg-accent-soft'
@@ -330,10 +301,7 @@ export function GenerateFromNote({
                                     plural(note.concepts.length, 'concept'),
                                     plural(note.keypoints.length, 'key point'),
                                   ].map((fact) => (
-                                    <span
-                                      key={fact}
-                                      className="rounded-full bg-surface-alt px-2 py-1 text-xs text-text-muted tabular-nums"
-                                    >
+                                    <span key={fact} className={countPill}>
                                       {fact}
                                     </span>
                                   ))}
