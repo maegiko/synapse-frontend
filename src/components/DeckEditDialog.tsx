@@ -6,9 +6,9 @@ import { TextField } from './TextField'
 import { IconSpinner } from './icons'
 import { btnGhostLg, btnPrimaryDisabled, btnPrimaryLg } from './ui'
 import type { UpdateDeckRequest } from '../api'
+import { TITLE_MAX_LENGTH, validateTitle } from '../lib/validation'
 
 interface DeckEditDialogProps {
-  /** The deck's current name, shown prefilled. */
   initialTitle: string
   isPending: boolean
   errorMessage?: string
@@ -16,10 +16,6 @@ interface DeckEditDialogProps {
   onClose: () => void
 }
 
-/**
- * Renames a deck. The only editable field a deck has, so this is a single input;
- * the submit stays disabled until the name is a non-blank change.
- */
 export function DeckEditDialog({
   initialTitle,
   isPending,
@@ -32,18 +28,16 @@ export function DeckEditDialog({
 
   const trimmed = title.trim()
   const hasChanges = trimmed !== initialTitle
-  // Matches the profile form: the submit only lights up once the name is a
-  // non-empty change.
   const canSubmit = hasChanges && trimmed !== ''
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isPending || !canSubmit) return
 
-    if (!trimmed) {
-      setFieldErrorMessage('Give this deck a name.')
-      return
-    }
+    const invalid = validateTitle(title, 'deck', 'name')
+    setFieldErrorMessage(invalid ?? undefined)
+    if (invalid) return
+
     onSubmit({ title: trimmed })
   }
 
@@ -61,6 +55,7 @@ export function DeckEditDialog({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           error={fieldErrorMessage}
+          maxLength={TITLE_MAX_LENGTH}
           disabled={isPending}
           autoComplete="off"
         />

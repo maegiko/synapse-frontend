@@ -13,9 +13,13 @@ import {
   fieldLabel,
 } from './ui'
 import type { QuestionType, QuizQuestion, UpdateQuestionRequest } from '../api'
+import {
+  ANSWER_MAX_LENGTH,
+  QUESTION_MAX_LENGTH,
+  validateAnswerText,
+  validateQuestionText,
+} from '../lib/validation'
 
-const QUESTION_MAX_LENGTH = 1000
-const ANSWER_MAX_LENGTH = 500
 /** The backend requires four answers for multiple choice and two for boolean. */
 const CHOICE_COUNT = 4
 const BOOLEAN_ANSWERS = ['True', 'False']
@@ -25,7 +29,6 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   BOOLEAN: 'True or False',
 }
 
-/** Four slots for the choice inputs, seeded from the question's current answers. */
 function initialChoices(question: QuizQuestion): string[] {
   const slots = Array<string>(CHOICE_COUNT).fill('')
   if (question.questionType === 'MULTIPLE_CHOICE') {
@@ -36,7 +39,6 @@ function initialChoices(question: QuizQuestion): string[] {
   return slots
 }
 
-/** The index of the answer marked correct, clamped so a radio always has a target. */
 function initialCorrectIndex(question: QuizQuestion): number {
   const found = question.answers.findIndex((answer) => answer.correct)
   return found >= 0 ? found : 0
@@ -51,11 +53,8 @@ interface QuestionEditDialogProps {
 }
 
 /**
- * Edits a quiz question's text, type, and answers. The answer form follows the
- * type — four choices for multiple choice, a True/False pair for boolean — and
- * the whole answer set is always sent as one complete replacement, so the quiz
- * never sees a half-updated question. The submit stays disabled until there is a
- * valid change to save.
+ * The answer form follows the type, and the whole answer set is always sent as
+ * one replacement, so the quiz never sees a half-updated question.
  */
 export function QuestionEditDialog({
   question,
@@ -73,7 +72,6 @@ export function QuestionEditDialog({
 
   const [questionText, setQuestionText] = useState(originalText)
   const [questionType, setQuestionType] = useState<QuestionType>(originalType)
-  // Always four slots; boolean renders the fixed pair instead and ignores these.
   const [choices, setChoices] = useState<string[]>(originalChoices)
   const [correctIndex, setCorrectIndex] = useState(originalCorrectIndex)
   const [fieldErrors, setFieldErrors] = useState<{ question?: string; answers?: string }>({})
@@ -87,15 +85,12 @@ export function QuestionEditDialog({
     (questionType === 'MULTIPLE_CHOICE' &&
       choices.some((choice, index) => choice.trim() !== originalChoices[index]))
   const hasChanges = questionChanged || typeChanged || answersChanged
-  // Matches the profile form: the submit only lights up once the question and
-  // every answer the current type needs are filled in, and something changed.
   const answersFilled =
     questionType === 'BOOLEAN' || choices.every((choice) => choice.trim() !== '')
   const canSubmit = hasChanges && trimmedQuestion !== '' && answersFilled
 
   function changeType(next: QuestionType) {
     setQuestionType(next)
-    // The two shapes do not share an answer list, so the choice resets with it.
     setCorrectIndex(0)
     setFieldErrors({})
   }
@@ -111,29 +106,18 @@ export function QuestionEditDialog({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // A second submit while the first is in flight would send a duplicate PATCH.
     if (isPending || !canSubmit) return
 
-    const nextErrors: { question?: string; answers?: string } = {}
-    if (!trimmedQuestion) nextErrors.question = 'Write the question.'
-    else if (trimmedQuestion.length > QUESTION_MAX_LENGTH) {
-      nextErrors.question = `Questions can be at most ${QUESTION_MAX_LENGTH} characters.`
+    const nextErrors: { question?: string; answers?: string } = {
+      question: validateQuestionText(questionText) ?? undefined,
+      answers:
+        questionType === 'MULTIPLE_CHOICE'
+          ? (choices.map(validateAnswerText).find(Boolean) ?? undefined)
+          : undefined,
     }
-
-    if (questionType === 'MULTIPLE_CHOICE') {
-      const filled = choices.map((choice) => choice.trim())
-      if (filled.some((choice) => !choice)) {
-        nextErrors.answers = `Multiple choice needs all ${CHOICE_COUNT} answers filled in.`
-      } else if (filled.some((choice) => choice.length > ANSWER_MAX_LENGTH)) {
-        nextErrors.answers = `Answers can be at most ${ANSWER_MAX_LENGTH} characters.`
-      }
-    }
-
     setFieldErrors(nextErrors)
     if (nextErrors.question || nextErrors.answers) return
 
-    // The answer set is only sent when it (or the type) changed, to avoid
-    // regenerating answer IDs needlessly; when it is sent it is always complete.
     const sendAnswers = typeChanged || answersChanged
     onSubmit({
       ...(questionChanged ? { question: trimmedQuestion } : {}),

@@ -14,10 +14,12 @@ import {
   fieldInputInvalid,
   fieldLabel,
 } from './ui'
-
-/** The backend's own limits, so an overlong field is caught before the request. */
-const NAME_MAX_LENGTH = 100
-const DESCRIPTION_MAX_LENGTH = 500
+import {
+  DESCRIPTION_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+  validateDescription,
+  validateTitle,
+} from '../lib/validation'
 
 export interface GroupFormValues {
   name: string
@@ -26,24 +28,17 @@ export interface GroupFormValues {
 }
 
 interface GroupFormDialogProps {
-  /** "New study group" when creating, the group's name when editing. */
   title: string
   description?: string
   submitLabel: string
   pendingLabel: string
   initialValues?: GroupFormValues
   isPending: boolean
-  /** Backend failure for the last attempt, shown above the fields. */
   errorMessage?: string
   onSubmit: (values: GroupFormValues) => void
   onClose: () => void
 }
 
-/**
- * The one group form, shared by creating and editing. Both take the same two
- * fields under the same rules, so they look and behave identically; only the
- * wording and the mutation behind them differ.
- */
 export function GroupFormDialog({
   title,
   description,
@@ -61,28 +56,19 @@ export function GroupFormDialog({
 
   const trimmedName = name.trim()
   const trimmedDescription = groupDescription.trim()
-  // Creating has nothing to compare against; editing needs a real change, the
-  // same rule the profile form uses.
   const hasChanges =
     !initialValues ||
     trimmedName !== initialValues.name ||
     trimmedDescription !== initialValues.description
-  // Matches the profile form: the submit only lights up once the name is filled
-  // in and there is something to save.
   const canSubmit = trimmedName !== '' && hasChanges
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // A second submit while the first is in flight would create a second group.
     if (isPending || !canSubmit) return
 
-    const nextErrors: { name?: string; description?: string } = {}
-    if (!trimmedName) nextErrors.name = 'Give this group a name.'
-    else if (trimmedName.length > NAME_MAX_LENGTH) {
-      nextErrors.name = `Names can be at most ${NAME_MAX_LENGTH} characters.`
-    }
-    if (trimmedDescription.length > DESCRIPTION_MAX_LENGTH) {
-      nextErrors.description = `Descriptions can be at most ${DESCRIPTION_MAX_LENGTH} characters.`
+    const nextErrors: { name?: string; description?: string } = {
+      name: validateTitle(name, 'group', 'name') ?? undefined,
+      description: validateDescription(groupDescription) ?? undefined,
     }
     setFieldErrors(nextErrors)
     if (nextErrors.name || nextErrors.description) return
@@ -100,7 +86,7 @@ export function GroupFormDialog({
           value={name}
           onChange={(event) => setName(event.target.value)}
           error={fieldErrors.name}
-          maxLength={NAME_MAX_LENGTH}
+          maxLength={TITLE_MAX_LENGTH}
           disabled={isPending}
           autoComplete="off"
           placeholder="Biology"

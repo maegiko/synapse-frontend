@@ -4,11 +4,25 @@ import { Dialog } from './Dialog'
 import { FormAlert } from './FormAlert'
 import { TextField } from './TextField'
 import { IconSpinner } from './icons'
-import { btnGhostLg, btnPrimaryDisabled, btnPrimaryLg, fieldHint, fieldInput, fieldLabel } from './ui'
+import {
+  btnGhostLg,
+  btnPrimaryDisabled,
+  btnPrimaryLg,
+  fieldError,
+  fieldHint,
+  fieldInput,
+  fieldInputInvalid,
+  fieldLabel,
+} from './ui'
 import type { UpdateQuizRequest } from '../api'
+import {
+  DESCRIPTION_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+  validateDescription,
+  validateTitle,
+} from '../lib/validation'
 
 interface QuizEditDialogProps {
-  /** The quiz's current title and description ('' when it has none). */
   initialValues: { title: string; description: string }
   isPending: boolean
   errorMessage?: string
@@ -16,11 +30,7 @@ interface QuizEditDialogProps {
   onClose: () => void
 }
 
-/**
- * Edits a quiz's title and description. Difficulty has its own control and is
- * left alone here. A blank description is a deliberate instruction to clear it;
- * only the fields the user changed are sent.
- */
+/** A blank description clears it. Difficulty has its own control. */
 export function QuizEditDialog({
   initialValues,
   isPending,
@@ -30,29 +40,28 @@ export function QuizEditDialog({
 }: QuizEditDialogProps) {
   const [title, setTitle] = useState(initialValues.title)
   const [description, setDescription] = useState(initialValues.description)
-  const [titleError, setTitleError] = useState<string>()
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; description?: string }>({})
 
   const trimmedTitle = title.trim()
   const trimmedDescription = description.trim()
   const titleChanged = trimmedTitle !== initialValues.title
   const descriptionChanged = trimmedDescription !== initialValues.description
   const hasChanges = titleChanged || descriptionChanged
-  // Matches the profile form: the submit only lights up once there is a valid
-  // change to send. A blank description is allowed (it clears the field).
   const canSubmit = hasChanges && trimmedTitle !== ''
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isPending || !canSubmit) return
 
-    if (!trimmedTitle) {
-      setTitleError('Give this quiz a title.')
-      return
+    const nextErrors = {
+      title: validateTitle(title, 'quiz') ?? undefined,
+      description: validateDescription(description) ?? undefined,
     }
+    setFieldErrors(nextErrors)
+    if (nextErrors.title || nextErrors.description) return
 
     onSubmit({
       ...(titleChanged ? { title: trimmedTitle } : {}),
-      // A blank description clears it; the backend maps '' back to null.
       ...(descriptionChanged
         ? { description: trimmedDescription === '' ? null : trimmedDescription }
         : {}),
@@ -72,7 +81,8 @@ export function QuizEditDialog({
           label="Title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          error={titleError}
+          error={fieldErrors.title}
+          maxLength={TITLE_MAX_LENGTH}
           disabled={isPending}
           autoComplete="off"
         />
@@ -86,14 +96,24 @@ export function QuizEditDialog({
             rows={3}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+            maxLength={DESCRIPTION_MAX_LENGTH}
             disabled={isPending}
-            aria-describedby="quiz-description-hint"
-            className={`${fieldInput} resize-y`}
+            aria-invalid={fieldErrors.description ? true : undefined}
+            aria-describedby={
+              fieldErrors.description ? 'quiz-description-error' : 'quiz-description-hint'
+            }
+            className={`${fieldInput} resize-y ${fieldErrors.description ? fieldInputInvalid : ''}`}
             placeholder="What this quiz covers"
           />
-          <p className={fieldHint} id="quiz-description-hint">
-            Leave this empty to clear it.
-          </p>
+          {fieldErrors.description ? (
+            <p className={fieldError} id="quiz-description-error">
+              {fieldErrors.description}
+            </p>
+          ) : (
+            <p className={fieldHint} id="quiz-description-hint">
+              Leave this empty to clear it.
+            </p>
+          )}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-3">

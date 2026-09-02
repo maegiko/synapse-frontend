@@ -14,22 +14,21 @@ import {
   fieldLabel,
 } from './ui'
 import type { UpdateNoteRequest } from '../api'
+import {
+  NOTE_OVERVIEW_MAX_LENGTH,
+  TITLE_MAX_LENGTH,
+  validateNoteOverview,
+  validateTitle,
+} from '../lib/validation'
 
 interface NoteEditDialogProps {
-  /** The note's current title and overview, shown prefilled. */
   initialValues: { title: string; overview: string }
   isPending: boolean
-  /** Backend failure for the last attempt, shown above the fields. */
   errorMessage?: string
   onSubmit: (body: UpdateNoteRequest) => void
   onClose: () => void
 }
 
-/**
- * Edits a note's title and overview. Both are prefilled with the current values,
- * only the fields the user actually changed are sent, and the submit stays
- * disabled until there is a valid change to save.
- */
 export function NoteEditDialog({
   initialValues,
   isPending,
@@ -46,22 +45,19 @@ export function NoteEditDialog({
   const titleChanged = trimmedTitle !== initialValues.title
   const overviewChanged = trimmedOverview !== initialValues.overview
   const hasChanges = titleChanged || overviewChanged
-  // Matches the profile form: the submit only lights up once there is a valid,
-  // non-empty change to send.
   const canSubmit = hasChanges && trimmedTitle !== '' && trimmedOverview !== ''
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // A second submit while the first is in flight would send a duplicate PATCH.
     if (isPending || !canSubmit) return
 
-    const nextErrors: { title?: string; overview?: string } = {}
-    if (!trimmedTitle) nextErrors.title = 'Give this note a title.'
-    if (!trimmedOverview) nextErrors.overview = 'Write an overview for this note.'
+    const nextErrors: { title?: string; overview?: string } = {
+      title: validateTitle(title, 'note') ?? undefined,
+      overview: validateNoteOverview(overview) ?? undefined,
+    }
     setFieldErrors(nextErrors)
     if (nextErrors.title || nextErrors.overview) return
 
-    // Only changed fields are sent; the backend leaves the rest alone.
     onSubmit({
       ...(titleChanged ? { title: trimmedTitle } : {}),
       ...(overviewChanged ? { overview: trimmedOverview } : {}),
@@ -82,6 +78,7 @@ export function NoteEditDialog({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           error={fieldErrors.title}
+          maxLength={TITLE_MAX_LENGTH}
           disabled={isPending}
           autoComplete="off"
         />
@@ -95,6 +92,7 @@ export function NoteEditDialog({
             rows={5}
             value={overview}
             onChange={(event) => setOverview(event.target.value)}
+            maxLength={NOTE_OVERVIEW_MAX_LENGTH}
             disabled={isPending}
             aria-invalid={fieldErrors.overview ? true : undefined}
             aria-describedby={fieldErrors.overview ? 'note-overview-error' : undefined}

@@ -14,9 +14,9 @@ import {
   fieldLabel,
 } from './ui'
 import type { UpdateFlashcardRequest } from '../api'
+import { FLASHCARD_SIDE_MAX_LENGTH, validateFlashcardSide } from '../lib/validation'
 
 interface CardEditDialogProps {
-  /** The card's current question and answer, shown prefilled. */
   initialValues: { question: string; answer: string }
   isPending: boolean
   errorMessage?: string
@@ -24,11 +24,6 @@ interface CardEditDialogProps {
   onClose: () => void
 }
 
-/**
- * Edits one flashcard's question and answer. Both are prefilled, only the side
- * the user changed is sent, and the submit stays disabled until there is a valid
- * change. The card keeps its position in the deck.
- */
 export function CardEditDialog({
   initialValues,
   isPending,
@@ -46,17 +41,16 @@ export function CardEditDialog({
   const questionChanged = trimmedQuestion !== initialValues.question
   const answerChanged = trimmedAnswer !== initialValues.answer
   const hasChanges = questionChanged || answerChanged
-  // Matches the profile form: the submit only lights up once both sides are
-  // filled in and something has changed.
   const canSubmit = hasChanges && trimmedQuestion !== '' && trimmedAnswer !== ''
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (isPending || !canSubmit) return
 
-    const nextErrors: { question?: string; answer?: string } = {}
-    if (!trimmedQuestion) nextErrors.question = 'Write the question for this card.'
-    if (!trimmedAnswer) nextErrors.answer = 'Write the answer for this card.'
+    const nextErrors: { question?: string; answer?: string } = {
+      question: validateFlashcardSide(question, 'question') ?? undefined,
+      answer: validateFlashcardSide(answer, 'answer') ?? undefined,
+    }
     setFieldErrors(nextErrors)
     if (nextErrors.question || nextErrors.answer) return
 
@@ -76,6 +70,7 @@ export function CardEditDialog({
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           error={fieldErrors.question}
+          maxLength={FLASHCARD_SIDE_MAX_LENGTH}
           disabled={isPending}
           autoComplete="off"
         />
@@ -89,6 +84,7 @@ export function CardEditDialog({
             rows={3}
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
+            maxLength={FLASHCARD_SIDE_MAX_LENGTH}
             disabled={isPending}
             aria-invalid={fieldErrors.answer ? true : undefined}
             aria-describedby={fieldErrors.answer ? `${answerId}-error` : undefined}
