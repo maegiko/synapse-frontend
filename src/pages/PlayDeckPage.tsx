@@ -475,14 +475,19 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
           </div>
 
           <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {/* Below 500px the three controls no longer fit on one line, so the
+                two steppers drop to their arrows and let the answer button —
+                the one you actually reach for — keep its label. */}
             <button
               type="button"
               className={`${btnGhostLg} disabled:cursor-not-allowed disabled:opacity-45`}
               onClick={goBack}
               disabled={isFirst}
+              aria-label="Previous card"
+              title="Previous card"
             >
               <IconArrowLeft />
-              Previous
+              <span className="max-[499px]:hidden">Previous</span>
             </button>
             <button
               type="button"
@@ -495,8 +500,14 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               type="button"
               className={isRevealed ? btnPrimaryLg : btnGhostLg}
               onClick={goNext}
+              aria-label={isLast ? 'Finish' : 'Next card'}
+              title={isLast ? 'Finish' : 'Next card'}
             >
-              {isLast ? 'Finish' : 'Next card'}
+              {/* `Finish` keeps its label at every width: it ends the session
+                  rather than stepping, so an arrow alone would not say so. */}
+              <span className={isLast ? undefined : 'max-[499px]:hidden'}>
+                {isLast ? 'Finish' : 'Next card'}
+              </span>
               <IconArrowRight />
             </button>
           </div>

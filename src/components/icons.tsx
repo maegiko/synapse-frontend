@@ -173,6 +173,14 @@ export function IconX({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
+export function IconMenu({ className = 'h-5 w-5' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={className} aria-hidden="true">
+      <path d="M4.5 7h15M4.5 12h15M4.5 17h15" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconTrash({ className = 'h-4 w-4' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" className={className} aria-hidden="true">

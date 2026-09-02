@@ -105,16 +105,20 @@ export function DashboardGroups() {
             <IconGroup className="h-5 w-5 sm:h-6 sm:w-6" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 id="groups-heading" className="text-base sm:text-lg">
+            <h2 id="groups-heading" className="text-sm sm:text-lg">
               Group your study material
             </h2>
-            <p className="mt-0.5 text-xs text-text-muted sm:mt-1">
+            {/* Supporting copy only, and on a phone it is what turns this row
+                into four cramped lines beside the button. The heading and the
+                button say the same thing between them at that size. */}
+            <p className="mt-0.5 hidden text-xs text-text-muted sm:mt-1 sm:block">
               A study group keeps one subject's notes, decks, and quizzes together in one place.
             </p>
           </div>
           <button type="button" className={`${btnPrimarySm} shrink-0`} onClick={openCreate}>
             <IconPlus />
-            Create your first group
+            <span className="sm:hidden">Create group</span>
+            <span className="hidden sm:inline">Create your first group</span>
           </button>
         </section>
         {dialog}
