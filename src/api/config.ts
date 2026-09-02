@@ -1,9 +1,4 @@
-/**
- * The single place the backend location and every endpoint path is declared.
- * Point the app at another environment by setting VITE_API_BASE_URL; nothing
- * else in the codebase should ever hard-code a URL.
- */
-
+import { MAX_PAGE_SIZE, clampPage, clampPageSize, clampSearchQuery } from '../lib/validation'
 import type { AnalyticsPeriodDays, ListParams } from './types'
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8080'
@@ -19,23 +14,13 @@ export const API_PATHS = {
     refresh: '/api/auth/refresh',
     logout: '/api/auth/logout',
     password: '/api/auth/password',
-    /**
-     * The forgotten-password pair, both public. Neither takes a bearer token:
-     * a user who cannot log in has nothing to authenticate with. Reset clears
-     * the refresh cookie, so it is the one of the two that needs the cookie.
-     */
     forgotPassword: '/api/auth/password/forgot',
     resetPassword: '/api/auth/password/reset',
-    /**
-     * The two email endpoints are public. Registration verification may set a
-     * refresh-token cookie, while resending remains cookie-free.
-     */
     verifyEmail: '/api/auth/email/verify',
     resendVerification: '/api/auth/email/resend',
   },
   user: {
     details: '/api/user/details',
-    /** The only route an account's email address changes through. */
     emailChange: '/api/user/email-change',
     streak: '/api/user/streak',
     analytics: '/api/user/analytics',
@@ -49,7 +34,7 @@ export const API_PATHS = {
     list: '/api/flashcards/list',
     generate: '/api/flashcards/generate',
     detail: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}`,
-    /** The decks due today. A fixed path, so it never collides with a deck ID. */
+    /** A fixed path, so it never collides with a deck id. */
     reviewQueue: '/api/flashcards/review',
     review: (deckId: string) => `/api/flashcards/${encodeURIComponent(deckId)}/review`,
     card: (deckId: string, cardId: string) =>
@@ -58,12 +43,8 @@ export const API_PATHS = {
   groups: {
     create: '/api/groups',
     list: '/api/groups/list',
-    /** Also the PATCH and DELETE target for one group. */
     detail: (groupId: string) => `/api/groups/${encodeURIComponent(groupId)}`,
-    /**
-     * Membership. `PUT` adds or moves, `DELETE` clears; both answer 204. The
-     * path segment is the content kind exactly as the backend names it.
-     */
+    /** PUT adds or moves, DELETE clears. */
     content: (groupId: string, kind: 'notes' | 'decks' | 'quizzes', resourceId: string) =>
       `/api/groups/${encodeURIComponent(groupId)}/${kind}/${encodeURIComponent(resourceId)}`,
   },
@@ -81,26 +62,24 @@ export const API_PATHS = {
 } as const
 
 /** The largest `size` a list endpoint accepts. */
-export const MAX_LIST_PAGE_SIZE = 100
+export const MAX_LIST_PAGE_SIZE = MAX_PAGE_SIZE
 
-/**
- * The analytics window. `period` is always sent explicitly rather than relying
- * on the backend default, so the response's window matches the one on screen.
- */
+/** `period` is always explicit, so the response window matches the one shown. */
 export function analyticsPath(period: AnalyticsPeriodDays): string {
   return `${API_PATHS.user.analytics}?period=${period}`
 }
 
 /**
  * Adds the optional search and paging parameters to a list path. Omitted values
- * are left off entirely so the backend applies its own defaults, and a blank
- * `query` is dropped rather than sent as an empty search.
+ * are left off so the backend applies its own defaults, and every supplied one
+ * is clamped to the bounds the backend enforces rather than spent on a 400.
  */
 export function listPath(path: string, { query, page, size }: ListParams): string {
   const params = new URLSearchParams()
-  if (query?.trim()) params.set('query', query.trim())
-  if (page !== undefined) params.set('page', String(page))
-  if (size !== undefined) params.set('size', String(size))
+  const term = query ? clampSearchQuery(query) : ''
+  if (term) params.set('query', term)
+  if (page !== undefined) params.set('page', String(clampPage(page)))
+  if (size !== undefined) params.set('size', String(clampPageSize(size)))
 
   const search = params.toString()
   return search ? `${path}?${search}` : path

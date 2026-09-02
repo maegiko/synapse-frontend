@@ -1,6 +1,7 @@
 import { apiRequest } from './client'
 import { API_PATHS, MAX_LIST_PAGE_SIZE, listPath } from './config'
 import { toDurationSeconds } from './duration'
+import { clampDifficulty } from '../lib/validation'
 import type {
   CreatedQuestion,
   CreateQuestionRequest,
@@ -118,11 +119,15 @@ export async function removeQuestion(quizId: PublicId, questionId: PublicId): Pr
   })
 }
 
-/** 1 through 5. There is no endpoint for clearing difficulty back to null. */
+/**
+ * 1 through 5. There is no endpoint for clearing difficulty back to null.
+ * The value is held inside that range on the way out, so a control that ever
+ * offered something else cannot turn a rating into a `400`.
+ */
 export async function setDifficulty(quizId: PublicId, difficulty: number): Promise<void> {
   await apiRequest<void>(API_PATHS.quiz.difficulty(quizId), {
     method: 'PUT',
-    json: { difficulty },
+    json: { difficulty: clampDifficulty(difficulty) },
     authenticated: true,
   })
 }
