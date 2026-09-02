@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
+import { DetailMetadata } from '../components/DetailMetadata'
 import { FormAlert } from '../components/FormAlert'
 import { GenerationStatus } from '../components/GenerationStatus'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
@@ -13,9 +14,12 @@ import { PinToggle } from '../components/PinToggle'
 import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import {
   IconArrowRight,
+  IconCheck,
   IconDeck,
+  IconNote,
   IconPencil,
   IconQuiz,
+  IconSummary,
   IconSpinner,
   IconTrash,
 } from '../components/icons'
@@ -28,9 +32,10 @@ import {
   cardLink,
   countPill,
   shell,
+  successAlert,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toFormMessage, toReasonMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { usePinNote } from '../lib/pinMutations'
 import { queryClient } from '../lib/queryClient'
@@ -40,7 +45,6 @@ import type { NoteSummary, UpdateNoteRequest } from '../api'
 
 const ICON = 'h-4 w-4'
 
-/** Narration for the one long synchronous generation call, per resource type. */
 const STEPS = {
   deck: [
     'Reading your note…',
@@ -58,7 +62,6 @@ function plural(count: number, singular: string, pluralForm = `${singular}s`): s
   return `${count} ${count === 1 ? singular : pluralForm}`
 }
 
-/** Failures of a generate call started from this note. */
 function messageForGenerateFailure(error: unknown, noun: 'deck' | 'quiz'): string {
   if (isStatus(error, 404)) {
     return 'This note no longer exists. It may have just been deleted.'
@@ -72,7 +75,6 @@ function messageForGenerateFailure(error: unknown, noun: 'deck' | 'quiz'): strin
   return toFormMessage(error)
 }
 
-/** Matches the recents-card skeleton, so a cold load reads the same everywhere. */
 function NoteSkeleton() {
   return (
     <div className="grid gap-6" aria-hidden="true">
@@ -113,14 +115,12 @@ type Confirming = 'deck' | 'quiz' | 'delete' | null
 
 function NoteContent({ note }: { note: NoteSummary }) {
   const navigate = useNavigate()
-  // A deck or quiz generated here was reached *from* this note, so it carries
-  // the note on its trail. Deletion uses the plain navigate below: a note that
-  // no longer exists is not somewhere to offer a way back to.
   const generatedNavigate = useTrailNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
 
   const [confirming, setConfirming] = useState<Confirming>(null)
   const [actionError, setActionError] = useState('')
+  const [justPinned, setJustPinned] = useState(false)
   const [step, setStep] = useState(0)
   const [isEditing, setIsEditing] = useState(false)
   const [editError, setEditError] = useState('')
@@ -129,8 +129,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
     mutationFn: () => recordQualifyingAction(() => api.flashcards.generate(note.id)),
     onSuccess: (deck) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
-      // The generation response has no card IDs, so the deck page fetches the
-      // saved deck itself; we only hand it the destination.
       generatedNavigate(`/flashcards/${deck.deckId}`, { replace: true })
     },
     onError: (error) => {
@@ -142,7 +140,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
   const makeQuiz = useMutation({
     mutationFn: () => recordQualifyingAction(() => api.quiz.generate(note.id)),
     onSuccess: (quiz) => {
-      // The generate response is the whole quiz, so the detail view needs no refetch.
       queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
       generatedNavigate(`/quiz/${quiz.id}`, { replace: true })
@@ -156,8 +153,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
   const updateNote = useMutation({
     mutationFn: (body: UpdateNoteRequest) => api.notes.update(note.id, body),
     onSuccess: (updated) => {
-      // The PATCH response is the complete updated summary, so the detail view
-      // updates at once; the list feeds the library, dashboard, and any group.
       queryClient.setQueryData(queryKeys.note(note.id), updated)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
       if (updated.groupId) {
@@ -169,7 +164,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
       setEditError(
         isStatus(error, 404)
           ? 'This note no longer exists. It may have just been deleted.'
-          : `We could not save your changes. ${toFormMessage(error)}`,
+          : `We could not save your changes. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -188,7 +183,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
       setActionError(
         isStatus(error, 404)
           ? 'That note has already been deleted.'
-          : `We could not delete this note. ${toFormMessage(error)}`,
+          : `We could not delete this note. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -197,8 +192,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
   const isBusy =
     generatingNoun !== null || deleteNote.isPending || updateNote.isPending || pinNote.isPending
 
-  // The narration step only advances while a generate call is in flight; it is
-  // reset when a run is started (below), like the other generate flows.
   useEffect(() => {
     if (!generatingNoun) return
     const timers = [
@@ -208,8 +201,14 @@ function NoteContent({ note }: { note: NoteSummary }) {
     return () => timers.forEach(clearTimeout)
   }, [generatingNoun])
 
-  function ask(next: Exclude<Confirming, null>) {
+  /** A new note action starts here, so the last one's outcome is over. */
+  function clearActionFeedback() {
     setActionError('')
+    setJustPinned(false)
+  }
+
+  function ask(next: Exclude<Confirming, null>) {
+    clearActionFeedback()
     setConfirming(next)
   }
 
@@ -223,16 +222,32 @@ function NoteContent({ note }: { note: NoteSummary }) {
     makeQuiz.mutate()
   }
 
-  const showFeedback = Boolean(actionError) || generatingNoun !== null || confirming !== null
+  const showFeedback =
+    Boolean(actionError) || justPinned || generatingNoun !== null || confirming !== null
 
   return (
     <>
       <h1 className="text-3xl">{note.title}</h1>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className={countPill}>{plural(note.keypoints.length, 'key point')}</span>
-        <span className={countPill}>{plural(note.concepts.length, 'concept')}</span>
-        <span className={countPill}>{plural(note.importantTerms.length, 'term')}</span>
-      </div>
+      <DetailMetadata
+        className="mt-3"
+        items={[
+          {
+            key: 'key-points',
+            icon: <IconCheck />,
+            content: plural(note.keypoints.length, 'key point'),
+          },
+          {
+            key: 'concepts',
+            icon: <IconSummary />,
+            content: plural(note.concepts.length, 'concept'),
+          },
+          {
+            key: 'terms',
+            icon: <IconNote />,
+            content: plural(note.importantTerms.length, 'term'),
+          },
+        ]}
+      />
 
       <div className="mt-3">
         <GroupMembershipControl
@@ -243,7 +258,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
         />
       </div>
 
-      {/* Turn this note into study material on the left; remove it on the right. */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -272,13 +286,14 @@ function NoteContent({ note }: { note: NoteSummary }) {
             isPending={pinNote.isPending}
             disabled={isBusy || confirming !== null}
             onToggle={(next) => {
-              setActionError('')
+              clearActionFeedback()
               pinNote.mutate(next, {
+                onSuccess: () => setJustPinned(next),
                 onError: (error) =>
                   setActionError(
                     isStatus(error, 404)
                       ? 'This note no longer exists. It may have just been deleted.'
-                      : `We could not ${next ? 'pin' : 'unpin'} this note. ${toFormMessage(error)}`,
+                      : `We could not ${next ? 'pin' : 'unpin'} this note. ${toReasonMessage(error)}`,
                   ),
               })
             }}
@@ -287,7 +302,7 @@ function NoteContent({ note }: { note: NoteSummary }) {
             type="button"
             className={btnGhostSm}
             onClick={() => {
-              setActionError('')
+              clearActionFeedback()
               setEditError('')
               setIsEditing(true)
             }}
@@ -311,6 +326,13 @@ function NoteContent({ note }: { note: NoteSummary }) {
       {showFeedback && (
         <div className="mt-6 grid gap-6">
           {actionError && <FormAlert message={actionError} />}
+
+          {justPinned && (
+            <p className={successAlert} role="status">
+              <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+              <span>Pinned. It now shows first in your library.</span>
+            </p>
+          )}
 
           {generatingNoun && (
             <GenerationStatus
@@ -399,9 +421,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
                     className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent-solid"
                     aria-hidden="true"
                   />
-                  {/* `min-w-0`: a flex item will not shrink below its longest
-                      word without it, so one unbroken term would push the row
-                      past the card. */}
                   <span className="min-w-0 max-w-[72ch]">{point}</span>
                 </li>
               ))}
@@ -459,7 +478,6 @@ function NoteContent({ note }: { note: NoteSummary }) {
   )
 }
 
-/** One saved note summary. Where a finished generation lands. */
 export function NotePage() {
   const { noteId } = useParams<{ noteId: string }>()
   const note = useNote(noteId)
@@ -482,7 +500,7 @@ export function NotePage() {
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
                   ? 'It may have been deleted, or it belongs to another account.'
-                  : toFormMessage(note.error)}
+                  : toReasonMessage(note.error)}
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 {!isMissing && (
