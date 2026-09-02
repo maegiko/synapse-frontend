@@ -5,7 +5,7 @@ import { BackLink } from '../components/BackLink'
 import { IconArrowRight } from '../components/icons'
 import { ScoreRow } from '../components/ScoreRow'
 import { btnGhostSm, cardLink, countPill, shell, surfaceCard } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toReasonMessage } from '../lib/apiErrors'
 import type { BackTarget } from '../lib/backTrail'
 import { formatDateTime } from '../lib/formatDate'
 import { plural } from '../lib/plural'
@@ -24,7 +24,6 @@ function ScoresSkeleton() {
   )
 }
 
-/** Every saved attempt at one quiz, newest first. */
 export function QuizScoresPage() {
   const { quizId } = useParams<{ quizId: string }>()
   const quiz = useQuiz(quizId)
@@ -32,11 +31,8 @@ export function QuizScoresPage() {
   const timeZone = useUserTimeZone()
 
   const isMissing = isStatus(quiz.error, 404) || isStatus(scores.error, 404)
-  /** The quiz these attempts belong to, for anyone who opened this page directly. */
   const quizBack: BackTarget = { to: `/quiz/${quizId}`, label: 'quiz overview' }
 
-  // Each attempt scores against its own question count, so a plain average of
-  // the raw scores would be meaningless; the percentages are averaged instead.
   const best = scores.data?.length
     ? Math.max(...scores.data.map((s) => (s.score / Math.max(s.totalQuestions, 1)) * 100))
     : 0
@@ -81,7 +77,7 @@ export function QuizScoresPage() {
                 <p className="mt-3 text-base text-text-muted">
                   {isMissing
                     ? 'It may have been deleted, or it belongs to another account.'
-                    : toFormMessage(scores.error)}
+                    : toReasonMessage(scores.error)}
                 </p>
                 <div className="mt-6 flex flex-wrap items-center gap-3">
                   {!isMissing && (

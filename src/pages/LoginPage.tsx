@@ -29,11 +29,7 @@ export function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  /**
-   * Set only when the backend itself says the account is unverified. The
-   * address is normalized the way the backend normalizes it, so the resend
-   * action asks about the account the login attempt actually found.
-   */
+  /** Normalized the way the backend normalizes it, so a resend finds the account. */
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -54,19 +50,16 @@ export function LoginPage() {
       capture('login_succeeded')
       navigate(redirectTo, { replace: true })
     } catch (error) {
-      // The right password on an account that never confirmed its address. It
-      // is the one 401 that is not a credentials failure, and the only case the
-      // backend lets the frontend tell apart.
       if (isUnverifiedAccount(error)) {
         setPassword('')
         setUnverifiedEmail(email.trim().toLowerCase())
         setSubmitting(false)
         return
       }
-      // Unknown email and wrong password intentionally look the same, on a
-      // verified and an unverified account alike.
       setFormError(
-        isStatus(error, 401) ? 'Invalid email or password.' : toFormMessage(error),
+        isStatus(error, 401) || isStatus(error, 400)
+          ? 'Invalid email or password.'
+          : toFormMessage(error),
       )
       setSubmitting(false)
     }

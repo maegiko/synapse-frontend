@@ -36,7 +36,7 @@ import {
   NO_DATA_LABEL,
   periodDescription,
 } from '../lib/analytics'
-import { toFormMessage } from '../lib/apiErrors'
+import { toReasonMessage } from '../lib/apiErrors'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import {
   calendarWeekday,
@@ -47,13 +47,11 @@ import {
 import { plural } from '../lib/plural'
 import { useAnalytics, useUserTimeZone } from '../lib/queries'
 
-/** How many attempts the recent-attempts list shows before it stops. */
 const RECENT_ATTEMPT_LIMIT = 8
 
 /** Short weekday names for the due forecast, indexed the way `calendarWeekday` is. */
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** A figure told by typography alone, matching the profile page's treatment. */
 function Metric({
   label,
   value,
@@ -65,11 +63,8 @@ function Metric({
   value: string
   hint?: string
   icon?: ReactNode
-  /** The overview's four figures, set a step up so they carry the page. */
   large?: boolean
 }) {
-  // A rate or an average with nothing behind it says so in words, so it is set
-  // as a sentence rather than as a number that happens to be very long.
   const isNoData = value === NO_DATA_LABEL
 
   return (
@@ -100,7 +95,6 @@ function Section({
 }: {
   id: string
   title: string
-  /** Left out where the section's own content already introduces itself. */
   intro?: string
   children: ReactNode
 }) {
@@ -118,16 +112,14 @@ function Section({
 interface DistributionItem {
   label: string
   count: number
-  /** The semantic tint this bucket already carries elsewhere in the app. */
   fill: string
   text: string
 }
 
 /**
- * A set of buckets over one total: a proportional bar, and the same figures as
- * a list underneath so the split is readable without reading the bar. The
- * colours are the ones a rating already wears in the review queue and the deck
- * player, so a rating means the same thing wherever it appears.
+ * Buckets over one total: a proportional bar, and the figures listed underneath
+ * so the split is readable without reading the bar. The colours are the ones a
+ * rating already wears in the review queue and the deck player.
  */
 function Distribution({
   items,
@@ -185,7 +177,6 @@ function Distribution({
   )
 }
 
-/** One saved attempt, named and dated so unrelated quizzes stay distinguishable. */
 function AttemptRow({ attempt, when }: { attempt: AnalyticsScoreHistoryItem; when: string }) {
   const percentage = Math.round(attempt.percentage)
 
@@ -219,7 +210,6 @@ function PageSkeleton() {
   )
 }
 
-/** Everything the endpoint reports for one window, for one signed-in account. */
 export function AnalyticsPage() {
   const [period, setPeriod] = useState<AnalyticsPeriodDays>(DEFAULT_ANALYTICS_PERIOD)
   const analytics = useAnalytics(period)
@@ -249,12 +239,10 @@ export function AnalyticsPage() {
           )}
         </div>
 
-        {/* A failure that still has a previous window on screen is a warning
-            rather than a wall: the figures below are simply no longer current. */}
         {analytics.isError && data && (
           <div className="mt-8">
             <FormAlert
-              message={`These figures may be out of date. ${toFormMessage(analytics.error)}`}
+              message={`These figures may be out of date. ${toReasonMessage(analytics.error)}`}
             />
             <button
               type="button"
@@ -269,7 +257,7 @@ export function AnalyticsPage() {
         {analytics.isError && !data && (
           <div className={`${surfaceCard} app-content-in mt-8 max-w-150 p-8`}>
             <h2 className="text-xl">We could not load your progress</h2>
-            <p className="mt-3 text-base text-text-muted">{toFormMessage(analytics.error)}</p>
+            <p className="mt-3 text-base text-text-muted">{toReasonMessage(analytics.error)}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 type="button"
@@ -353,13 +341,8 @@ function AnalyticsSections({
         </dl>
       </Section>
 
-      {/* No intro: the chart opens with a sentence summarising the window, so a
-          standfirst here would only say it twice. */}
       <Section id="activity-heading" title="Study activity">
         <div className="mt-6">
-          {/* Keyed on the window: a new period is a new set of days, so the
-              chart starts over rather than keeping a selection that pointed at
-              a day the window no longer covers. */}
           <ActivityChart
             key={period.days}
             days={data.dailyActivity}

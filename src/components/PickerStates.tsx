@@ -1,6 +1,5 @@
-import { toFormMessage } from '../lib/apiErrors'
+import { toReasonMessage } from '../lib/apiErrors'
 
-/** Reads as a gap waiting to be filled, matching the library's empty panels. */
 export const pickerPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-5 py-6 text-center text-sm text-text-muted app-content-in'
 
@@ -21,7 +20,7 @@ export function PickerSkeleton({ rows = 3 }: { rows?: number }) {
 export function PickerError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   return (
     <div className={`${pickerPanel} grid justify-items-center gap-2`} role="alert">
-      <p>We could not load these. {toFormMessage(error)}</p>
+      <p>We could not load these. {toReasonMessage(error)}</p>
       <button
         type="button"
         onClick={onRetry}

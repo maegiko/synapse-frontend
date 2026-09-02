@@ -17,7 +17,7 @@ import {
   shell,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toReasonMessage } from '../lib/apiErrors'
 import { plural } from '../lib/plural'
 import { queryKeys, useQuiz } from '../lib/queries'
 import { queryClient } from '../lib/queryClient'
@@ -75,7 +75,6 @@ const LEAVE_BODY =
 
 type Phase = 'playing' | 'rating' | 'summary'
 
-/** What one finished attempt sends: the score, and how long it took. */
 interface SavedAttempt {
   score: number
   durationSeconds: number
@@ -90,7 +89,6 @@ function PlaySkeleton() {
   )
 }
 
-/** A held-up exit: where it was headed, and the trail state that goes with it. */
 type PendingExit = { to: string; state?: Record<string, BackTarget[]> }
 
 interface QuestionCardProps {
@@ -98,12 +96,9 @@ interface QuestionCardProps {
   position: number
   total: number
   isShuffled: boolean
-  /** Advances the run. `wasCorrect` feeds the running score. */
   onAnswered: (wasCorrect: boolean) => void
   isLastQuestion: boolean
-  /** Where the back link lands for anyone who opened the run directly. */
   quizBack: BackTarget
-  /** Returns false to hold the visitor here until they confirm leaving. */
   guardLeaving: (to: string, state?: PendingExit['state']) => boolean
 }
 
@@ -132,7 +127,6 @@ function QuestionCard({
       onAnswered(wasCorrect)
       return
     }
-    // Answering is a deliberate act: a choice must be made, and Submit pressed.
     if (!selectedId) {
       setError('Choose an answer first.')
       return
@@ -173,7 +167,6 @@ function QuestionCard({
           <div className="grid gap-3">
             {answers.map((answer) => {
               const isChosen = answer.id === selectedId
-              // Correctness is disclosed only once the answer is committed.
               const showAsCorrect = submitted && answer.correct
               const showAsWrong = submitted && isChosen && !answer.correct
 
@@ -271,60 +264,44 @@ function Runner({
   const { recordQualifyingAction } = useStreakCelebration()
   const questions = quiz.questions
 
-  // Starts when the attempt does and pauses while the tab is hidden, so what is
-  // reported is time actually spent answering.
   const elapsedSeconds = useSessionTimer()
 
   const [seed] = useState(newSeed)
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [phase, setPhase] = useState<Phase>('playing')
-  // Seeded with the quiz's current difficulty, so the stars show where it stands.
   const [rating, setRating] = useState(quiz.difficulty ?? 0)
-  /** Only what was rated in this attempt, which is what the summary may claim. */
   const [savedRating, setSavedRating] = useState<number | null>(null)
   const [closingNote, setClosingNote] = useState('')
   const [saveError, setSaveError] = useState('')
 
-  /** Where a confirmed exit goes. Null means no exit is pending. */
   const [pendingExit, setPendingExit] = useState<PendingExit | null>(null)
-  // Read by the popstate listener, which must not close over stale state.
   const isGuarding = useRef(true)
 
   const order = useMemo(() => {
     const asked = isShuffled ? shuffled(questions, seed) : questions
     return asked.map((question, position) => {
       // Generation puts the correct answer first on every multiple-choice
-      // question, so leaving the saved order would let position alone give the
-      // answer away. This runs on every attempt, whatever the shuffle toggle
-      // says: that switch reorders questions, not the answers within them.
-      // True/false is left alone — its correct answer already moves, and
-      // scrambling it would only put "False" above "True".
+      // question, so the saved order alone would give it away. True/false is left
+      // alone: its correct answer already moves.
       if (question.questionType === 'BOOLEAN') return question
       return { ...question, answers: shuffled(question.answers, seed + position + 1) }
     })
   }, [questions, isShuffled, seed])
 
   const quizHref = `/quiz/${quiz.id}`
-  /** The quiz this attempt belongs to, for anyone who opened the run directly. */
   const quizBack = useMemo(() => ({ to: quizHref, label: 'quiz overview' }), [quizHref])
-  // Every way out of a guarded run — the back link, the browser's Back button,
-  // the exit dialog — has to agree on one destination, so they all read the
-  // same resolved back link.
   const back = useBackLink(quizBack)
 
   const saveScore = useMutation({
-    // The duration is measured once, when the last answer lands, and travels
-    // with the score rather than being sent on its own.
     mutationFn: ({ score: finalScore, durationSeconds }: SavedAttempt) =>
       recordQualifyingAction(() => api.quiz.saveScore(quiz.id, finalScore, durationSeconds)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizScores(quiz.id) })
-      // Every analytics window now has this attempt, its score, and its length.
       void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
     },
     onError: (error) =>
-      setSaveError(`Your score could not be saved. ${toFormMessage(error)}`),
+      setSaveError(`Your score could not be saved. ${toReasonMessage(error)}`),
   })
 
   const saveDifficulty = useMutation({
@@ -342,10 +319,7 @@ function Runner({
       setIndex(index + 1)
       return
     }
-    // The attempt ends here, not on the difficulty screen that follows, so the
-    // timer is read now rather than when the request settles.
     const durationSeconds = elapsedSeconds()
-    // The run is over, so nothing is left to lose and the guard comes off.
     isGuarding.current = false
     setClosingNote(drawClosingNote(nextScore, order.length))
     setPhase('rating')
@@ -360,9 +334,6 @@ function Runner({
     setPhase('summary')
   }
 
-  // Browser Back. One sentinel entry is pushed for the run, so the first Back
-  // lands here instead of leaving. Pushing it is a mount-only job; the listener
-  // is separate because it has to see the current back target.
   useEffect(() => {
     window.history.pushState({ quizGuard: true }, '')
   }, [])
@@ -370,8 +341,6 @@ function Runner({
   useEffect(() => {
     function onPopState() {
       if (!isGuarding.current) return
-      // The sentinel that was just consumed is put straight back, and the
-      // dialog asks rather than letting the run end silently.
       window.history.pushState({ quizGuard: true }, '')
       setPendingExit(back)
     }
@@ -379,7 +348,6 @@ function Runner({
     return () => window.removeEventListener('popstate', onPopState)
   }, [back])
 
-  // Reloading or closing the tab. The browser supplies its own wording here.
   useEffect(() => {
     function onBeforeUnload(event: BeforeUnloadEvent) {
       if (!isGuarding.current) return
@@ -389,7 +357,6 @@ function Runner({
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
-  /** Returns false to hold the visitor here until they confirm. */
   const guardLeaving = useCallback((to: string, state?: PendingExit['state']) => {
     if (!isGuarding.current) return true
     setPendingExit({ to, state })
@@ -413,7 +380,6 @@ function Runner({
       <main className={`${shell} app-content-in pt-10 pb-20`}>
         {phase === 'playing' && (
           <QuestionCard
-            // Remounting per question resets the selection and the reveal.
             key={order[index].id}
             question={order[index]}
             position={index + 1}
@@ -527,12 +493,10 @@ function Runner({
   )
 }
 
-/** Taking one quiz, a question at a time. */
 export function PlayQuizPage() {
   const { quizId } = useParams<{ quizId: string }>()
   const [searchParams] = useSearchParams()
   const quiz = useQuiz(quizId)
-  // Bumping this remounts the runner, which is what starts a clean attempt.
   const [attempt, setAttempt] = useState(0)
 
   const isShuffled = searchParams.get(SHUFFLE_PARAM) === '1'
@@ -565,7 +529,7 @@ export function PlayQuizPage() {
             <p className="mt-3 text-base text-text-muted">
               {isMissing
                 ? 'It may have been deleted, or it belongs to another account.'
-                : toFormMessage(quiz.error)}
+                : toReasonMessage(quiz.error)}
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {!isMissing && (

@@ -15,7 +15,7 @@ import {
   shell,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toReasonMessage } from '../lib/apiErrors'
 import { formatCalendarDate } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 import { queryKeys, useFlashcardDeck } from '../lib/queries'
@@ -42,9 +42,9 @@ function drawClosingNote(): string {
 }
 
 /**
- * The backend needs a rating to reschedule the deck, so a finished run ends by
- * asking for one. The wording describes the run that just happened; what each
- * answer does to the schedule is the backend's arithmetic, not ours to predict.
+ * The backend needs a rating to reschedule the deck. The wording describes the
+ * run that just happened; what each answer does to the schedule is not ours to
+ * predict.
  */
 const RATINGS: {
   value: ReviewRating
@@ -88,7 +88,6 @@ const RATINGS: {
 
 type Phase = 'playing' | 'rating' | 'summary'
 
-/** A held-up exit: where it was headed, and the trail state that goes with it. */
 type PendingExit = { to: string; state?: Record<string, BackTarget[]> }
 
 const LEAVE_TITLE = 'Leave this deck?'
@@ -110,18 +109,10 @@ function PlaySkeleton() {
 function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean }) {
   const navigate = useNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
-  // The page only mounts this once it knows the deck holds cards, so no fallback
-  // array is built here — a fresh one each render would defeat the memo below.
   const cards = deck.flashcards
 
-  // Starts when the run does and pauses while the tab is hidden, so what is
-  // reported is time actually spent on the cards.
   const elapsedSeconds = useSessionTimer()
-  /**
-   * The run's length, frozen the moment the last card was finished. The review
-   * is sent from the rating screen, and how long someone spends choosing a
-   * rating is not study time.
-   */
+  /** Frozen at the last card: time spent choosing a rating is not study time. */
   const sessionSeconds = useRef<number | null>(null)
 
   const [seed, setSeed] = useState(newSeed)
@@ -129,16 +120,12 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const [isRevealed, setIsRevealed] = useState(false)
   const [phase, setPhase] = useState<Phase>('playing')
   const [closingNote, setClosingNote] = useState(drawClosingNote)
-  /** The recorded review for this visit, kept so a replay does not send another. */
   const [reviewResult, setReviewResult] = useState<ReviewDeckResponse | null>(null)
   const [isRepeatRun, setIsRepeatRun] = useState(false)
 
-  /** Where a confirmed exit goes. Null means no exit is pending. */
   const [pendingExit, setPendingExit] = useState<PendingExit | null>(null)
-  // Read by the popstate listener, which must not close over stale state.
   const isGuarding = useRef(true)
 
-  // A new seed on replay deals a fresh order rather than the same one again.
   const order = useMemo(
     () => (isShuffled ? shuffled(cards, seed) : cards),
     [cards, isShuffled, seed],
@@ -148,22 +135,14 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   const isFirst = index === 0
   const isLast = index >= order.length - 1
   const deckHref = `/flashcards/${deck.deckId}`
-  /** The deck this run belongs to, for anyone who opened the run directly. */
   const deckBack = useMemo(() => ({ to: deckHref, label: 'deck overview' }), [deckHref])
-  // Every way out of a guarded run — the back link, the browser's Back button,
-  // the exit dialog — has to agree on one destination, so they all read the
-  // same resolved back link.
   const back = useBackLink(deckBack)
 
-  // The last card ends the run by asking how it went, rather than ending it
-  // underneath someone who only meant to keep paging: the rating screen still
-  // offers a way back into the deck.
   const goNext = useCallback(() => {
     if (isLast) {
       setClosingNote(drawClosingNote())
-      // A replay within the same visit is not sent again. The review endpoint
-      // is not repeatable: a second call would push the due date out again and
-      // count every card a second time.
+      // The review endpoint is not repeatable: a second call would push the due
+      // date out again and count every card twice.
       if (reviewResult) {
         isGuarding.current = false
         setIsRepeatRun(true)
@@ -178,36 +157,22 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setIsRevealed(false)
   }, [elapsedSeconds, isLast, reviewResult])
 
-  // Stepping back re-hides the answer, so a revisited card is asked again
-  // rather than handed straight over.
   const goBack = useCallback(() => {
     if (isFirst) return
     setIndex((current) => current - 1)
     setIsRevealed(false)
   }, [isFirst])
 
-  // Reaching the end and rating the run is what records it, both for the deck's
-  // schedule and for the streak. It is a one-shot call, so a failure holds the
-  // rating screen open to be retried rather than being swallowed.
   const review = useMutation({
-    // One call per completed run, carrying the length frozen for that run. A
-    // rejected review saves nothing at all, so retrying it re-sends the same
-    // measured length rather than a second, longer session.
     mutationFn: (rating: ReviewRating) =>
       recordQualifyingAction(() =>
         api.flashcards.review(deck.deckId, rating, sessionSeconds.current ?? elapsedSeconds()),
       ),
     onSuccess: (result) => {
-      // The run is recorded, so nothing is left to lose and the guard comes off.
       isGuarding.current = false
       setReviewResult(result)
-      // The deck has left the review queue until its new due date.
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue })
-      // Every analytics window now has one more session, and this run's cards
-      // and duration, in it.
       void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
-      // The response carries the user's new lifetime total, so the cached
-      // profile is corrected from it instead of being fetched again.
       queryClient.setQueryData<UserDetails>(
         queryKeys.userDetails,
         (current) =>
@@ -218,7 +183,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   })
 
   function restart() {
-    // Only an unrecorded run has anything left to lose.
     isGuarding.current = reviewResult === null
     setSeed(newSeed())
     setIndex(0)
@@ -226,9 +190,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     setPhase('playing')
   }
 
-  // Browser Back. One sentinel entry is pushed for the run, so the first Back
-  // lands here instead of leaving. Pushing it is a mount-only job; the listener
-  // is separate because it has to see the current back target.
   useEffect(() => {
     window.history.pushState({ deckGuard: true }, '')
   }, [])
@@ -236,8 +197,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   useEffect(() => {
     function onPopState() {
       if (!isGuarding.current) return
-      // The sentinel that was just consumed is put straight back, and the
-      // dialog asks rather than letting the run end silently.
       window.history.pushState({ deckGuard: true }, '')
       setPendingExit(back)
     }
@@ -245,7 +204,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     return () => window.removeEventListener('popstate', onPopState)
   }, [back])
 
-  // Reloading or closing the tab. The browser supplies its own wording here.
   useEffect(() => {
     function onBeforeUnload(event: BeforeUnloadEvent) {
       if (!isGuarding.current) return
@@ -255,7 +213,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
-  /** Returns false to hold the visitor here until they confirm. */
   const guardLeaving = useCallback((to: string, state?: PendingExit['state']) => {
     if (!isGuarding.current) return true
     setPendingExit({ to, state })
@@ -269,11 +226,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     navigate(destination.to, { replace: true, state: destination.state })
   }
 
-  // Space flips and the arrows step through the deck, so a run can be played
-  // one-handed. Keys typed into a control belong to that control, so those are
-  // left alone.
   useEffect(() => {
-    // Only the cards themselves answer to the keyboard.
     if (phase !== 'playing') return
     function onKeyDown(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null
@@ -293,8 +246,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [goBack, goNext, phase])
 
-  // The rating screen still guards the exit, so this dialog belongs to both the
-  // unfinished screens.
   const leaveDialog = pendingExit !== null && (
     <ConfirmDialog
       title={LEAVE_TITLE}
@@ -343,7 +294,7 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
                 className="mx-auto max-w-[46ch] text-sm font-bold text-error-solid"
                 role="alert"
               >
-                Your session could not be saved. {toFormMessage(review.error)}
+                Your session could not be saved. {toReasonMessage(review.error)}
               </p>
             )}
 
@@ -352,7 +303,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
                 type="button"
                 className={btnGhostLg}
                 onClick={() => {
-                  // A failed attempt is not carried back onto the next screen.
                   review.reset()
                   setPhase('playing')
                 }}
@@ -455,7 +405,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
             className={`flashcard relative mt-7 h-80 sm:h-96 ${isRevealed ? 'flashcard--revealed' : ''}`}
             aria-live="polite"
           >
-            {/* Only the face in view is exposed, so the hidden side is not read out. */}
             <div
               className="flashcard-face flashcard-face--front absolute inset-0 flex items-center justify-center rounded-lg border border-border bg-surface-alt p-8 text-center shadow-sm transition-transform duration-500 sm:p-10"
               aria-hidden={isRevealed}
@@ -475,9 +424,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
           </div>
 
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            {/* Below 500px the three controls no longer fit on one line, so the
-                two steppers drop to their arrows and let the answer button —
-                the one you actually reach for — keep its label. */}
             <button
               type="button"
               className={`${btnGhostLg} disabled:cursor-not-allowed disabled:opacity-45`}
@@ -503,8 +449,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
               aria-label={isLast ? 'Finish' : 'Next card'}
               title={isLast ? 'Finish' : 'Next card'}
             >
-              {/* `Finish` keeps its label at every width: it ends the session
-                  rather than stepping, so an arrow alone would not say so. */}
               <span className={isLast ? undefined : 'max-[499px]:hidden'}>
                 {isLast ? 'Finish' : 'Next card'}
               </span>
@@ -523,7 +467,6 @@ function Player({ deck, isShuffled }: { deck: FlashcardDeck; isShuffled: boolean
   )
 }
 
-/** Studying one deck, a card at a time. */
 export function PlayDeckPage() {
   const { deckId } = useParams<{ deckId: string }>()
   const [searchParams] = useSearchParams()
@@ -552,7 +495,7 @@ export function PlayDeckPage() {
             <p className="mt-3 text-base text-text-muted">
               {isMissing
                 ? 'It may have been deleted, or it belongs to another account.'
-                : toFormMessage(deck.error)}
+                : toReasonMessage(deck.error)}
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               {!isMissing && (

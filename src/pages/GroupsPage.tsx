@@ -5,14 +5,14 @@ import { GroupCard } from '../components/GroupCard'
 import { GroupFormDialog } from '../components/GroupFormDialog'
 import { IconPlus } from '../components/icons'
 import { btnGhostSm, btnPrimarySm, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
-import { toFormMessage } from '../lib/apiErrors'
+import { toFormMessage, toReasonMessage } from '../lib/apiErrors'
+import { SEARCH_QUERY_MAX_LENGTH } from '../lib/validation'
 import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { useCreateGroup } from '../lib/groupMutations'
 import { useGroupsSearch } from '../lib/queries'
 import { useDebouncedValue } from '../lib/useDebouncedValue'
 import { plural } from '../lib/plural'
 
-/** Reads as a gap waiting to be filled, matching the library's empty panels. */
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-10 text-center text-sm text-text-muted'
 
@@ -30,9 +30,8 @@ function GroupSkeleton() {
 }
 
 /**
- * Every study group as a folder grid. Groups are a layer over the library
- * rather than a fourth kind of content, so they live here instead of joining
- * the library's Everything / Notes / Decks / Quizzes filter.
+ * Groups are a layer over the library rather than a fourth kind of content, so
+ * they live here instead of joining its Everything / Notes / Decks / Quizzes tabs.
  */
 export function GroupsPage() {
   const createGroup = useCreateGroup()
@@ -42,17 +41,12 @@ export function GroupsPage() {
   const [isCreating, setIsCreating] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  // Searching and paging are the backend's job. The debounced term keys the
-  // query, so a new term starts from page 0 with a fresh list of its own.
   const term = useDebouncedValue(search).trim()
   const isSearching = term.length > 0
   const groups = useGroupsSearch(term)
 
   const visible = groups.data?.pages.flatMap((page) => page.groups ?? []) ?? []
-  // Every page carries the same totals, so the first one answers for all.
   const total = groups.data?.pages[0]?.totalElements
-  // Only an unsearched, empty result means there are no groups at all; a search
-  // that matched nothing is answered by the grid below instead.
   const isEmpty = groups.isSuccess && !isSearching && total === 0
 
   function openCreate() {
@@ -95,13 +89,13 @@ export function GroupsPage() {
           </div>
         ) : (
           <>
-            {/* Kept mounted while a search runs, so the box never loses focus mid-typing. */}
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <input
                 type="search"
                 className={`${fieldInput} max-w-100 flex-1`}
                 placeholder="Search by name"
                 aria-label="Search your groups by name"
+                maxLength={SEARCH_QUERY_MAX_LENGTH}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -122,7 +116,7 @@ export function GroupsPage() {
               {groups.isError && (
                 <div className={`${surfaceCard} app-content-in grid justify-items-start gap-2.5 p-6`}>
                   <p className="text-sm text-text-muted">
-                    We could not load your groups. {toFormMessage(groups.error)}
+                    We could not load your groups. {toReasonMessage(groups.error)}
                   </p>
                   <button
                     type="button"
@@ -146,7 +140,6 @@ export function GroupsPage() {
                 </div>
               )}
 
-              {/* Paged by hand rather than on scroll, so nothing loads that was not asked for. */}
               {groups.isSuccess && groups.hasNextPage && (
                 <div className="mt-6 flex justify-center">
                   <button
@@ -177,8 +170,6 @@ export function GroupsPage() {
             createGroup.mutate(
               { name, description: description || null },
               {
-                // A new group is empty, so its own page — where Add content is
-                // the obvious next step — is the right place to land.
                 onSuccess: (group) => navigate(`/groups/${group.id}`),
                 onError: (error) => setCreateError(toFormMessage(error)),
               },
