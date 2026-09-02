@@ -8,6 +8,7 @@ import { TextField } from '../components/TextField'
 import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
 import { isStatus, toEmailSendMessage } from '../lib/apiErrors'
+import { useProductAnalytics } from '../lib/productAnalytics'
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -30,6 +31,7 @@ interface FieldErrors {
 }
 
 export function RegisterPage() {
+  const capture = useProductAnalytics()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -73,6 +75,7 @@ export function RegisterPage() {
       setPassword('')
       setConfirmPassword('')
       setRegisteredEmail(created.email)
+      capture('registration_submitted')
     } catch (error) {
       // A 409 means the address is already on a *verified* account. A pending
       // unverified registration answers the ordinary 202 with a fresh link, so

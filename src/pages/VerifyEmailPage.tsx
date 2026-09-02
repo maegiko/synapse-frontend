@@ -8,6 +8,7 @@ import { IconCheck } from '../components/icons'
 import { btnPrimaryLg, successAlert } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { useProductAnalytics } from '../lib/productAnalytics'
 
 const ASIDE_BULLETS = [
   'Confirming your address is the last step of signing up.',
@@ -35,6 +36,7 @@ export function VerifyEmailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { status, adoptSession, refreshUser } = useAuth()
+  const capture = useProductAnalytics()
 
   // A visit with no token in the URL has nothing to check and never calls the
   // backend: it is decided here, in the first render, rather than in an effect.
@@ -74,12 +76,11 @@ export function VerifyEmailPage() {
       return
     }
     requested.current = true
+    // The analytics SDK includes the current URL with an event. Remove the raw
+    // credential before the request or any successful event can be captured.
+    setSearchParams({}, { replace: true })
 
     const wasSignedIn = status === 'authenticated'
-    // Set when the page leaves for the app, so the cleanup below does not touch
-    // a URL this page no longer owns.
-    let leaving = false
-
     void (async () => {
       try {
         const confirmed = await api.auth.verifyEmail(token)
@@ -90,10 +91,10 @@ export function VerifyEmailPage() {
           // account is signed in here and goes straight into the app without
           // ever typing the password a second time.
           adoptSession(confirmed)
+          capture('email_verified')
           setOutcome('confirmed')
           // `replace`, so this history entry and the token in it are gone: back
           // never returns to a spent link.
-          leaving = true
           navigate('/dashboard', { replace: true })
           return
         }
@@ -120,13 +121,9 @@ export function VerifyEmailPage() {
             : toFormMessage(error),
         )
         setOutcome('failed')
-      } finally {
-        // The token has been used and must not sit in the address bar, the
-        // history entry, or anything the page is later shared or reloaded from.
-        if (!leaving) setSearchParams({}, { replace: true })
       }
     })()
-  }, [searchParams, setSearchParams, status, adoptSession, navigate, refreshUser])
+  }, [searchParams, setSearchParams, status, adoptSession, navigate, refreshUser, capture])
 
   return (
     <AuthLayout

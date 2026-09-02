@@ -4,6 +4,7 @@ import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { api } from '../api'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
+import { useProductAnalytics } from '../lib/productAnalytics'
 
 const STEPS: GenerationStep[] = [
   { afterMs: 0, label: 'Reading your note…' },
@@ -19,6 +20,7 @@ const TIPS = [
 
 export function NewDeckPage() {
   const { recordQualifyingAction } = useStreakCelebration()
+  const capture = useProductAnalytics()
 
   return (
     <GenerateFromNote
@@ -31,6 +33,7 @@ export function NewDeckPage() {
       tips={TIPS}
       onGenerate={async (note) => {
         const deck = await recordQualifyingAction(() => api.flashcards.generate(note.id))
+        capture('flashcard_deck_generated')
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
         // The generation response has no card IDs, so the deck page fetches the
         // saved deck itself; we only hand it the destination.

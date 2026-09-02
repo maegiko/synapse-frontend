@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { ProductAnalyticsProvider } from './components/ProductAnalyticsProvider'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -12,7 +13,9 @@ createRoot(document.getElementById('root')!).render(
       empty document.
     */}
     <AppErrorBoundary>
-      <App />
+      <ProductAnalyticsProvider>
+        <App />
+      </ProductAnalyticsProvider>
     </AppErrorBoundary>
   </StrictMode>,
 )

@@ -15,6 +15,7 @@ import { DASHBOARD_BACK, useTrailNavigate } from '../lib/backTrail'
 import { MAX_FILE_BYTES, formatFileSize, validateNoteFile, withDeclaredType } from '../lib/noteFiles'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
+import { useProductAnalytics } from '../lib/productAnalytics'
 
 /**
  * Generation is one synchronous request with nothing to report on, so the wait
@@ -58,6 +59,7 @@ export function NewNotePage() {
   // the trail and its back link names wherever the visitor started.
   const navigate = useTrailNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
+  const capture = useProductAnalytics()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [file, setFile] = useState<File | null>(null)
@@ -68,6 +70,7 @@ export function NewNotePage() {
     mutationFn: (chosen: File) =>
       recordQualifyingAction(() => api.notes.summarise(withDeclaredType(chosen))),
     onSuccess: (note) => {
+      capture('note_created')
       // The response is the complete summary, so the detail view can render
       // immediately instead of refetching what we already hold.
       queryClient.setQueryData(queryKeys.note(note.id), note)

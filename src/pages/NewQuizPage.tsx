@@ -4,6 +4,7 @@ import { useStreakCelebration } from '../components/StreakCelebrationContext'
 import { api } from '../api'
 import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
+import { useProductAnalytics } from '../lib/productAnalytics'
 
 const STEPS: GenerationStep[] = [
   { afterMs: 0, label: 'Reading your note…' },
@@ -19,6 +20,7 @@ const TIPS = [
 
 export function NewQuizPage() {
   const { recordQualifyingAction } = useStreakCelebration()
+  const capture = useProductAnalytics()
 
   return (
     <GenerateFromNote
@@ -31,6 +33,7 @@ export function NewQuizPage() {
       tips={TIPS}
       onGenerate={async (note) => {
         const quiz = await recordQualifyingAction(() => api.quiz.generate(note.id))
+        capture('quiz_generated')
         // The generation response is the whole quiz, so the detail view can
         // render it without a refetch.
         queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)

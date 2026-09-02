@@ -8,6 +8,7 @@ import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, isUnverifiedAccount, toFormMessage } from '../lib/apiErrors'
+import { useProductAnalytics } from '../lib/productAnalytics'
 import { validateEmail, validatePassword } from '../lib/validation'
 
 const ASIDE_BULLETS = [
@@ -18,6 +19,7 @@ const ASIDE_BULLETS = [
 
 export function LoginPage() {
   const { login } = useAuth()
+  const capture = useProductAnalytics()
   const navigate = useNavigate()
   const location = useLocation()
   const redirectTo = (location.state as { from?: string } | null)?.from ?? '/dashboard'
@@ -49,6 +51,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       await login(email, password)
+      capture('login_succeeded')
       navigate(redirectTo, { replace: true })
     } catch (error) {
       // The right password on an account that never confirmed its address. It
