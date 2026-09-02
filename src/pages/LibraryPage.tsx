@@ -6,9 +6,20 @@ import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { LibraryCard } from '../components/LibraryCard'
 import { DifficultyStars } from '../components/DifficultyStars'
-import { IconArrowRight, IconDeck, IconNote, IconPin, IconQuiz } from '../components/icons'
+import {
+  IconArrowRight,
+  IconCard,
+  IconChart,
+  IconCheck,
+  IconDeck,
+  IconNote,
+  IconPin,
+  IconQuiz,
+  IconSummary,
+} from '../components/icons'
 import { btnGhostSm, btnPrimaryLg, cardLink, fieldInput, shell, surfaceCard } from '../components/ui'
-import { toFormMessage } from '../lib/apiErrors'
+import { toReasonMessage } from '../lib/apiErrors'
+import { SEARCH_QUERY_MAX_LENGTH } from '../lib/validation'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { pinnedSlice } from '../lib/pinned'
@@ -23,7 +34,6 @@ import {
 import type { UseInfiniteQueryResult } from '@tanstack/react-query'
 
 type Kind = 'all' | 'notes' | 'decks' | 'quizzes'
-/** The three content types, i.e. every kind but the "everything" view. */
 type ContentKind = Exclude<Kind, 'all'>
 
 const KINDS: { value: Kind; label: string }[] = [
@@ -74,7 +84,6 @@ function CardSkeleton() {
   )
 }
 
-/** The slice of an infinite query's state these helpers and sections read. */
 type PagedQuery = Pick<
   UseInfiniteQueryResult,
   | 'isPending'
@@ -89,18 +98,10 @@ type PagedQuery = Pick<
 >
 
 /**
- * Completes the pinned view of one paged section.
- *
- * The list endpoints have no pinned-only parameter, but they do order pinned
- * records first and keep that order across pages, so the pinned records are a
- * prefix of the page sequence. Pulling pages until an unpinned record appears —
- * or until the pages run out — therefore reaches every pinned record without
- * walking the whole library.
- *
- * It cannot loop: each fetch either closes the prefix, exhausts `hasNextPage`,
- * or fails, and all three switch `needsMore` off. Nothing is fetched at all
- * while the filter is inactive, while a fetch is already in flight, or for a
- * content type the current type filter is hiding.
+ * Completes the pinned view of one paged section. The list endpoints have no
+ * pinned-only parameter, but they order pinned records first and keep that order
+ * across pages, so pulling pages until an unpinned record appears reaches every
+ * pinned one without walking the whole library.
  */
 function useCompletePinnedPages(enabled: boolean, isComplete: boolean, query: PagedQuery): void {
   const { hasNextPage, isFetchingNextPage, isError, isFetchNextPageError, fetchNextPage } = query
@@ -119,20 +120,15 @@ function useCompletePinnedPages(enabled: boolean, isComplete: boolean, query: Pa
 
 interface SectionProps {
   title: string
-  /** The paged query behind this section, so one place handles all of its states. */
   query: PagedQuery
   /**
-   * How many records this section has in total: the search's `totalElements`
-   * normally, and the pinned count once the pinned prefix is fully loaded.
-   * `undefined` while that is still unknown, so no inaccurate count is shown.
+   * The search's `totalElements`, or the pinned count once that prefix is loaded.
+   * Undefined while it is unknown, so no inaccurate count is shown.
    */
   total: number | undefined
   shown: number
-  /** Already resolved for the active search and pinned filters. */
   emptyMessage: string
-  /** Hidden in the pinned view: a further page can only hold unpinned records. */
   showLoadMore: boolean
-  /** True while the pinned view is pulling the rest of the pinned prefix itself. */
   isAutoLoading: boolean
   children: ReactNode
 }
@@ -151,7 +147,6 @@ function Section({
 
   return (
     <section className="mt-12 first:mt-10">
-      {/* No count here — the filter tabs above already carry it. */}
       <h2 className="mb-5 text-xl">{title}</h2>
 
       {query.isPending && (
@@ -165,7 +160,7 @@ function Section({
       {query.isError && (
         <div className={`${surfaceCard} app-content-in grid justify-items-start gap-2.5 p-6`}>
           <p className="text-sm text-text-muted">
-            We could not load these. {toFormMessage(query.error)}
+            We could not load these. {toReasonMessage(query.error)}
           </p>
           <button
             type="button"
@@ -177,7 +172,6 @@ function Section({
         </div>
       )}
 
-      {/* Nothing saved and nothing matched read differently, so they say different things. */}
       {isSettled && total === 0 && (
         <p className={`${placeholderPanel} app-content-in`}>{emptyMessage}</p>
       )}
@@ -186,7 +180,6 @@ function Section({
         <div className="app-content-in grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{children}</div>
       )}
 
-      {/* Paged by hand rather than on scroll, so nothing loads that was not asked for. */}
       {isSettled && showLoadMore && (
         <div className="mt-6 flex justify-center">
           <button
@@ -200,7 +193,6 @@ function Section({
         </div>
       )}
 
-      {/* The pinned view pages itself, so it reports rather than asks. */}
       {isSettled && !showLoadMore && isAutoLoading && (
         <p className="mt-6 text-center text-sm text-text-muted" role="status">
           Loading the rest of your pinned items…
@@ -211,17 +203,12 @@ function Section({
 }
 
 export function LibraryPage() {
-  // The filters live in the URL, so they survive a refresh and the back button,
-  // and the dashboard can link straight to one kind.
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const kindParam = searchParams.get('type')
   const kind: Kind = isKind(kindParam) ? kindParam : 'all'
   const pinnedOnly = searchParams.get(PINNED_PARAM) === PINNED_VALUE
 
-  // Searching and paging are the backend's job now. The debounced term is what
-  // the three queries are keyed on, so typing settles into one request per kind
-  // and a new term starts from page 0 with a fresh list rather than appending.
   const [search, setSearch] = useState('')
   const term = useDebouncedValue(search).trim()
   const isSearching = term.length > 0
@@ -235,7 +222,6 @@ export function LibraryPage() {
   const loadedDecks = decks.data?.pages.flatMap((page) => page.flashcardDecks ?? []) ?? []
   const loadedQuizzes = quizzes.data?.pages.flatMap((page) => page.quizzes ?? []) ?? []
 
-  // The pinned prefix of each section, and whether all of it has been reached.
   const notePins = pinnedSlice(loadedNotes, notes)
   const deckPins = pinnedSlice(loadedDecks, decks)
   const quizPins = pinnedSlice(loadedQuizzes, quizzes)
@@ -244,8 +230,6 @@ export function LibraryPage() {
   const showDecks = kind === 'all' || kind === 'decks'
   const showQuizzes = kind === 'all' || kind === 'quizzes'
 
-  // Only the sections actually on screen are completed, so switching to one
-  // type never pulls extra pages for the two it hides.
   useCompletePinnedPages(pinnedOnly && showNotes, notePins.isComplete, notes)
   useCompletePinnedPages(pinnedOnly && showDecks, deckPins.isComplete, decks)
   useCompletePinnedPages(pinnedOnly && showQuizzes, quizPins.isComplete, quizzes)
@@ -254,19 +238,14 @@ export function LibraryPage() {
   const visibleDecks = pinnedOnly ? deckPins.items : loadedDecks
   const visibleQuizzes = pinnedOnly ? quizPins.items : loadedQuizzes
 
-  // Every page of a query carries the same totals, so the first one answers for all.
   const noteTotal = notes.data?.pages[0]?.totalElements
   const deckTotal = decks.data?.pages[0]?.totalElements
   const quizTotal = quizzes.data?.pages[0]?.totalElements
 
   const allLoaded = notes.isSuccess && decks.isSuccess && quizzes.isSuccess
-  // Only an unsearched, empty result means the library itself is empty; a search
-  // that matched nothing is answered inside each section instead.
   const isLibraryEmpty =
     allLoaded && !isSearching && noteTotal === 0 && deckTotal === 0 && quizTotal === 0
 
-  // In the pinned view a section can only be counted once its pinned prefix is
-  // complete; until then it has no number rather than a misleading one.
   function pinnedCount(slice: { items: unknown[]; isComplete: boolean }): number | undefined {
     return slice.isComplete ? slice.items.length : undefined
   }
@@ -296,14 +275,9 @@ export function LibraryPage() {
     if (nextKind !== 'all') params.type = nextKind
     if (nextPinned) params[PINNED_PARAM] = PINNED_VALUE
 
-    // `replace`, so flicking through filters does not stack up history entries.
-    // The location state is carried over by hand: `setSearchParams` drops it
-    // otherwise, and with it the trail this page's own back link is read from.
     setSearchParams(params, { replace: true, state: location.state })
   }
 
-  // While a search is running these are match counts rather than library totals,
-  // which is what the tabs should say when the sections below are filtered.
   const counts: Record<Kind, number | undefined> = {
     all: pinnedOnly
       ? everyCount
@@ -322,8 +296,6 @@ export function LibraryPage() {
     return pinnedOnly ? PINNED_EMPTY_MESSAGES[contentKind] : EMPTY_MESSAGES[contentKind]
   }
 
-  // One panel rather than three near-identical ones when the pinned view, over
-  // whichever types are on screen, has settled on nothing at all.
   const shownPinnedSlices = [
     showNotes ? notePins : null,
     showDecks ? deckPins : null,
@@ -362,6 +334,7 @@ export function LibraryPage() {
                 className={`${fieldInput} max-w-100 flex-1`}
                 placeholder="Search by title"
                 aria-label="Search your library by title"
+                maxLength={SEARCH_QUERY_MAX_LENGTH}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
@@ -397,8 +370,6 @@ export function LibraryPage() {
                 })}
               </div>
 
-              {/* Its own control, not a fifth tab: pinning narrows whichever
-                  type is selected rather than replacing the selection. */}
               <button
                 type="button"
                 aria-pressed={pinnedOnly}
@@ -447,9 +418,21 @@ export function LibraryPage() {
                         preview={note.overview}
                         pinned={note.pinned}
                         facts={[
-                          plural(note.keypoints.length, 'key point'),
-                          plural(note.concepts.length, 'concept'),
-                          plural(note.importantTerms.length, 'term'),
+                          {
+                            key: 'key-points',
+                            icon: <IconCheck />,
+                            content: plural(note.keypoints.length, 'key point'),
+                          },
+                          {
+                            key: 'concepts',
+                            icon: <IconSummary />,
+                            content: plural(note.concepts.length, 'concept'),
+                          },
+                          {
+                            key: 'terms',
+                            icon: <IconNote />,
+                            content: plural(note.importantTerms.length, 'term'),
+                          },
                         ]}
                       />
                     ))}
@@ -476,7 +459,13 @@ export function LibraryPage() {
                         // `title` on a saved flashcard is the question, not a heading.
                         preview={deck.flashcards[0]?.title}
                         pinned={deck.pinned}
-                        facts={[plural(deck.flashcards.length, 'card')]}
+                        facts={[
+                          {
+                            key: 'cards',
+                            icon: <IconCard />,
+                            content: plural(deck.flashcards.length, 'card'),
+                          },
+                        ]}
                       />
                     ))}
                   </Section>
@@ -502,14 +491,22 @@ export function LibraryPage() {
                         preview={quiz.description}
                         pinned={quiz.pinned}
                         facts={[
-                          plural(quiz.questions.length, 'question'),
-                          quiz.difficulty === null ? (
-                            'No difficulty set'
-                          ) : (
-                            <DifficultyStars value={quiz.difficulty} />
-                          ),
+                          {
+                            key: 'questions',
+                            icon: <IconQuiz />,
+                            content: plural(quiz.questions.length, 'question'),
+                          },
+                          {
+                            key: 'difficulty',
+                            icon: <IconChart />,
+                            content:
+                              quiz.difficulty === null ? (
+                                'No difficulty set'
+                              ) : (
+                                <DifficultyStars value={quiz.difficulty} />
+                              ),
+                          },
                         ]}
-                        // Quizzes are the only listed resource the API timestamps.
                         timestamp={formatRelative(quiz.createdAt, timeZone)}
                       />
                     ))}
