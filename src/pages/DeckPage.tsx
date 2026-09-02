@@ -7,11 +7,14 @@ import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { CardEditDialog } from '../components/CardEditDialog'
 import { DeckEditDialog } from '../components/DeckEditDialog'
+import { DetailMetadata } from '../components/DetailMetadata'
 import { FormAlert } from '../components/FormAlert'
 import { GroupMembershipControl } from '../components/GroupMembershipControl'
 import { PinToggle } from '../components/PinToggle'
 import {
   IconArrowRight,
+  IconCard,
+  IconCheck,
   IconPencil,
   IconPlay,
   IconPlus,
@@ -32,9 +35,11 @@ import {
   fieldInputInvalid,
   fieldLabel,
   shell,
+  successAlert,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toReasonMessage } from '../lib/apiErrors'
+import { FLASHCARD_SIDE_MAX_LENGTH, validateFlashcardSide } from '../lib/validation'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { usePinDeck } from '../lib/pinMutations'
 import { plural } from '../lib/plural'
@@ -54,10 +59,8 @@ import type {
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
 
-/** An empty deck is the one case where playing is not possible. */
 const PLAY_EMPTY_REASON = 'Add a card before you can play this deck.'
 
-/** Matches the note skeleton, so a cold load reads the same on either page. */
 function DeckSkeleton() {
   return (
     <div className="grid gap-6" aria-hidden="true">
@@ -77,7 +80,6 @@ function DeckSkeleton() {
 interface CardRowProps {
   card: SavedFlashcard
   position: number
-  /** Card-level deletes are confirmed one at a time, so only one row opens. */
   isConfirming: boolean
   isDeleting: boolean
   disabled: boolean
@@ -105,15 +107,10 @@ function CardRow({
       }`}
     >
       <div className="flex items-start gap-4">
-        {/* Fixed width so a two-digit number never shifts the content column. */}
         <span className="mt-0.5 w-6 shrink-0 text-right text-xs font-bold text-text-muted tabular-nums">
           {position}
         </span>
         <div className="min-w-0 flex-1">
-          {/*
-           * Only the question side is shown. Answers stay hidden here so the
-           * deck is not spoiled before it is studied; `title` is the question.
-           */}
           <p className="max-w-[72ch] text-sm font-bold text-text">{card.title}</p>
         </div>
         <div className="flex shrink-0 items-start gap-1">
@@ -169,12 +166,14 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   const questionId = useId()
   const answerId = useId()
   const questionRef = useRef<HTMLInputElement>(null)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   const [isAdding, setIsAdding] = useState(false)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{ question?: string; answer?: string }>({})
   const [justAdded, setJustAdded] = useState(false)
+  const [justPinned, setJustPinned] = useState(false)
   const [actionError, setActionError] = useState('')
   const [confirmingCardId, setConfirmingCardId] = useState<string | null>(null)
   const [isConfirmingDeck, setIsConfirmingDeck] = useState(false)
@@ -187,7 +186,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   const cards = deck.flashcards ?? []
   const editingCard = editingCardId ? cards.find((card) => card.id === editingCardId) : undefined
 
-  /** Both mutations change the card count the dashboard and library show. */
   async function refreshDeck() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDeck(deck.deckId) })
     void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
@@ -200,6 +198,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       setQuestion('')
       setAnswer('')
       setJustAdded(true)
+      setIsAdding(false)
       await refreshDeck()
     },
     onError: (error) => setActionError(messageForCardFailure(error, 'add')),
@@ -208,9 +207,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   const updateDeck = useMutation({
     mutationFn: (body: UpdateDeckRequest) => api.flashcards.updateDeck(deck.deckId, body),
     onSuccess: (updated) => {
-      // The response is the whole updated deck, so the detail view is current at
-      // once. The list feeds the library, dashboard, and any group; the review
-      // queue shows the deck title too.
       queryClient.setQueryData(queryKeys.flashcardDeck(deck.deckId), updated)
       void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue, exact: true })
@@ -223,7 +219,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       setDeckEditError(
         isStatus(error, 404)
           ? 'This deck no longer exists. It may have just been deleted.'
-          : `We could not rename this deck. ${toFormMessage(error)}`,
+          : `We could not rename this deck. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -233,8 +229,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       api.flashcards.updateCard(deck.deckId, vars.cardId, vars.body),
     onSuccess: async () => {
       setEditingCardId(null)
-      // Refetching keeps the cards in the backend's saved position order and
-      // maps its `question` field back to the deck's `title`.
       await refreshDeck()
     },
     onError: (error) => setCardEditError(messageForCardFailure(error, 'edit')),
@@ -259,22 +253,15 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: queryKeys.flashcardDeck(deck.deckId) })
 
-      // A successful delete is definitive, so remove the deck from the cached
-      // queue before navigating. Invalidating alone would leave the stale row
-      // visible while the background refetch settles.
       queryClient.setQueryData<ReviewQueueDeck[]>(queryKeys.reviewQueue, (current) =>
         current?.filter((queuedDeck) => queuedDeck.deckId !== deck.deckId),
       )
 
       void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
       void queryClient.invalidateQueries({ queryKey: queryKeys.reviewQueue, exact: true })
-      // Mastery, overdue totals, and the due forecast all describe the deck
-      // library as it stands now.
       void queryClient.invalidateQueries({ queryKey: queryKeys.analytics })
 
       if (deck.groupId) {
-        // The group survives, but its contents and list-card count both lose
-        // this deck.
         void queryClient.invalidateQueries({ queryKey: queryKeys.group(deck.groupId) })
         void queryClient.invalidateQueries({ queryKey: queryKeys.groups, exact: true })
       }
@@ -286,7 +273,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
       setActionError(
         isStatus(error, 404)
           ? 'That deck has already been deleted.'
-          : `We could not delete this deck. ${toFormMessage(error)}`,
+          : `We could not delete this deck. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -299,26 +286,30 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
     updateCard.isPending ||
     pinDeck.isPending
 
-  // Matches the profile form: the submit only lights up once both fields hold
-  // something to send.
   const canAddCard = question.trim() !== '' && answer.trim() !== ''
 
-  // Cards are usually added in runs, so the form stays open and takes focus
-  // back. It has to wait for the request to settle, since the input is disabled
-  // until then and a disabled input cannot be focused.
   useEffect(() => {
-    if (justAdded && !addCard.isPending) questionRef.current?.focus()
+    if (isAdding) questionRef.current?.focus()
+  }, [isAdding])
+
+  useEffect(() => {
+    if (justAdded && !addCard.isPending) addButtonRef.current?.focus()
   }, [justAdded, addCard.isPending])
+
+  function clearActionFeedback() {
+    setActionError('')
+    setJustAdded(false)
+    setJustPinned(false)
+  }
 
   function handleAddCard(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setActionError('')
-    setJustAdded(false)
+    clearActionFeedback()
 
-    // The backend requires both fields nonblank, so whitespace is not enough.
-    const nextErrors: { question?: string; answer?: string } = {}
-    if (!question.trim()) nextErrors.question = 'Write the question for this card.'
-    if (!answer.trim()) nextErrors.answer = 'Write the answer for this card.'
+    const nextErrors: { question?: string; answer?: string } = {
+      question: validateFlashcardSide(question, 'question') ?? undefined,
+      answer: validateFlashcardSide(answer, 'answer') ?? undefined,
+    }
     setFieldErrors(nextErrors)
     if (nextErrors.question || nextErrors.answer) return
 
@@ -326,8 +317,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   }
 
   function toggleAddForm() {
-    setActionError('')
-    setJustAdded(false)
+    clearActionFeedback()
     setFieldErrors({})
     setIsAdding((open) => !open)
   }
@@ -335,9 +325,16 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   return (
     <>
       <h1 className="text-3xl">{deck.title}</h1>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className={countPill}>{plural(cards.length, 'card')}</span>
-      </div>
+      <DetailMetadata
+        className="mt-3"
+        items={[
+          {
+            key: 'cards',
+            icon: <IconCard />,
+            content: plural(cards.length, 'card'),
+          },
+        ]}
+      />
 
       <div className="mt-3">
         <GroupMembershipControl
@@ -348,8 +345,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
         />
       </div>
 
-      {/* Playback mode and Play deck on the left; card management pushed to the
-          right. Bottom-aligned so the "Playback mode" label sits above. */}
       <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex flex-wrap items-end gap-3">
           <PlaybackModeControl
@@ -379,6 +374,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
 
         <div className="flex flex-wrap items-end gap-3">
           <button
+            ref={addButtonRef}
             type="button"
             className={btnGhostSm}
             onClick={toggleAddForm}
@@ -393,13 +389,14 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             isPending={pinDeck.isPending}
             disabled={isBusy || isConfirmingDeck}
             onToggle={(next) => {
-              setActionError('')
+              clearActionFeedback()
               pinDeck.mutate(next, {
+                onSuccess: () => setJustPinned(next),
                 onError: (error) =>
                   setActionError(
                     isStatus(error, 404)
                       ? 'This deck no longer exists. It may have just been deleted.'
-                      : `We could not ${next ? 'pin' : 'unpin'} this deck. ${toFormMessage(error)}`,
+                      : `We could not ${next ? 'pin' : 'unpin'} this deck. ${toReasonMessage(error)}`,
                   ),
               })
             }}
@@ -420,7 +417,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
             type="button"
             className={btnDangerGhostSm}
             onClick={() => {
-              setActionError('')
+              clearActionFeedback()
               setIsConfirmingDeck(true)
             }}
             disabled={isBusy || isConfirmingDeck}
@@ -436,6 +433,20 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}
+
+        {justAdded && !addCard.isPending && (
+          <p className={successAlert} role="status">
+            <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+            <span>Card added. It is at the end of the deck.</span>
+          </p>
+        )}
+
+        {justPinned && (
+          <p className={successAlert} role="status">
+            <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+            <span>Pinned. It now shows first in your library.</span>
+          </p>
+        )}
 
         {isConfirmingDeck && (
           <section className="rounded-md border border-error-solid bg-error-soft p-6">
@@ -484,6 +495,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
                   value={question}
                   onChange={(event) => setQuestion(event.target.value)}
                   placeholder="What is a cell?"
+                  maxLength={FLASHCARD_SIDE_MAX_LENGTH}
                   disabled={addCard.isPending}
                   aria-invalid={fieldErrors.question ? true : undefined}
                   aria-describedby={fieldErrors.question ? `${questionId}-error` : undefined}
@@ -506,6 +518,7 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
                   onChange={(event) => setAnswer(event.target.value)}
                   placeholder="The basic unit of life."
                   rows={3}
+                  maxLength={FLASHCARD_SIDE_MAX_LENGTH}
                   disabled={addCard.isPending}
                   aria-invalid={fieldErrors.answer ? true : undefined}
                   aria-describedby={fieldErrors.answer ? `${answerId}-error` : undefined}
@@ -536,9 +549,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
               >
                 Done
               </button>
-              <p className="text-sm font-bold text-success-solid" role="status" aria-live="polite">
-                {justAdded && !addCard.isPending ? 'Card added.' : ''}
-              </p>
               {!canAddCard && !addCard.isPending && (
                 <span className="text-xs text-text-muted">Fill in both fields to add the card.</span>
               )}
@@ -569,13 +579,13 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
                   isDeleting={deleteCard.isPending && deleteCard.variables === card.id}
                   disabled={isBusy || isConfirmingDeck}
                   onAskEdit={() => {
-                    setActionError('')
+                    clearActionFeedback()
                     setCardEditError('')
                     setConfirmingCardId(null)
                     setEditingCardId(card.id)
                   }}
                   onAskDelete={() => {
-                    setActionError('')
+                    clearActionFeedback()
                     setConfirmingCardId(card.id)
                   }}
                   onCancelDelete={() => setConfirmingCardId(null)}
@@ -616,7 +626,6 @@ function DeckContent({ deck }: { deck: FlashcardDeck }) {
   )
 }
 
-/** Card-level failures, which are all recoverable without leaving the page. */
 function messageForCardFailure(error: unknown, action: 'add' | 'edit' | 'delete'): string {
   if (isStatus(error, 404)) {
     if (action === 'add') return 'This deck no longer exists, so the card was not saved.'
@@ -628,12 +637,11 @@ function messageForCardFailure(error: unknown, action: 'add' | 'edit' | 'delete'
   if (isStatus(error, 400)) {
     return 'A card needs both a question and an answer.'
   }
-  if (action === 'add') return `We could not add that card. ${toFormMessage(error)}`
-  if (action === 'edit') return `We could not save that card. ${toFormMessage(error)}`
-  return `We could not delete that card. ${toFormMessage(error)}`
+  if (action === 'add') return `We could not add that card. ${toReasonMessage(error)}`
+  if (action === 'edit') return `We could not save that card. ${toReasonMessage(error)}`
+  return `We could not delete that card. ${toReasonMessage(error)}`
 }
 
-/** One saved deck: its cards, and every action that changes them. */
 export function DeckPage() {
   const { deckId } = useParams<{ deckId: string }>()
   const deck = useFlashcardDeck(deckId)
@@ -658,7 +666,7 @@ export function DeckPage() {
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
                   ? 'It may have been deleted, or it belongs to another account.'
-                  : toFormMessage(deck.error)}
+                  : toReasonMessage(deck.error)}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 {!isMissing && (
