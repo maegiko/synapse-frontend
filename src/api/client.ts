@@ -1,50 +1,42 @@
 import { API_BASE_URL, API_PATHS } from './config'
 import { getAccessToken, setAccessToken } from './tokenStore'
+import { NETWORK_ERROR_STATUS, standardErrorMessage } from '../lib/errorMessages'
 import type { ApiErrorBody, RefreshResponse } from './types'
 
-/** Status used for failures that never reached the backend (offline, CORS, DNS). */
-export const NETWORK_ERROR_STATUS = 0
+export { NETWORK_ERROR_STATUS }
 
 export class ApiError extends Error {
   readonly status: number
   readonly retryAfterSeconds: number | null
+  /**
+   * What the backend said, never shown. Its wording is not a contract and it
+   * names server-side fields, so `message` carries the app's own copy instead.
+   */
+  readonly serverMessage: string | null
 
-  constructor(status: number, message: string, retryAfterSeconds: number | null = null) {
-    super(message)
+  constructor(
+    status: number,
+    retryAfterSeconds: number | null = null,
+    serverMessage: string | null = null,
+  ) {
+    super(standardErrorMessage(status, retryAfterSeconds))
     this.name = 'ApiError'
     this.status = status
     this.retryAfterSeconds = retryAfterSeconds
+    this.serverMessage = serverMessage
   }
 }
 
 interface RequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  /** Serialized as a JSON body with the matching Content-Type. */
   json?: unknown
-  /**
-   * Multipart body. The Content-Type header is deliberately left unset so the
-   * browser can add the multipart boundary itself.
-   */
+  /** Content-Type is left unset so the browser adds the multipart boundary. */
   formData?: FormData
-  /** Attach the bearer access token, and refresh-and-retry once on 401. */
+  /** Attach the bearer token, and refresh-and-retry once on 401. */
   authenticated?: boolean
-  /** Required for every /api/auth call so the refresh cookie is sent and stored. */
+  /** Required for every /api/auth call so the refresh cookie is sent. */
   withRefreshCookie?: boolean
   signal?: AbortSignal
-}
-
-const DEFAULT_MESSAGES: Record<number, string> = {
-  400: 'Some of the details you entered are not valid.',
-  401: 'Your session has expired. Please log in again.',
-  404: 'We could not find what you were looking for.',
-  409: 'That already belongs to another account.',
-  413: 'That file is too large to upload.',
-  429: 'Too many attempts. Please wait a moment and try again.',
-  502: 'The AI service is unavailable right now. Please try again.',
-}
-
-function messageForStatus(status: number): string {
-  return DEFAULT_MESSAGES[status] ?? 'Something went wrong. Please try again.'
 }
 
 function parseRetryAfter(header: string | null): number | null {
@@ -55,17 +47,17 @@ function parseRetryAfter(header: string | null): number | null {
 
 /** Tolerates an empty body or a non-domain error shape, per the API contract. */
 async function toApiError(response: Response): Promise<ApiError> {
-  let message = ''
+  let serverMessage: string | null = null
   try {
     const body = (await response.json()) as Partial<ApiErrorBody> | null
-    if (body && typeof body.message === 'string') message = body.message
+    if (body && typeof body.message === 'string') serverMessage = body.message
   } catch {
     // Spring Security can answer 401 with no body at all.
   }
   return new ApiError(
     response.status,
-    message || messageForStatus(response.status),
     parseRetryAfter(response.headers.get('Retry-After')),
+    serverMessage,
   )
 }
 
@@ -85,8 +77,6 @@ async function send(path: string, config: RequestConfig): Promise<Response> {
     headers.set('Content-Type', 'application/json')
     body = JSON.stringify(config.json)
   } else if (config.formData) {
-    // No Content-Type here on purpose; see RequestConfig.formData. FormData is
-    // re-sendable, so a refresh-and-retry can reuse this same body.
     body = config.formData
   }
   if (config.authenticated) {
@@ -104,19 +94,13 @@ async function send(path: string, config: RequestConfig): Promise<Response> {
     })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') throw error
-    throw new ApiError(
-      NETWORK_ERROR_STATUS,
-      'We could not reach the server. Check your connection and try again.',
-    )
+    throw new ApiError(NETWORK_ERROR_STATUS)
   }
 }
 
 let refreshInFlight: Promise<string> | null = null
 
-/**
- * One shared refresh at a time. Refresh tokens rotate on every use, so two
- * concurrent calls would make one of them fail.
- */
+/** Refresh tokens rotate on every use, so only one refresh may be in flight. */
 export function refreshAccessToken(): Promise<string> {
   refreshInFlight ??= (async () => {
     try {
@@ -138,8 +122,6 @@ export function refreshAccessToken(): Promise<string> {
 export async function apiRequest<T>(path: string, config: RequestConfig = {}): Promise<T> {
   let response = await send(path, config)
 
-  // At most one refresh-and-retry per request, and never for the refresh call
-  // itself (it is not `authenticated`), so this cannot recurse.
   if (response.status === 401 && config.authenticated) {
     try {
       await refreshAccessToken()
