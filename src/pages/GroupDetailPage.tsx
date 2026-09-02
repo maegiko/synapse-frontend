@@ -5,12 +5,14 @@ import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DetailMetadata } from '../components/DetailMetadata'
 import { FormAlert } from '../components/FormAlert'
 import { GroupContentPickerDialog } from '../components/GroupContentPickerDialog'
 import { GroupFormDialog } from '../components/GroupFormDialog'
 import { PinnedIndicator } from '../components/PinnedIndicator'
 import {
   IconArrowRight,
+  IconClock,
   IconDeck,
   IconNote,
   IconPencil,
@@ -29,7 +31,7 @@ import {
   shell,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toFormMessage, toReasonMessage } from '../lib/apiErrors'
 import { useDeleteGroup, useRemoveFromGroup, useUpdateGroup } from '../lib/groupMutations'
 import { formatRelative } from '../lib/formatDate'
 import { pinnedFirst } from '../lib/pinned'
@@ -37,7 +39,6 @@ import { plural } from '../lib/plural'
 import { useGroup, useUserTimeZone } from '../lib/queries'
 import type { GroupContentKind, StudyGroupContentItem, StudyGroupDetail } from '../api'
 
-/** The groups page is where a deleted group's visitor is sent, and the fallback. */
 const GROUPS_BACK = { to: '/groups', label: 'your groups' }
 
 const DELETE_TITLE = 'Delete this group?'
@@ -62,18 +63,9 @@ function GroupSkeleton() {
 }
 
 /**
- * One row of group content. Items are uniform across the three kinds — `id` and
- * `title`, decks included — so the link path is the only thing that varies.
- *
- * The card holds two separate targets: opening the resource, and taking it out
- * of this group. A button cannot sit inside an anchor, so the link covers the
- * card through a stretched overlay and the remove button is lifted above it —
- * the whole card still opens the resource, and each control keeps its own
- * accessible name.
- *
- * The pinned mark sits between the two: a static indicator under the stretched
- * link, so the only things that can be clicked here are still the resource and
- * the remove button.
+ * One row of group content. The card holds two targets, opening the resource and
+ * taking it out of the group, and a button cannot sit inside an anchor, so the
+ * link covers the card through a stretched overlay with the button above it.
  */
 function ContentCard({
   item,
@@ -88,10 +80,8 @@ function ContentCard({
   to: string
   icon: ReactNode
   groupId: string
-  /** Carried into the trail so the resource offers "Back to <group>". */
   groupName: string
   kind: GroupContentKind
-  /** Failures are reported to the page, which announces them in one place. */
   onError: (message: string) => void
 }) {
   const removeFromGroup = useRemoveFromGroup()
@@ -123,7 +113,6 @@ function ContentCard({
       />
       <button
         type="button"
-        // Above the stretched link, so this is a click on the button alone.
         className="relative z-10 inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm border border-transparent p-1.5 text-text-muted transition-colors duration-150 hover:border-border hover:bg-surface-alt hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-60"
         aria-label={`Remove ${item.title} from ${groupName}`}
         title={`Remove from ${groupName}. This does not delete it.`}
@@ -178,8 +167,6 @@ function ContentSection({
         <p className={placeholderPanel}>{emptyMessage}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {/* The backend already leads each list with its pinned items; this is
-              only a stable fallback, so a correctly ordered list is untouched. */}
           {pinnedFirst(items).map((item) => (
             <ContentCard
               key={item.id}
@@ -199,8 +186,6 @@ function ContentSection({
 }
 
 function GroupContent({ group }: { group: StudyGroupDetail }) {
-  // A plain navigate: a group that has just been deleted must not be left on
-  // the trail as somewhere the groups page can offer to go back to.
   const navigate = useNavigate()
   const updateGroup = useUpdateGroup(group.id)
   const deleteGroup = useDeleteGroup()
@@ -219,14 +204,32 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
         <p className="mt-3 max-w-[72ch] text-base text-text-muted">{group.description}</p>
       )}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className={countPill}>{plural(group.notes.length, 'note')}</span>
-        <span className={countPill}>{plural(group.decks.length, 'deck')}</span>
-        <span className={countPill}>{plural(group.quizzes.length, 'quiz', 'quizzes')}</span>
-        <span className={countPill}>Created {formatRelative(group.createdAt, timeZone)}</span>
-      </div>
+      <DetailMetadata
+        className={group.description ? 'mt-5' : 'mt-3'}
+        items={[
+          {
+            key: 'notes',
+            icon: <IconNote />,
+            content: plural(group.notes.length, 'note'),
+          },
+          {
+            key: 'decks',
+            icon: <IconDeck />,
+            content: plural(group.decks.length, 'deck'),
+          },
+          {
+            key: 'quizzes',
+            icon: <IconQuiz />,
+            content: plural(group.quizzes.length, 'quiz', 'quizzes'),
+          },
+          {
+            key: 'created',
+            icon: <IconClock />,
+            content: formatRelative(group.createdAt, timeZone),
+          },
+        ]}
+      />
 
-      {/* Filling the group on the left; managing the group itself on the right. */}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <button
           type="button"
@@ -288,8 +291,7 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
         title="Flashcard decks"
         items={group.decks}
         icon={<IconDeck className="h-4.5 w-4.5" />}
-        // Group content items use `id` even for decks, which are `deckId` in
-        // the flashcard endpoints; the deck page's route takes the deck ID.
+        // Group content uses `id` even for decks, which are `deckId` elsewhere.
         hrefFor={(item) => `/flashcards/${item.id}`}
         emptyMessage="No flashcard decks in this group yet."
         groupId={group.id}
@@ -320,8 +322,6 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
           errorMessage={editError}
           onSubmit={({ name, description }) => {
             setEditError('')
-            // Both fields are sent: the form shows both, and a blank
-            // description is a deliberate instruction to clear it.
             updateGroup.mutate(
               { name, description },
               {
@@ -357,7 +357,7 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
                 setActionError(
                   isStatus(error, 404)
                     ? 'That group has already been deleted.'
-                    : `We could not delete this group. ${toFormMessage(error)}`,
+                    : `We could not delete this group. ${toReasonMessage(error)}`,
                 ),
             })
           }}
@@ -368,7 +368,6 @@ function GroupContent({ group }: { group: StudyGroupDetail }) {
   )
 }
 
-/** One study group: what it holds, and the actions that change it. */
 export function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>()
   const group = useGroup(groupId)
@@ -393,7 +392,7 @@ export function GroupDetailPage() {
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
                   ? 'It may have been deleted, or it belongs to another account. Anything that was in it is still in your library.'
-                  : toFormMessage(group.error)}
+                  : toReasonMessage(group.error)}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 {!isMissing && (
