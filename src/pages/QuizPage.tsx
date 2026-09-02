@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppHeader } from '../components/AppHeader'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
+import { DetailMetadata } from '../components/DetailMetadata'
 import { ScoreRow } from '../components/ScoreRow'
 import { PlaybackModeControl } from '../components/PlaybackModeControl'
 import { DifficultyStars } from '../components/DifficultyStars'
@@ -16,9 +17,13 @@ import { QuestionEditDialog } from '../components/QuestionEditDialog'
 import { QuizEditDialog } from '../components/QuizEditDialog'
 import {
   IconArrowRight,
+  IconChart,
+  IconCheck,
+  IconClock,
   IconPencil,
   IconPlay,
   IconPlus,
+  IconQuiz,
   IconSpinner,
   IconTrash,
   IconX,
@@ -36,9 +41,16 @@ import {
   fieldInputInvalid,
   fieldLabel,
   shell,
+  successAlert,
   surfaceCard,
 } from '../components/ui'
-import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isStatus, toReasonMessage } from '../lib/apiErrors'
+import {
+  ANSWER_MAX_LENGTH,
+  QUESTION_MAX_LENGTH,
+  validateAnswerText,
+  validateQuestionText,
+} from '../lib/validation'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatRelative } from '../lib/formatDate'
 import { usePinQuiz } from '../lib/pinMutations'
@@ -58,14 +70,10 @@ import type {
 const placeholderPanel =
   'rounded-md border border-dashed border-border bg-surface-alt px-6 py-7 text-center text-sm text-text-muted'
 
-/** The tile shows only the newest few; the rest live on their own page. */
 const RECENT_SCORE_LIMIT = 3
 
-/** An empty quiz is the one case where playing is not possible. */
 const PLAY_EMPTY_REASON = 'Add a question before you can play this quiz.'
 
-const QUESTION_MAX_LENGTH = 1000
-const ANSWER_MAX_LENGTH = 500
 /** The backend requires four answers for multiple choice and two for boolean. */
 const CHOICE_COUNT = 4
 const BOOLEAN_ANSWERS = ['True', 'False']
@@ -75,7 +83,6 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   BOOLEAN: 'True or False',
 }
 
-/** Matches the note and deck skeletons, so a cold load reads the same everywhere. */
 function QuizSkeleton() {
   return (
     <div className="grid gap-6" aria-hidden="true">
@@ -95,7 +102,6 @@ function QuizSkeleton() {
 interface QuestionRowProps {
   question: QuizQuestion
   position: number
-  /** Question-level deletes are confirmed one at a time, so only one row opens. */
   isConfirming: boolean
   isDeleting: boolean
   disabled: boolean
@@ -116,11 +122,8 @@ function QuestionRow({
   onCancelDelete,
   onConfirmDelete,
 }: QuestionRowProps) {
-  // Answers are deliberately not rendered: this page must not spoil the quiz
-  // before it is taken. Only their counts are read, never their text.
   const answers = question.answers ?? []
-  // Generated questions are not validated for exactly one correct answer, so
-  // the page reports what it was actually given rather than assuming one.
+  // Generated questions are not validated for exactly one correct answer.
   const correctCount = answers.filter((answer) => answer.correct).length
 
   return (
@@ -130,7 +133,6 @@ function QuestionRow({
       }`}
     >
       <div className="flex items-start gap-4">
-        {/* Fixed width so a two-digit number never shifts the content column. */}
         <span className="mt-0.5 w-6 shrink-0 text-right text-xs font-bold text-text-muted tabular-nums">
           {position}
         </span>
@@ -191,7 +193,6 @@ function QuestionRow({
   )
 }
 
-/** Past attempts. Saving one belongs to the quiz runner, so this is read-only. */
 function ScoreHistory({ quizId }: { quizId: string }) {
   const scores = useQuizScores(quizId)
   const timeZone = useUserTimeZone()
@@ -223,7 +224,7 @@ function ScoreHistory({ quizId }: { quizId: string }) {
         {scores.isError && (
           <div className="grid justify-items-start gap-2.5">
             <p className="text-sm text-text-muted">
-              We could not load your attempts. {toFormMessage(scores.error)}
+              We could not load your attempts. {toReasonMessage(scores.error)}
             </p>
             <button type="button" className={btnGhostSm} onClick={() => void scores.refetch()}>
               Try again
@@ -236,7 +237,6 @@ function ScoreHistory({ quizId }: { quizId: string }) {
             <p className={placeholderPanel}>Scores you save will show up here.</p>
           ) : (
             <ol className="m-0 grid list-none gap-3.5 p-0">
-              {/* The API returns every attempt, so the newest few are taken here. */}
               {scores.data.slice(0, RECENT_SCORE_LIMIT).map((score) => (
                 <ScoreRow
                   key={score.publicId}
@@ -256,6 +256,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const questionId = useId()
   const timeZone = useUserTimeZone()
   const questionRef = useRef<HTMLTextAreaElement>(null)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   const [isAdding, setIsAdding] = useState(false)
   const [questionText, setQuestionText] = useState('')
@@ -264,6 +265,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const [correctIndex, setCorrectIndex] = useState(0)
   const [fieldErrors, setFieldErrors] = useState<{ question?: string; answers?: string }>({})
   const [justAdded, setJustAdded] = useState(false)
+  const [justPinned, setJustPinned] = useState(false)
   const [actionError, setActionError] = useState('')
   const [confirmingQuestionId, setConfirmingQuestionId] = useState<string | null>(null)
   const [isConfirmingQuiz, setIsConfirmingQuiz] = useState(false)
@@ -278,7 +280,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     ? questions.find((question) => question.id === editingQuestionId)
     : undefined
 
-  /** Every mutation changes what the dashboard and library show for this quiz. */
   async function refreshQuiz() {
     await queryClient.invalidateQueries({ queryKey: queryKeys.quiz(quiz.id) })
     void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
@@ -304,6 +305,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       setChoices(Array<string>(CHOICE_COUNT).fill(''))
       setCorrectIndex(0)
       setJustAdded(true)
+      setIsAdding(false)
       await refreshQuiz()
     },
     onError: (error) => setActionError(messageForQuestionFailure(error, 'add')),
@@ -312,9 +314,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const updateQuiz = useMutation({
     mutationFn: (body: UpdateQuizRequest) => api.quiz.update(quiz.id, body),
     onSuccess: (updated) => {
-      // The response is the whole updated quiz in the normal quiz vocabulary, so
-      // the detail view is current at once; the list feeds the library,
-      // dashboard, and any group.
       queryClient.setQueryData(queryKeys.quiz(quiz.id), updated)
       void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
       if (updated.groupId) {
@@ -326,7 +325,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       setQuizEditError(
         isStatus(error, 404)
           ? 'This quiz no longer exists. It may have just been deleted.'
-          : `We could not save your changes. ${toFormMessage(error)}`,
+          : `We could not save your changes. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -335,9 +334,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     mutationFn: (vars: { questionId: string; body: UpdateQuestionRequest }) =>
       api.quiz.updateQuestion(quiz.id, vars.questionId, vars.body),
     onSuccess: async () => {
-      // The update answers in the creation vocabulary and regenerates answer
-      // IDs, so the quiz is refetched rather than merged — the mapping the API
-      // contract calls for.
       await refreshQuiz()
       setEditingQuestionId(null)
     },
@@ -359,7 +355,8 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   const setDifficulty = useMutation({
     mutationFn: (level: number) => api.quiz.setDifficulty(quiz.id, level),
     onSuccess: () => refreshQuiz(),
-    onError: (error) => setActionError(`We could not set the difficulty. ${toFormMessage(error)}`),
+    onError: (error) =>
+      setActionError(`We could not set the difficulty. ${toReasonMessage(error)}`),
   })
 
   const pinQuiz = usePinQuiz(quiz.id)
@@ -376,7 +373,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       setActionError(
         isStatus(error, 404)
           ? 'That quiz has already been deleted.'
-          : `We could not delete this quiz. ${toFormMessage(error)}`,
+          : `We could not delete this quiz. ${toReasonMessage(error)}`,
       )
     },
   })
@@ -390,40 +387,35 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
     updateQuestion.isPending ||
     pinQuiz.isPending
 
-  // Matches the profile form: the submit only lights up once the question and
-  // every answer the current type needs are filled in.
   const canAddQuestion =
     questionText.trim() !== '' &&
     (questionType === 'BOOLEAN' || choices.every((choice) => choice.trim() !== ''))
 
-  // Questions are usually added in runs, so the form stays open and takes focus
-  // back. It has to wait for the request to settle, since the field is disabled
-  // until then and a disabled field cannot be focused.
   useEffect(() => {
-    if (justAdded && !addQuestion.isPending) questionRef.current?.focus()
+    if (isAdding) questionRef.current?.focus()
+  }, [isAdding])
+
+  useEffect(() => {
+    if (justAdded && !addQuestion.isPending) addButtonRef.current?.focus()
   }, [justAdded, addQuestion.isPending])
+
+  function clearActionFeedback() {
+    setActionError('')
+    setJustAdded(false)
+    setJustPinned(false)
+  }
 
   function handleAddQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setActionError('')
-    setJustAdded(false)
+    clearActionFeedback()
 
-    const nextErrors: { question?: string; answers?: string } = {}
-    const trimmed = questionText.trim()
-    if (!trimmed) nextErrors.question = 'Write the question.'
-    else if (trimmed.length > QUESTION_MAX_LENGTH) {
-      nextErrors.question = `Questions can be at most ${QUESTION_MAX_LENGTH} characters.`
+    const nextErrors: { question?: string; answers?: string } = {
+      question: validateQuestionText(questionText) ?? undefined,
+      answers:
+        questionType === 'MULTIPLE_CHOICE'
+          ? (choices.map(validateAnswerText).find(Boolean) ?? undefined)
+          : undefined,
     }
-
-    if (questionType === 'MULTIPLE_CHOICE') {
-      const filled = choices.map((choice) => choice.trim())
-      if (filled.some((choice) => !choice)) {
-        nextErrors.answers = `Multiple choice needs all ${CHOICE_COUNT} answers filled in.`
-      } else if (filled.some((choice) => choice.length > ANSWER_MAX_LENGTH)) {
-        nextErrors.answers = `Answers can be at most ${ANSWER_MAX_LENGTH} characters.`
-      }
-    }
-
     setFieldErrors(nextErrors)
     if (nextErrors.question || nextErrors.answers) return
 
@@ -431,15 +423,13 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   }
 
   function toggleAddForm() {
-    setActionError('')
-    setJustAdded(false)
+    clearActionFeedback()
     setFieldErrors({})
     setIsAdding((open) => !open)
   }
 
   function changeType(next: QuestionType) {
     setQuestionType(next)
-    // The two shapes do not share an answer list, so the choice resets with it.
     setCorrectIndex(0)
     setFieldErrors({})
   }
@@ -450,17 +440,31 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
       {quiz.description && (
         <p className="mt-3 max-w-[72ch] text-base text-text-muted">{quiz.description}</p>
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className={countPill}>{plural(questions.length, 'question')}</span>
-        <span className={countPill}>
-          {quiz.difficulty === null ? (
-            'No difficulty set'
-          ) : (
-            <DifficultyStars value={quiz.difficulty} />
-          )}
-        </span>
-        <span className={countPill}>Created {formatRelative(quiz.createdAt, timeZone)}</span>
-      </div>
+      <DetailMetadata
+        className={quiz.description ? 'mt-5' : 'mt-3'}
+        items={[
+          {
+            key: 'questions',
+            icon: <IconQuiz />,
+            content: plural(questions.length, 'question'),
+          },
+          {
+            key: 'difficulty',
+            icon: <IconChart />,
+            content:
+              quiz.difficulty === null ? (
+                'No difficulty set'
+              ) : (
+                <DifficultyStars value={quiz.difficulty} />
+              ),
+          },
+          {
+            key: 'created',
+            icon: <IconClock />,
+            content: formatRelative(quiz.createdAt, timeZone),
+          },
+        ]}
+      />
 
       <div className="mt-3">
         <GroupMembershipControl
@@ -471,8 +475,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
         />
       </div>
 
-      {/* Playback mode and Play quiz on the left; quiz management pushed to the
-          right. Bottom-aligned so the "Playback mode" label sits above. */}
       <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="flex flex-wrap items-end gap-3">
           <PlaybackModeControl
@@ -502,6 +504,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
 
         <div className="flex flex-wrap items-end gap-3">
           <button
+            ref={addButtonRef}
             type="button"
             className={btnGhostSm}
             onClick={toggleAddForm}
@@ -516,13 +519,14 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             isPending={pinQuiz.isPending}
             disabled={isBusy || isConfirmingQuiz}
             onToggle={(next) => {
-              setActionError('')
+              clearActionFeedback()
               pinQuiz.mutate(next, {
+                onSuccess: () => setJustPinned(next),
                 onError: (error) =>
                   setActionError(
                     isStatus(error, 404)
                       ? 'This quiz no longer exists. It may have just been deleted.'
-                      : `We could not ${next ? 'pin' : 'unpin'} this quiz. ${toFormMessage(error)}`,
+                      : `We could not ${next ? 'pin' : 'unpin'} this quiz. ${toReasonMessage(error)}`,
                   ),
               })
             }}
@@ -543,7 +547,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
             type="button"
             className={btnDangerGhostSm}
             onClick={() => {
-              setActionError('')
+              clearActionFeedback()
               setIsConfirmingQuiz(true)
             }}
             disabled={isBusy || isConfirmingQuiz}
@@ -559,6 +563,20 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
 
       <div className="mt-6 grid gap-6">
         {actionError && <FormAlert message={actionError} />}
+
+        {justAdded && !addQuestion.isPending && (
+          <p className={successAlert} role="status">
+            <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+            <span>Question added. It is at the end of the quiz.</span>
+          </p>
+        )}
+
+        {justPinned && (
+          <p className={successAlert} role="status">
+            <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+            <span>Pinned. It now shows first in your library.</span>
+          </p>
+        )}
 
         {isConfirmingQuiz && (
           <section className="rounded-md border border-error-solid bg-error-soft p-6">
@@ -698,7 +716,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
                             disabled={addQuestion.isPending}
                             aria-label={`Answer ${index + 1}`}
                             className={`${fieldInput} ${
-                              // Only the answers actually at fault are marked.
                               fieldErrors.answers &&
                               (!choice.trim() || choice.trim().length > ANSWER_MAX_LENGTH)
                                 ? fieldInputInvalid
@@ -729,9 +746,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
               >
                 Done
               </button>
-              <p className="text-sm font-bold text-success-solid" role="status" aria-live="polite">
-                {justAdded && !addQuestion.isPending ? 'Question added.' : ''}
-              </p>
               {!canAddQuestion && !addQuestion.isPending && (
                 <span className="text-xs text-text-muted">
                   Fill in the question and every answer to add it.
@@ -756,7 +770,7 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
                 disabled={isBusy || isConfirmingQuiz}
                 onChange={(level) => {
                   if (level === quiz.difficulty) return
-                  setActionError('')
+                  clearActionFeedback()
                   setDifficulty.mutate(level)
                 }}
               />
@@ -794,13 +808,13 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
                   isDeleting={deleteQuestion.isPending && deleteQuestion.variables === question.id}
                   disabled={isBusy || isConfirmingQuiz}
                   onAskEdit={() => {
-                    setActionError('')
+                    clearActionFeedback()
                     setQuestionEditError('')
                     setConfirmingQuestionId(null)
                     setEditingQuestionId(question.id)
                   }}
                   onAskDelete={() => {
-                    setActionError('')
+                    clearActionFeedback()
                     setConfirmingQuestionId(question.id)
                   }}
                   onCancelDelete={() => setConfirmingQuestionId(null)}
@@ -841,7 +855,6 @@ function QuizContent({ quiz }: { quiz: Quiz }) {
   )
 }
 
-/** Question-level failures, which are all recoverable without leaving the page. */
 function messageForQuestionFailure(error: unknown, action: 'add' | 'edit' | 'delete'): string {
   if (isStatus(error, 404)) {
     if (action === 'add') return 'This quiz no longer exists, so the question was not saved.'
@@ -853,12 +866,11 @@ function messageForQuestionFailure(error: unknown, action: 'add' | 'edit' | 'del
   if (isStatus(error, 400)) {
     return 'That question was rejected. Check that every answer is filled in and exactly one is marked correct.'
   }
-  if (action === 'add') return `We could not add that question. ${toFormMessage(error)}`
-  if (action === 'edit') return `We could not save that question. ${toFormMessage(error)}`
-  return `We could not delete that question. ${toFormMessage(error)}`
+  if (action === 'add') return `We could not add that question. ${toReasonMessage(error)}`
+  if (action === 'edit') return `We could not save that question. ${toReasonMessage(error)}`
+  return `We could not delete that question. ${toReasonMessage(error)}`
 }
 
-/** One saved quiz: its questions, its difficulty, and its score history. */
 export function QuizPage() {
   const { quizId } = useParams<{ quizId: string }>()
   const quiz = useQuiz(quizId)
@@ -883,7 +895,7 @@ export function QuizPage() {
               <p className="mt-3 text-base text-text-muted">
                 {isMissing
                   ? 'It may have been deleted, or it belongs to another account.'
-                  : toFormMessage(quiz.error)}
+                  : toReasonMessage(quiz.error)}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 {!isMissing && (
