@@ -35,8 +35,6 @@ export function NewDeckPage() {
         const deck = await recordQualifyingAction(() => api.flashcards.generate(note.id))
         capture('flashcard_deck_generated')
         void queryClient.invalidateQueries({ queryKey: queryKeys.flashcardDecks, exact: true })
-        // The generation response has no card IDs, so the deck page fetches the
-        // saved deck itself; we only hand it the destination.
         return `/flashcards/${deck.deckId}`
       }}
     />

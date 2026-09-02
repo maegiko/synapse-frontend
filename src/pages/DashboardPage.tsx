@@ -27,14 +27,9 @@ import { formatRelative } from '../lib/formatDate'
 import { plural } from '../lib/plural'
 
 const RECENT_LIMIT = 3
-// Quizzes are terser rows, so one more fits without unbalancing the column.
 const RECENT_QUIZ_LIMIT = 4
 
-/**
- * Hero heading: a fresh nudge to study each time the dashboard loads. Each one
- * looks forward to the day, feels encouraging, and names the user.
- * One is drawn at random per visit.
- */
+/** One is drawn per visit, so the dashboard opens on a different nudge. */
 const HERO_GREETINGS: ((name: string) => string)[] = [
   (name) => `Ready to learn, ${name}?`,
   (name) => `What are we learning today, ${name}?`,
@@ -67,7 +62,6 @@ const NEW_FLOWS = ['/notes/new', '/flashcards/new', '/quiz/new']
 function drawNewFlow(): string {
   return NEW_FLOWS[Math.floor(Math.random() * NEW_FLOWS.length)]
 }
-// One icon treatment for every Library item: small, standalone, accent, no tile.
 const ROW_ICON = 'h-4.5 w-4.5 shrink-0 text-accent-foreground'
 /** Row hairline is lighter than the section dividers; most of the separation is
  *  the generous vertical padding on the link, not the line. */
@@ -75,7 +69,6 @@ const FLAT_ROW =
   'group border-b border-border/85 transition-colors last:border-b-0 hover:bg-surface-alt/60'
 const FLAT_ROW_LINK = 'block py-4 no-underline'
 
-/** A recent note: document-shaped — title, overview, then quiet inline facts. */
 function RecentNoteRow({
   to,
   title,
@@ -105,7 +98,6 @@ function RecentNoteRow({
   )
 }
 
-/** A recent quiz: activity-shaped — title, when it landed, then question count and difficulty. */
 function RecentQuizRow({
   to,
   title,
@@ -150,12 +142,9 @@ export function DashboardPage() {
   const reviewQueue = useReviewQueue()
 
   const firstName = user?.fullName.trim().split(' ')[0] ?? 'there'
-  // Drawn once per dashboard visit, so it does not reshuffle on every render.
   const [greeting] = useState(() => drawGreeting(firstName))
-  // Drawn once per visit too, so the hero button keeps one destination while here.
   const [continueFlow] = useState(drawNewFlow)
 
-  // Decks and quizzes are both generated from an existing note.
   const needsFirstNote = notes.isSuccess && notes.data.length === 0
 
   const allLoaded = notes.isSuccess && decks.isSuccess && quizzes.isSuccess
@@ -215,8 +204,6 @@ export function DashboardPage() {
           isLoading={reviewQueue.isPending}
           isError={reviewQueue.isError}
           onRetry={() => void reviewQueue.refetch()}
-          // Unknown while the deck list loads, and the queue itself is the
-          // stronger signal anyway: assume there are decks until told otherwise.
           hasDecks={decks.data ? decks.data.length > 0 : true}
         />
 
@@ -285,10 +272,6 @@ export function DashboardPage() {
           </AppLink>
         </div>
 
-        {/* One Library surface holding three sections: the deck strip, then
-            notes and quizzes as two columns. No nested cards — a gently
-            elevated frame with a subtle outer border and consistent 1px
-            dividers between every section and entry. */}
         <div className="overflow-hidden rounded-md border border-border bg-surface shadow-sm">
           <RecentsCard
             title="Recent decks"
@@ -359,7 +342,6 @@ export function DashboardPage() {
                   title={quiz.title}
                   questionCount={quiz.questions.length}
                   difficulty={quiz.difficulty}
-                  // Quizzes are the only listed resource the API timestamps.
                   timestamp={formatRelative(quiz.createdAt, timeZone)}
                 />
               ))}

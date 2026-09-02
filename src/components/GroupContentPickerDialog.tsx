@@ -11,17 +11,12 @@ import { useAddToGroup } from '../lib/groupMutations'
 import { useFlashcardDecks, useGroups, useNotes, useQuizzes } from '../lib/queries'
 import type { GroupContentKind } from '../api'
 
-/**
- * One row in the picker, normalised across the three resource kinds. Decks
- * identify themselves with `deckId` while notes and quizzes use `id`, so every
- * kind is mapped explicitly rather than sharing a resource type.
- */
+/** Decks identify themselves with `deckId` while notes and quizzes use `id`. */
 interface PickerItem {
   id: string
   title: string
   /** The group it is in today; non-null makes adding it here a move. */
   groupId: string | null
-  /** Second line: enough to tell two similarly named resources apart. */
   preview?: string | null
 }
 
@@ -50,12 +45,8 @@ interface GroupContentPickerDialogProps {
 }
 
 /**
- * Puts existing notes, decks, and quizzes into one group. Each kind is a tab
- * over its own list query, so a list that fails to load costs only its own tab
- * and the rest of the dialog keeps working.
- *
- * Anything already in another group is shown with that group's name and is
- * confirmed as a move, since a resource can only be in one group at a time.
+ * Each kind is a tab over its own list query, so a failed list costs only its own
+ * tab. Anything already in another group is confirmed as a move by name.
  */
 export function GroupContentPickerDialog({
   groupId,
@@ -73,7 +64,6 @@ export function GroupContentPickerDialog({
   const [pendingMove, setPendingMove] = useState<PickerItem | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
 
-  // Explicit per-kind mapping: `deckId` becomes `id` here, and only here.
   const items: Record<GroupContentKind, PickerItem[]> = {
     notes: (notes.data ?? []).map((note) => ({
       id: note.id,
@@ -111,7 +101,6 @@ export function GroupContentPickerDialog({
       item.preview?.toLowerCase().includes(term),
   )
 
-  /** Group names, so a row can say where a resource is rather than show an ID. */
   const groupNames = new Map((groups.data ?? []).map((group) => [group.id, group.name]))
 
   function add(item: PickerItem) {

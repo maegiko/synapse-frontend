@@ -6,8 +6,7 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       refetchOnWindowFocus: false,
-      // 4xx answers are decisions, not blips. The HTTP client already
-      // refresh-and-retries a 401 once on its own.
+      // 4xx answers are decisions, not blips, and the client already retries a 401.
       retry: (failureCount, error) => {
         if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false
         return failureCount < 2

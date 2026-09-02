@@ -15,13 +15,11 @@ export function getDetails(): Promise<UserDetails> {
 }
 
 /**
- * Partial: only the supplied properties change, and at least one must be present.
- * The email address is not one of them; it moves only through
- * {@link requestEmailChange}.
+ * Only the supplied properties change, and at least one must be present. The
+ * email address is not one of them: it moves through {@link requestEmailChange}.
  *
- * A new `timeZone` moves every later calendar-day boundary — streak days, deck due
- * dates — but never rewrites days already recorded or timestamps already stored,
- * so date-sensitive caches need refreshing rather than rebuilding.
+ * A new `timeZone` moves every later calendar-day boundary without rewriting
+ * days already recorded, so date-sensitive caches need refreshing, not rebuilding.
  */
 export function updateDetails(payload: UpdateUserDetailsRequest): Promise<UserDetails> {
   return apiRequest<UserDetails>(API_PATHS.user.details, {
@@ -32,15 +30,9 @@ export function updateDetails(payload: UpdateUserDetailsRequest): Promise<UserDe
 }
 
 /**
- * Asks for the account's email address to be moved to `email`. Nothing changes
- * yet: the backend emails a single-use confirmation link to the proposed
- * address, and the account keeps the address it has until that link is
- * confirmed through `POST /api/auth/email/verify`.
- *
- * Answers the pending state on `202`, and `null` on the `204` that means the
- * normalized address is already this account's own. A newer request replaces
- * any earlier pending one, and an abandoned request simply expires, so there is
- * nothing to cancel.
+ * Nothing changes yet: a single-use link goes to the proposed address and the
+ * account keeps the one it has until that link is confirmed. Answers the pending
+ * state on 202, or null on the 204 meaning the address is already this account's.
  */
 export async function requestEmailChange(email: string): Promise<EmailChangeResponse | null> {
   const pending = await apiRequest<EmailChangeResponse | undefined>(API_PATHS.user.emailChange, {
@@ -51,16 +43,14 @@ export async function requestEmailChange(email: string): Promise<EmailChangeResp
   return pending ?? null
 }
 
-/** Current and longest study streaks, counted in calendar days of the user's saved time zone. */
+/** Counted in calendar days of the user's saved time zone. */
 export function getStreak(): Promise<StreakResponse> {
   return apiRequest<StreakResponse>(API_PATHS.user.streak, { authenticated: true })
 }
 
 /**
- * How the study is going over a window of whole calendar days ending on the
- * user's today, counted in the account's saved time zone. The window moves at
- * local midnight, and a submitted review or score changes it, so this is
- * refetched after both rather than cached indefinitely.
+ * A window of whole calendar days ending on the user's today. It moves at local
+ * midnight and every review or score changes it, so it is refetched, not cached.
  */
 export function getAnalytics(period: AnalyticsPeriodDays): Promise<AnalyticsResponse> {
   return apiRequest<AnalyticsResponse>(analyticsPath(period), { authenticated: true })

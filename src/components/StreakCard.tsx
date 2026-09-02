@@ -29,7 +29,6 @@ interface StreakCardProps {
   onRetry: () => void
 }
 
-/** Compact dashboard status for the user's study streak. */
 export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardProps) {
   const [consistencyMessage] = useState(drawConsistencyMessage)
   const cardClass =
@@ -129,9 +128,6 @@ export function StreakCard({ streak, isLoading, isError, onRetry }: StreakCardPr
         </p>
       </div>
 
-      {/* Only offered once the card has real numbers on it: from the loading
-          and error states there is nothing here for the link to lead on from.
-          The label collapses to its arrow where the row is tightest. */}
       <AppLink
         to="/analytics"
         className="inline-flex items-center gap-1.5 border-l border-border pl-3 text-xs font-bold whitespace-nowrap text-accent-foreground no-underline hover:underline sm:pl-5"

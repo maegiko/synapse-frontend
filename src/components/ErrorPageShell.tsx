@@ -3,28 +3,18 @@ import synapseLogo from '../assets/synapse_logo.webp'
 import { iconChip, shell, surfaceCard } from './ui'
 
 interface ErrorPageShellProps {
-  /** The icon shown in the chip above the heading. */
   icon: ReactNode
   title: string
   description: string
-  /** The recovery actions: the primary one first, so it is the first tab stop. */
   children: ReactNode
-  /**
-   * Announces the heading and its supporting text when the page appears, for
-   * the unexpected-error fallback. The 404 leaves this off: it is a normal
-   * navigation, and the routine page change needs no alert.
-   */
+  /** For the unexpected-error fallback. The 404 is a normal navigation and leaves it off. */
   announce?: boolean
 }
 
 /**
- * The shared frame behind both error destinations: wordmark, one icon, one
- * heading, one line of explanation, and the recovery actions.
- *
- * Deliberately plain. It holds no hooks, no router links and no data, because
- * the unexpected-error fallback renders it after something else in the app has
- * already failed. The actions are passed in, so the page above can use a
- * router link or a native one as its own situation allows.
+ * The shared frame behind both error destinations. Deliberately plain: no hooks,
+ * no router links and no data, because the unexpected-error fallback renders it
+ * after something else has already failed.
  */
 export function ErrorPageShell({
   icon,
@@ -57,11 +47,6 @@ export function ErrorPageShell({
             <p className="mx-auto mt-3 max-w-[46ch] text-base text-pretty text-text-muted">{description}</p>
           </div>
 
-          {/*
-            No header sits above this page, so the primary action is the first
-            tab stop on load. Nothing is focused programmatically: that would
-            talk over the alert the fallback has just announced.
-          */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">{children}</div>
         </div>
       </div>

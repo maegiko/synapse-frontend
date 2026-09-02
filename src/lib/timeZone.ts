@@ -2,11 +2,9 @@
 export const DEFAULT_TIME_ZONE = 'UTC'
 
 /**
- * The device's own IANA time zone, for seeding a new account at registration.
- *
- * <p>Read from the browser's own locale settings — no location permission is asked
- * for and no address lookup is made. Falls back to UTC on anything that cannot
- * answer, which matches what the backend does with a missing value.</p>
+ * The device's own IANA zone, for seeding a new account. Read from the browser's
+ * locale settings, so no location permission is asked for. Falls back to UTC,
+ * which is what the backend does with a missing value.
  */
 export function detectTimeZone(): string {
   try {
@@ -17,10 +15,8 @@ export function detectTimeZone(): string {
 }
 
 /**
- * Every IANA zone this browser knows, for the profile's time zone picker.
- *
- * `Intl.supportedValuesOf` is not in every engine, so the fallback is the two
- * zones that are certainly meaningful: the device's own, and UTC.
+ * Every IANA zone this browser knows. `Intl.supportedValuesOf` is not in every
+ * engine, so the fallback is the device's own zone and UTC.
  */
 export function supportedTimeZones(): string[] {
   try {
@@ -32,10 +28,7 @@ export function supportedTimeZones(): string[] {
   }
 }
 
-/**
- * Widens the list so a zone the account already has is always selectable, even
- * when this browser's own list has never heard of it.
- */
+/** Widens the list so a zone this browser has never heard of is still selectable. */
 export function timeZoneOptions(current: string | undefined): string[] {
   const zones = supportedTimeZones()
   if (!current || zones.includes(current)) return zones

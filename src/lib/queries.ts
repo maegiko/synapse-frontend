@@ -5,22 +5,18 @@ import { DEFAULT_TIME_ZONE } from './timeZone'
 export const queryKeys = {
   userDetails: ['user-details'] as const,
   streak: ['streak'] as const,
-  /** The prefix every window shares, so one invalidation refreshes them all. */
   analytics: ['analytics'] as const,
   analyticsPeriod: (period: AnalyticsPeriodDays) => ['analytics', period] as const,
   notes: ['notes'] as const,
-  /** The prefix every note search shares, so one invalidation refreshes them all. */
   notesSearches: ['notes', 'search'] as const,
   notesSearch: (query: string) => ['notes', 'search', query] as const,
   note: (noteId: string) => ['notes', noteId] as const,
   flashcardDecks: ['flashcard-decks'] as const,
-  /** The prefix every deck search shares, so one invalidation refreshes them all. */
   flashcardDecksSearches: ['flashcard-decks', 'search'] as const,
   flashcardDecksSearch: (query: string) => ['flashcard-decks', 'search', query] as const,
   flashcardDeck: (deckId: string) => ['flashcard-decks', deckId] as const,
   reviewQueue: ['flashcard-decks', 'review-queue'] as const,
   quizzes: ['quizzes'] as const,
-  /** The prefix every quiz search shares, so one invalidation refreshes them all. */
   quizzesSearches: ['quizzes', 'search'] as const,
   quizzesSearch: (query: string) => ['quizzes', 'search', query] as const,
   quiz: (quizId: string) => ['quizzes', quizId] as const,
@@ -31,14 +27,10 @@ export const queryKeys = {
 }
 
 /**
- * What the four searchable list screens share. A screen holds one page at a
- * time and appends the next on demand, so the term belongs in the key: a new
- * term is a different query rather than a later answer to the current one, and
- * a slow reply to an abandoned term can never land on top of the live one.
- *
- * `staleTime: 0` overrides the shared 30 second window on purpose. These are the
- * indexes a user returns to straight after creating or deleting something on
- * another screen, and the list they come back to has to be the current one.
+ * What the four searchable list screens share. The term belongs in the key, so a
+ * new term is a different query and a slow reply to an abandoned one can never
+ * land on the live list. `staleTime: 0` overrides the shared 30 second window:
+ * these are the indexes a user returns to right after creating something.
  */
 const SEARCH_LIST_OPTIONS: { initialPageParam: number; staleTime: number } = {
   initialPageParam: 0,
@@ -46,9 +38,8 @@ const SEARCH_LIST_OPTIONS: { initialPageParam: number; staleTime: number } = {
 }
 
 /**
- * The profile source of truth. JWT display claims go stale after an edit, so
- * this is fetched rather than decoded. `fallback` is what auth state already
- * holds, shown while the request runs; `0` marks it stale so it always refetches.
+ * The profile source of truth; JWT display claims go stale after an edit.
+ * `fallback` is what auth state already holds, shown while the request runs.
  */
 export function useUserDetails(fallback?: UserDetails | null) {
   return useQuery({
@@ -60,11 +51,8 @@ export function useUserDetails(fallback?: UserDetails | null) {
 }
 
 /**
- * The time zone every date on screen is read in. Falls back to UTC while the
- * profile is still loading, and to UTC for an account that predates the field.
- *
- * <p>Deliberately the saved zone rather than the browser's: a user who travels
- * should still see their own calendar until they change it themselves.</p>
+ * Falls back to UTC while the profile loads. Deliberately the saved zone rather
+ * than the browser's: a user who travels keeps their own calendar.
  */
 export function useUserTimeZone(): string {
   return useUserDetails().data?.timeZone ?? DEFAULT_TIME_ZONE
@@ -74,11 +62,7 @@ export function useStreak() {
   return useQuery({ queryKey: queryKeys.streak, queryFn: api.user.getStreak })
 }
 
-/**
- * The study analytics for one window. Each period is its own cache entry, and
- * the previous one is held on screen while the next loads, so changing the
- * period redraws the page rather than emptying it.
- */
+/** The previous window stays on screen while the next loads, so it redraws rather than empties. */
 export function useAnalytics(period: AnalyticsPeriodDays) {
   return useQuery({
     queryKey: queryKeys.analyticsPeriod(period),
@@ -135,10 +119,7 @@ export function useFlashcardDeck(deckId: string | undefined) {
   })
 }
 
-/**
- * The decks due for review, in the backend's order: oldest due date first, and
- * that order is the recommendation, so it is never re-sorted here.
- */
+/** The backend's order is the recommendation, so it is never re-sorted here. */
 export function useReviewQueue() {
   return useQuery({ queryKey: queryKeys.reviewQueue, queryFn: api.flashcards.reviewQueue })
 }
@@ -158,10 +139,7 @@ export function useQuizzesSearch(query: string) {
   })
 }
 
-/**
- * One saved quiz with its questions and answers, in saved position order.
- * Seeded by the generation flow, so a freshly generated quiz needs no refetch.
- */
+/** Seeded by the generation flow, so a fresh quiz needs no refetch. */
 export function useQuiz(quizId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.quiz(quizId ?? ''),
@@ -179,10 +157,7 @@ export function useQuizScores(quizId: string | undefined) {
   })
 }
 
-/**
- * Every study group, newest first, with the content counts the folder cards
- * read from. The contents themselves come from `useGroup`.
- */
+/** Counts only; the contents come from `useGroup`. */
 export function useGroups() {
   return useQuery({ queryKey: queryKeys.groups, queryFn: api.groups.listAll })
 }
@@ -197,11 +172,7 @@ export function useGroupsSearch(query: string) {
   })
 }
 
-/**
- * One group with its notes, decks, and quizzes. Content items carry `id` and
- * `title` for all three kinds — decks included — so they are their own type
- * rather than a `FlashcardDeck`.
- */
+/** Content items carry `id` and `title` for all three kinds, decks included. */
 export function useGroup(groupId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.group(groupId ?? ''),

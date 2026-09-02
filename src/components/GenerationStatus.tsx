@@ -1,9 +1,6 @@
 import { IconSpinner } from './icons'
 
-/**
- * The AI endpoints are one long synchronous call each, so the wait is narrated
- * rather than measured. Announced politely, since it changes while it is shown.
- */
+/** The AI endpoints are one long synchronous call, so the wait is narrated. */
 export function GenerationStatus({ label, hint }: { label: string; hint: string }) {
   return (
     <div

@@ -1,4 +1,3 @@
-/** Shared line icons. Stroke-based, 24x24 viewBox, sized by the caller. */
 
 interface IconProps {
   className?: string
@@ -31,7 +30,6 @@ export function IconDeck({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
-/** One flashcard, distinct from the stacked-card deck icon. */
 export function IconCard({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -50,7 +48,6 @@ export function IconHome({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
-/** The library: a couple of books stood on a shelf. */
 export function IconLibrary({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -114,7 +111,6 @@ export function IconCheck({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
-/** Indeterminate progress ring. Decorative, so pair it with a text status. */
 export function IconSpinner({ className = 'h-5 w-5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`animate-spin ${className}`} aria-hidden="true">
@@ -191,7 +187,6 @@ export function IconTrash({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
-/** A study group: a folder, since a group is a folder over existing content. */
 export function IconGroup({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -208,7 +203,6 @@ export function IconPencil({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
-/** Leaving a group: an item stepping out of a container. */
 export function IconRemoveFromGroup({ className = 'h-4 w-4' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden="true">
@@ -218,7 +212,6 @@ export function IconRemoveFromGroup({ className = 'h-4 w-4' }: IconProps) {
   )
 }
 
-/** A study streak, matching the flame the streak card and profile already use. */
 export function IconFlame({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -227,7 +220,6 @@ export function IconFlame({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
-/** Nothing recorded: a broken outline, the visual opposite of {@link IconCheck}. */
 export function IconCircleDashed({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -236,10 +228,6 @@ export function IconCircleDashed({ className = 'h-5.5 w-5.5' }: IconProps) {
   )
 }
 
-/**
- * A pushpin, for the pinned state. Filled is the pinned indicator; outlined is
- * the "not pinned yet" control, matching {@link IconStar}'s two-state shape.
- */
 export function IconPin({ className = 'h-4 w-4', filled = false }: IconProps & { filled?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">
@@ -249,7 +237,6 @@ export function IconPin({ className = 'h-4 w-4', filled = false }: IconProps & {
   )
 }
 
-/** Whole stars only, so this is either filled or outlined — never partial. */
 export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & { filled?: boolean }) {
   return (
     <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.6" className={className} aria-hidden="true">
@@ -258,7 +245,6 @@ export function IconStar({ className = 'h-7 w-7', filled = false }: IconProps & 
   )
 }
 
-/** Something went wrong, matching the circle-and-bar mark the form alerts use. */
 export function IconAlert({ className = 'h-5.5 w-5.5' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className} aria-hidden="true">

@@ -6,17 +6,13 @@ import { FILE_ACCEPT, MAX_FILE_BYTES, formatFileSize, validateNoteFile } from '.
 
 interface FileDropzoneProps {
   file: File | null
-  /** Locked while a request is in flight; Replace and Remove are hidden too. */
   disabled?: boolean
-  /** Lets the page move focus here when it submits with nothing chosen. */
   inputRef?: RefObject<HTMLInputElement | null>
   onSelect: (file: File) => void
-  /** Called with the one-sentence reason a dropped or picked file was refused. */
   onReject: (reason: string) => void
   onClear: () => void
 }
 
-/** Drag-and-drop or browse for one note file, validated before it is handed up. */
 export function FileDropzone({
   file,
   disabled = false,
@@ -27,7 +23,7 @@ export function FileDropzone({
 }: FileDropzoneProps) {
   const inputId = useId()
   const ownRef = useRef<HTMLInputElement>(null)
-  // Drag events fire for every child, so nested enters/leaves are counted.
+  // Drag events fire for every child, so nested enters and leaves are counted.
   const dragDepth = useRef(0)
   const [dragging, setDragging] = useState(false)
 
@@ -69,8 +65,6 @@ export function FileDropzone({
   }
 
   return (
-    // `relative` keeps the sr-only input's absolute position scoped here rather
-    // than to the page, which would extend the document's scroll area.
     <div className="relative">
       <input
         ref={inputRef ?? ownRef}

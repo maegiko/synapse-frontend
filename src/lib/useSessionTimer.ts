@@ -2,32 +2,17 @@ import { useCallback, useEffect, useRef } from 'react'
 
 /**
  * How long the visitor has actually spent on a study session, in whole seconds.
- *
- * <p>Measured with `performance.now()`, which is monotonic: a clock correction
- * or a daylight-saving jump mid-session cannot make a run appear to take
- * minutes longer, or to have finished before it started, the way two wall-clock
- * timestamps could.</p>
- *
- * <p>The clock is paused whenever the page is hidden, so a tab left open in the
- * background overnight does not report a nine-hour deck review. It starts on
- * mount and runs until the component unmounts; the session's owner decides when
- * to read it, and reading it never stops it.</p>
+ * Measured with `performance.now()`, which is monotonic, so a clock correction
+ * mid-session cannot make a run appear to finish before it started. The clock
+ * pauses while the page is hidden.
  */
 export function useSessionTimer(): () => number {
-  // Written from event handlers between renders, so it is a ref rather than
-  // state: nothing on screen depends on it, and re-rendering the player once a
-  // second to advance a number nobody sees would be waste.
   const timer = useRef({
-    /** Visible milliseconds banked before the current visible stretch. */
     accumulatedMs: 0,
-    /** When the current visible stretch began, or null while hidden. */
     startedAt: null as number | null,
   })
 
   useEffect(() => {
-    // Started here rather than in the ref's initial value: reading the clock is
-    // not something a render may do, and the sub-millisecond gap between the
-    // first render and this effect is not worth counting.
     timer.current.startedAt ??= isVisible() ? performance.now() : null
 
     function onVisibilityChange() {

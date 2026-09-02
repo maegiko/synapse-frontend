@@ -7,17 +7,12 @@ interface ConfirmDialogProps {
   body: string
   confirmLabel: string
   cancelLabel: string
-  /** `danger` for a confirmation that discards something. */
   tone?: 'accent' | 'danger'
   onConfirm: () => void
   onCancel: () => void
 }
 
-/**
- * Modal confirmation, on the shared `Dialog` shell. Focus opens on the confirm
- * button rather than the shell's default first focusable, so the keyboard path
- * through a yes/no question is a single key.
- */
+/** Focus opens on the confirm button, so a yes/no question is a single key. */
 export function ConfirmDialog({
   title,
   body,

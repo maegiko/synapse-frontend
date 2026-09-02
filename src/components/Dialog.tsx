@@ -2,30 +2,22 @@ import { useEffect, useId, useRef } from 'react'
 import type { ReactNode, RefObject } from 'react'
 import { surfaceCard } from './ui'
 
-/** Everything a keyboard can land on inside a panel, in document order. */
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 interface DialogProps {
   title: string
-  /** Supporting line under the title, announced with it. */
   description?: ReactNode
-  /** `lg` for the pickers, which hold a scrolling list of results. */
   size?: 'sm' | 'lg'
-  /**
-   * Focused when the dialog opens. Defaults to the first focusable element,
-   * which is the right answer for a form; the confirmations point it at their
-   * confirm button instead.
-   */
+  /** Defaults to the first focusable element; confirmations point it at Confirm. */
   initialFocusRef?: RefObject<HTMLElement | null>
   onClose: () => void
   children: ReactNode
 }
 
 /**
- * The modal shell every dialog in the app is built on. For as long as it is
- * open it owns focus, the Escape key, and the page's scrolling, so nothing
- * behind it can be reached by accident.
+ * The modal shell every dialog is built on. While open it owns focus, Escape and
+ * the page's scrolling, so nothing behind it can be reached by accident.
  */
 export function Dialog({
   title,
@@ -45,8 +37,6 @@ export function Dialog({
       initialFocusRef?.current ?? panelRef.current?.querySelector<HTMLElement>(FOCUSABLE)
     target?.focus()
 
-    // Locking the page also removes its scrollbar, which would shift everything
-    // sideways as the dialog opens; the freed width is padded back on.
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
     const restore = {
       overflow: document.body.style.overflow,
@@ -60,7 +50,7 @@ export function Dialog({
       document.body.style.paddingRight = restore.paddingRight
       previouslyFocused?.focus?.()
     }
-    // Focusing once, on open: a later ref change must not steal focus back.
+    // Focus once, on open: a later ref change must not steal focus back.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -71,8 +61,6 @@ export function Dialog({
         onClose()
         return
       }
-      // Focus stays inside the dialog while it is open. The list is read at
-      // press time, so a panel whose contents change stays trapped correctly.
       if (event.key !== 'Tab') return
       const focusable = panelRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE)
       if (!focusable?.length) return

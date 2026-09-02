@@ -1,9 +1,8 @@
 import { DEFAULT_TIME_ZONE } from './timeZone'
 
 /**
- * Backend event timestamps are ISO local date-times with no offset, and the
- * instant they name is always UTC. Reading one with `new Date` alone would take
- * it as browser-local, so the zone is attached here before anything else.
+ * Backend timestamps are ISO local date-times with no offset, and always name a
+ * UTC instant. `new Date` alone would read one as browser-local.
  */
 function toInstant(value: string): Date {
   const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value)
@@ -11,9 +10,8 @@ function toInstant(value: string): Date {
 }
 
 /**
- * The zone a timestamp is shown in: the account's saved one, and UTC while the
- * profile has not loaded. Never the browser's own — the user's calendar is the
- * one they chose in their profile, wherever they happen to be sitting.
+ * The account's saved zone, and UTC until the profile loads. Never the browser's:
+ * the calendar is the one they chose, wherever they are sitting.
  */
 function displayZone(timeZone: string | undefined): string {
   return timeZone || DEFAULT_TIME_ZONE
@@ -32,11 +30,7 @@ export function formatDate(value: string | null | undefined, timeZone?: string):
   })
 }
 
-/**
- * Relative age for recent items, falling back to the absolute date after a
- * week. Elapsed time is the same wherever you are, so only that fallback date
- * needs the user's zone.
- */
+/** Relative age, falling back to the absolute date after a week. */
 export function formatRelative(value: string | null | undefined, timeZone?: string): string {
   if (!value) return ''
   const date = toInstant(value)
@@ -55,11 +49,7 @@ export function formatRelative(value: string | null | undefined, timeZone?: stri
   return formatDate(value, timeZone)
 }
 
-/**
- * Date and time together, for lists where several entries can share a day.
- * Shown in the user's saved zone, so two attempts a minute apart never look a
- * day apart because the reader has travelled.
- */
+/** In the user's saved zone, so two attempts a minute apart never look a day apart. */
 export function formatDateTime(value: string | null | undefined, timeZone?: string): string {
   if (!value) return ''
   const date = toInstant(value)
@@ -75,9 +65,8 @@ export function formatDateTime(value: string | null | undefined, timeZone?: stri
 }
 
 /**
- * A backend calendar date (`YYYY-MM-DD`), formatted as it stands. These are not
- * instants: the backend already decided them in the user's own time zone, so
- * converting one into any zone would shift it off the day it means.
+ * Formatted as it stands. These are not instants: the backend already decided
+ * them in the user's zone, so converting would shift the day they mean.
  */
 export function formatCalendarDate(value: string | null | undefined): string {
   const date = calendarDateAsUtc(value)
@@ -90,10 +79,7 @@ export function formatCalendarDate(value: string | null | undefined): string {
   })
 }
 
-/**
- * The same calendar date as a short day-and-month label, for the axis of a
- * chart where the year is already stated by the window it belongs to.
- */
+/** A short day-and-month label, for a chart axis whose window states the year. */
 export function formatCalendarDateShort(value: string | null | undefined): string {
   const date = calendarDateAsUtc(value)
   if (!date) return ''
@@ -107,11 +93,7 @@ export function formatCalendarMonth(value: string | null | undefined): string {
   return date.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })
 }
 
-/**
- * The weekday of a backend calendar date, `0` for Sunday. Read off the date as
- * written rather than as an instant, so a chart that lays days out in weeks
- * lines them up the way the user's own calendar does.
- */
+/** Read off the date as written, so weeks line up with the user's own calendar. */
 export function calendarWeekday(value: string | null | undefined): number | null {
   const date = calendarDateAsUtc(value)
   return date ? date.getUTCDay() : null
@@ -127,12 +109,8 @@ function calendarDateAsUtc(value: string | null | undefined): Date | null {
 }
 
 /**
- * Whole days from today to a backend calendar date (`YYYY-MM-DD`): `0` is today
- * and `-2` is two days ago. Null when there is no usable date.
- *
- * Today is taken in the user's saved zone, because that is the calendar the
- * backend scheduled the date in. Counting from the browser's day instead would
- * call a deck due tomorrow the moment the reader crossed a meridian.
+ * 0 is today and -2 is two days ago; null when there is no usable date. Today is
+ * taken in the user's saved zone, the calendar the backend scheduled in.
  */
 export function calendarDaysFromToday(
   value: string | null | undefined,
@@ -160,7 +138,6 @@ function todayIn(timeZone: string | undefined): number {
 
     return Date.UTC(year, month - 1, day)
   } catch {
-    // An unusable zone should not break a due label; UTC is the safe reading.
     const now = new Date()
     return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   }

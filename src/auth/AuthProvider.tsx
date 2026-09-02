@@ -17,8 +17,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<UserDetails | null>(null)
 
-  // Boot: one refresh attempt against the cookie, then load the profile.
-  // A 401 simply means "signed out"; it is never retried.
   useEffect(() => {
     let cancelled = false
 
@@ -29,8 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return
         setUser(details)
         setStatus('authenticated')
-        // A cookie this page load did not create: the account predates the
-        // visit, so it is one of the accounts the light default is not for.
         migrateExistingUserToDark()
       } catch {
         if (cancelled) return
@@ -44,7 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // A refresh that fails mid-request clears the token; follow it in React state.
   useEffect(
     () =>
       subscribeToAccessToken((token) => {
@@ -58,16 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const adopt = useCallback(({ accessToken, fullName, email }: AuthResponse) => {
-    // Whatever was cached belonged to the session this one replaces. Confirming
-    // a registration link can even swap accounts, so nothing is kept.
     clearQueryCache()
     setAccessToken(accessToken)
     setUser({ fullName, email })
     setStatus('authenticated')
   }, [])
 
-  // The only session that belongs to a brand-new account, and so the only one
-  // that settles the dark migration without moving the theme.
   const adoptSession = useCallback(
     (session: AuthResponse) => {
       adopt(session)
@@ -79,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (email: string, password: string) => {
       adopt(await api.auth.login({ email, password }))
-      // Signing in with a password means the account already existed.
       migrateExistingUserToDark()
     },
     [adopt],
@@ -96,12 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // The access token still carries the old `name`/`email` claims after a
-  // profile edit, so React state is updated from the PATCH response instead.
   const setUserDetails = useCallback((details: UserDetails) => setUser(details), [])
 
-  // Same quirk, without a response to read it from: a confirmed email change
-  // happens on a page of its own, so the profile is fetched again afterwards.
   const refreshUser = useCallback(async () => {
     const details = await api.user.getDetails()
     setUser(details)

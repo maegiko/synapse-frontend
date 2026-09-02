@@ -63,13 +63,9 @@ const FAQS = [
   },
 ]
 
-/** How much of a block has to be in view before it enters. */
 const REVEAL_THRESHOLD = 0.12
 
-/**
- * The share of the viewport its bottom edge is raised by for the reveal, so a
- * block enters once it is properly in view rather than the moment it peeks in.
- */
+/** Raises the viewport's bottom edge, so a block enters once properly in view. */
 const REVEAL_BOTTOM_BIAS = 0.08
 
 export function LandingPage() {
@@ -95,11 +91,8 @@ export function LandingPage() {
       rootMargin: `0px 0px -${REVEAL_BOTTOM_BIAS * 100}% 0px`,
     })
 
-    // Raising the edge needs room below the block to raise it into, and the
-    // last block on the page has none: the footer sits inside the raised edge
-    // even at full scroll, so the biased observer never fires for it and it
-    // would stay at opacity 0 for good. Blocks in that position watch the true
-    // viewport edge instead.
+    // The last block has no room below it to raise its edge into, so the biased
+    // observer never fires for it; it watches the true viewport edge instead.
     const tailObserver = new IntersectionObserver(onIntersect, { threshold: REVEAL_THRESHOLD })
     const lowestScrollTop = Math.max(
       0,
@@ -107,15 +100,12 @@ export function LandingPage() {
     )
     const biasedEdge = window.innerHeight * (1 - REVEAL_BOTTOM_BIAS)
 
-    /** Whether scrolling to the end of the page can bring `rect` far enough in. */
     const biasedObserverCanFire = (rect: DOMRect) => {
       const top = rect.top + window.scrollY - lowestScrollTop
       const shown = Math.min(top + rect.height, biasedEdge) - Math.max(top, 0)
       return shown >= rect.height * REVEAL_THRESHOLD
     }
 
-    // Do not make the first screen depend on an asynchronous observer callback:
-    // it should enter as soon as the page mounts, including in slower browsers.
     const initialBoundary = window.innerHeight
     elements.forEach((element) => {
       const rect = element.getBoundingClientRect()
@@ -301,7 +291,6 @@ export function LandingPage() {
   )
 }
 
-/** A grid of evenly spaced dots, used as a decorative texture on the CTA. */
 function dotGrid(x: number, y: number, cols: number, rows: number, gap: number) {
   return Array.from({ length: cols * rows }, (_, i) => (
     <circle key={i} cx={x + (i % cols) * gap} cy={y + Math.floor(i / cols) * gap} r={1.6} />
@@ -309,10 +298,8 @@ function dotGrid(x: number, y: number, cols: number, rows: number, gap: number) 
 }
 
 /**
- * Faint geometric line-art bleeding off the CTA panel: flowcharts, a node graph,
- * a plotted curve, a card stack — the shapes Synapse turns notes into. Purely
- * decorative, drawn in the panel's own foreground colour at low opacity, and
- * split into two edge-anchored SVGs so the centre stays clear at any width.
+ * Faint line-art bleeding off the CTA panel. Decorative, and split into two
+ * edge-anchored SVGs so the centre stays clear at any width.
  */
 function CtaDecorations() {
   return (
@@ -325,18 +312,15 @@ function CtaDecorations() {
       >
         <g stroke="currentColor" strokeWidth="1.4">
           <circle cx="14" cy="16" r="66" />
-          {/* flowchart */}
           <rect x="150" y="18" width="26" height="26" />
           <path d="M163 62l-19 19 19 19 19-19-19-19z" />
           <rect x="196" y="68" width="26" height="26" />
           <rect x="150" y="120" width="26" height="26" />
           <path d="M163 44v18M182 81h14M163 100v20" strokeDasharray="3 4" />
-          {/* plotted curve */}
           <path d="M44 214v92h92" />
           <path d="M40 222l4-10 4 10zM128 302l10 4-10 4z" fill="currentColor" stroke="none" />
           <path d="M54 300c20 2 44-10 60-70" />
           <path d="M62 250h-18M96 300v-42" strokeDasharray="3 4" />
-          {/* dashed square + plus */}
           <rect x="150" y="238" width="42" height="42" strokeDasharray="5 5" />
           <path d="M214 300h16M222 292v16" />
         </g>
@@ -352,7 +336,6 @@ function CtaDecorations() {
         className="absolute inset-y-0 right-0 h-full w-auto"
       >
         <g stroke="currentColor" strokeWidth="1.4">
-          {/* node graph */}
           <path d="M96 58l40 26M136 84l42-26M136 84l18 46" />
           <circle cx="96" cy="58" r="10" />
           <circle cx="138" cy="84" r="12" />
@@ -360,12 +343,10 @@ function CtaDecorations() {
           <circle cx="156" cy="132" r="9" />
           <circle cx="210" cy="94" r="6" />
           <circle cx="132" cy="30" r="5" />
-          {/* card stack */}
           <rect x="176" y="196" width="56" height="74" rx="4" transform="rotate(7 204 233)" />
           <rect x="168" y="204" width="56" height="74" rx="4" transform="rotate(-3 196 241)" />
           <rect x="160" y="210" width="56" height="74" rx="4" />
           <circle cx="158" cy="300" r="7" />
-          {/* dashed arc + plus */}
           <path d="M70 322C118 250 180 214 288 214" strokeDasharray="4 6" />
           <path d="M120 254h16M128 246v16" />
         </g>
@@ -378,11 +359,8 @@ function CtaDecorations() {
 }
 
 /**
- * A slice of the real signed-in app, not a generic document card: the Synapse
- * chrome, the violet gradient dashboard hero, and the spaced-repetition review
- * queue with its next-up deck. Built from the same tokens and patterns the
- * product uses (see DashboardPage and ReviewQueue), so the landing page shows
- * what the app actually looks like.
+ * A slice of the real signed-in app, built from the same tokens the product uses
+ * (see DashboardPage and ReviewQueue), so the landing page shows what it is.
  */
 function AppPreviewMock() {
   return (
@@ -391,7 +369,6 @@ function AppPreviewMock() {
       role="img"
       aria-label="A preview of the Synapse dashboard"
     >
-      {/* App header */}
       <div className="flex items-center gap-2.5 border-b border-border bg-surface px-5 py-3.5">
         <img src={synapseLogo} alt="" width="34" height="34" decoding="async" />
         <span className="translate-y-0.5 font-display text-lg font-medium text-text">Synapse</span>
@@ -401,7 +378,6 @@ function AppPreviewMock() {
       </div>
 
       <div className="p-5">
-        {/* Dashboard hero — the app's signature violet gradient panel */}
         <div className="landing-preview-hero rounded-md border border-accent-strong px-5 py-5">
           <p className="font-display text-lg text-on-accent">Ready to learn?</p>
           <p className="mt-1.5 text-sm text-on-hero-muted">
@@ -413,7 +389,6 @@ function AppPreviewMock() {
           </span>
         </div>
 
-        {/* Review queue */}
         <div className="mt-5">
           <div className="mb-2.5 flex items-baseline gap-2">
             <span className="font-display text-base font-medium text-text">Review queue</span>
@@ -421,7 +396,6 @@ function AppPreviewMock() {
           </div>
 
           <div className="flex items-stretch gap-3.5 overflow-hidden">
-            {/* Next-up deck — accent-tinted, with the timing + Review footer */}
             <div className="flex shrink-0 basis-[70%] flex-col overflow-hidden rounded-md border border-accent-solid/40 bg-accent-soft/40">
               <div className="flex-1 p-3.5">
                 <p className="rail-next-label mb-1.5 text-xs text-accent-strong">Next up</p>
@@ -449,7 +423,6 @@ function AppPreviewMock() {
               </div>
             </div>
 
-            {/* The next card in the rail, half in view — same cue the real queue gives */}
             <div className="flex shrink-0 basis-[42%] flex-col rounded-md border border-border bg-surface p-3.5">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-sm bg-accent-soft text-accent-strong">
                 <IconDeck className="h-4.5 w-4.5" />
@@ -464,11 +437,7 @@ function AppPreviewMock() {
   )
 }
 
-/**
- * A compressed slice of the real note summary view (see NotePage): an overview
- * line, bulleted key points with the accent dot, and the important-term pills.
- * Same tokens and shapes the product uses, just fewer of each.
- */
+/** A compressed slice of the real summary view (see NotePage), with fewer of each. */
 function SummaryMock() {
   return (
     <div className="landing-interactive-card flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
@@ -507,11 +476,7 @@ function SummaryMock() {
   )
 }
 
-/**
- * The real hover/focus flashcard flip (see PlayDeckPage and index.css), with two
- * cards peeking out above it so it reads as a deck. Only the front card flips;
- * the cards behind it are decorative.
- */
+/** The real flip (see PlayDeckPage), with decorative cards peeking out behind it. */
 function FlashcardDeckMock() {
   return (
     <div className="landing-interactive-card flex h-full flex-col gap-3.5 rounded-lg border border-border bg-surface p-5.5 shadow-sm">
@@ -546,10 +511,7 @@ const QUIZ_OPTIONS = [
   { value: 'false', label: 'False' },
 ] as const
 
-/**
- * The realistic quiz-question preview. The answer is selectable so the card
- * responds to a click, but it grades nothing — it is only a preview.
- */
+/** The answer is selectable so the card responds, but it grades nothing. */
 function QuizMock() {
   const [picked, setPicked] = useState<(typeof QUIZ_OPTIONS)[number]['value']>('true')
 

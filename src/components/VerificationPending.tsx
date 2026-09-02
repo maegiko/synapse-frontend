@@ -10,26 +10,15 @@ import { useCooldown } from '../lib/useCooldown'
 import { validateEmail } from '../lib/validation'
 
 interface VerificationPendingProps {
-  /**
-   * The normalized address the backend named, when the caller knows it. Left
-   * out on the verification page, which only knows that a link did not work:
-   * the panel then asks for the address before it can send anything.
-   */
+  /** Left out on the verification page, which must ask for the address first. */
   email?: string
-  /** What happened just before this panel appeared. One sentence. */
   description: string
 }
 
 /**
- * The check-your-email state: the end of registration, a login refused because
- * the address has never been confirmed, and a verification link that had
- * already expired. A registration link only lasts an hour, so arriving here
- * from a stale link is an ordinary outcome rather than a failure.
- *
- * The resend response is deliberately identical for an unknown address, an
- * already verified one, and a genuinely pending one, so the confirmation here
- * is worded neutrally: it must never imply whether an account exists. Nothing
- * is lost when a send fails, including the address it was about.
+ * The check-your-email state, after registering, after a login refused for an
+ * unconfirmed address, and after a stale link. The resend answer is identical for
+ * unknown, verified and pending addresses, so the copy stays neutral.
  */
 export function VerificationPending({ email, description }: VerificationPendingProps) {
   const [typedEmail, setTypedEmail] = useState('')
@@ -39,9 +28,6 @@ export function VerificationPending({ email, description }: VerificationPendingP
   const [error, setError] = useState('')
   const cooldown = useCooldown()
 
-  // This panel replaces the form the visitor had just submitted, so focus moves
-  // to it: otherwise the keyboard is left on a control that no longer exists,
-  // and a screen reader is left reading the page it has already left.
   const panel = useRef<HTMLDivElement>(null)
   useEffect(() => {
     panel.current?.focus()
@@ -58,7 +44,6 @@ export function VerificationPending({ email, description }: VerificationPendingP
       await api.auth.resendVerification(address)
       setSent(true)
     } catch (caught) {
-      // A 429 says how long to wait; anything else can be retried at once.
       cooldown.start(retryAfterSeconds(caught))
       setError(toEmailSendMessage(caught))
     } finally {

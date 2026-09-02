@@ -12,11 +12,9 @@ interface RecentsCardProps {
   onRetry: () => void
   emptyMessage: string
   children: ReactNode
-  /** True once the request succeeded and returned nothing. */
   isEmpty: boolean
   viewAllTo: string
   viewAllLabel: string
-  /** `strip` is the compact three-across deck row; `flat` is a stacked list. */
   variant?: RecentsVariant
   className?: string
 }
@@ -38,11 +36,6 @@ function Skeleton({ variant }: { variant: RecentsVariant }) {
   )
 }
 
-/**
- * One resource's recent items: a header, the newest few, and a way in. Rendered
- * without chrome of its own — the dashboard's Library surface is the frame, and
- * this is one section inside it.
- */
 export function RecentsCard({
   title,
   isLoading,
@@ -91,8 +84,6 @@ export function RecentsCard({
         {!isLoading && !isError && !isEmpty && (
           <ul
             className={`app-content-in grid min-w-0 p-0 ${
-              // `pt-4` gives the strip the same header-to-first-item gap the flat
-              // lists get from their rows' own top padding.
               isStrip ? 'gap-4 pt-4 sm:grid-cols-3 sm:gap-x-0' : 'gap-0'
             }`}
           >

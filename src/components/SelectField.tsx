@@ -10,11 +10,6 @@ interface SelectFieldProps
   hint?: string
 }
 
-/**
- * Labelled dropdown, built to the same shape as {@link TextField} so the two sit
- * together in a form. Options are plain strings because the only list it serves
- * — IANA time zone identifiers — is its own label.
- */
 export function SelectField({ label, options, error, hint, ...selectProps }: SelectFieldProps) {
   const id = useId()
 

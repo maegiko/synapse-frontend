@@ -17,10 +17,7 @@ import { queryClient } from '../lib/queryClient'
 import { queryKeys } from '../lib/queries'
 import { useProductAnalytics } from '../lib/productAnalytics'
 
-/**
- * Generation is one synchronous request with nothing to report on, so the wait
- * is narrated instead: each step is what the backend is plausibly doing by then.
- */
+/** One synchronous request with nothing to report on, so the wait is narrated. */
 const GENERATION_STEPS = [
   { afterMs: 0, label: 'Uploading your file…' },
   { afterMs: 4_000, label: 'Reading the text…' },
@@ -40,7 +37,6 @@ const OUTPUT_TIPS = [
   'The terms worth remembering.',
 ]
 
-/** Errors here are about one uploaded file, so they say more than the defaults. */
 function messageForFailure(error: unknown): string {
   if (isStatus(error, 400)) {
     return 'We could not read that file. It may be empty, password protected, or a scan with no text in it. Try a different file.'
@@ -55,8 +51,6 @@ function messageForFailure(error: unknown): string {
 }
 
 export function NewNotePage() {
-  // This page replaces itself with the note it produces, so the note inherits
-  // the trail and its back link names wherever the visitor started.
   const navigate = useTrailNavigate()
   const { recordQualifyingAction } = useStreakCelebration()
   const capture = useProductAnalytics()
@@ -71,8 +65,6 @@ export function NewNotePage() {
       recordQualifyingAction(() => api.notes.summarise(withDeclaredType(chosen))),
     onSuccess: (note) => {
       capture('note_created')
-      // The response is the complete summary, so the detail view can render
-      // immediately instead of refetching what we already hold.
       queryClient.setQueryData(queryKeys.note(note.id), note)
       void queryClient.invalidateQueries({ queryKey: queryKeys.notes, exact: true })
       navigate(`/notes/${note.id}`, { replace: true })
@@ -81,7 +73,6 @@ export function NewNotePage() {
 
   const isGenerating = generate.isPending
 
-  // The step only advances while a request is in flight; it is reset on submit.
   useEffect(() => {
     if (!isGenerating) return
     const timers = GENERATION_STEPS.slice(1).map((generationStep, index) =>
@@ -110,7 +101,6 @@ export function NewNotePage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    // Guards a second submit while the first request is still running.
     if (isGenerating) return
 
     if (!file) {

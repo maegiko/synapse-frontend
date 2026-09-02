@@ -6,9 +6,6 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#faf9fc" />
     <script>
-      // Applied before the first paint, so the page never flashes the wrong
-      // theme. Keep the key and the default in step with src/lib/theme.ts: a
-      // browser with no saved choice gets light, whatever its OS prefers.
       ;(() => {
         let theme = 'light'
         try {
@@ -39,7 +36,6 @@
     <meta name="application-name" content="Synapse" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
 
-    <!-- Social previews: replace public/social-preview.png with your final 1200 × 630 PNG. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Synapse" />
     <meta property="og:locale" content="en_AU" />

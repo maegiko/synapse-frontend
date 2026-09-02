@@ -1,7 +1,7 @@
 /**
- * Country codes for canonical IANA zones, derived from the public-domain IANA
- * zone table. A zone name cannot be converted to a country with Intl alone;
- * keeping this lookup explicit avoids incorrect guesses from continent names.
+ * Country codes for canonical IANA zones, from the public-domain zone table. Intl
+ * cannot convert a zone name to a country, and guessing from continent names is
+ * wrong often enough to be worth the table.
  */
 const TIME_ZONE_COUNTRIES: Record<string, string> = {
   'Europe/Andorra': 'AD',

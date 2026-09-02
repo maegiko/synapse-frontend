@@ -1,12 +1,10 @@
 /**
- * Upload rules for POST /api/notes/summarise, mirroring FRONTEND_API.md
- * section 8. The backend enforces all of this too; checking here keeps a
- * doomed 10 MB upload off the wire and gives a better message than a 413.
+ * Upload rules for the summarise endpoint. The backend enforces these too;
+ * checking here keeps a doomed 10 MB upload off the wire.
  */
 
 interface NoteFileFormat {
   extension: string
-  /** The declared MIME type the backend accepts for this extension. */
   mimeType: string
   label: string
 }
@@ -57,10 +55,9 @@ export function validateNoteFile(file: File): string | null {
 }
 
 /**
- * Browsers leave `type` empty or fall back to `application/octet-stream` for
- * extensions they do not know — Markdown most of all — and the backend rejects
- * an octet-stream upload even when the filename looks supported. The extension
- * is validated above, so the declared type is restated from it before sending.
+ * Browsers leave `type` empty or say `application/octet-stream` for extensions
+ * they do not know, Markdown most of all, and the backend rejects that. The
+ * extension is already validated, so the type is restated from it.
  */
 export function withDeclaredType(file: File): File {
   const format = formatFor(file)

@@ -39,16 +39,11 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  /**
-   * The address the backend says it wrote to, which is also what marks the
-   * registration finished. It is the normalized form, so the resend action
-   * asks about exactly the account that was created.
-   */
+  /** The normalized address, which is also what marks the registration finished. */
   const [registeredEmail, setRegisteredEmail] = useState('')
   /**
-   * The account was created but its verification email did not go out (a 502).
-   * Nothing is lost: the resend action is the way out, so this lands on the same
-   * screen with wording that does not claim an email was sent.
+   * The account exists but its verification email did not go out. Nothing is lost:
+   * this lands on the same screen, worded so it never claims an email was sent.
    */
   const [sendFailed, setSendFailed] = useState(false)
 
@@ -68,26 +63,17 @@ export function RegisterPage() {
 
     setSubmitting(true)
     try {
-      // 202, not a session: the account exists but cannot log in until the
-      // emailed link is confirmed, so nothing here signs anybody in.
       const created = await api.auth.register({ fullName, email, password })
-      // The password has done its work and is never needed again on this page.
       setPassword('')
       setConfirmPassword('')
       setRegisteredEmail(created.email)
       capture('registration_submitted')
     } catch (error) {
-      // A 409 means the address is already on a *verified* account. A pending
-      // unverified registration answers the ordinary 202 with a fresh link, so
-      // this never says "already exists" for one of those.
       if (isStatus(error, 409)) {
         setFieldErrors({ email: 'An account with this email already exists.' })
         setSubmitting(false)
         return
       }
-      // 502: the account exists, only the email failed. The address is
-      // normalized the way the backend normalizes it, so the resend action on
-      // the next screen asks about the account that was just created.
       if (isStatus(error, 502)) {
         setPassword('')
         setConfirmPassword('')

@@ -14,51 +14,27 @@ const RATING_BADGES: Record<ReviewRating, { label: string; className: string }> 
   EASY: { label: 'EASY', className: 'bg-success-soft text-success-solid' },
 }
 
-/**
- * The streak card's own shape, so the compact states of the two sit under the
- * hero as one pair of matching rows.
- */
+/** The streak card's shape, so the two compact rows under the hero match. */
 const COMPACT_CARD =
   'mt-6 rounded-md border border-border bg-surface px-4 py-3 shadow-sm sm:px-6 sm:py-4'
 
 /**
- * How wide one card is, as a share of the rail (which spans the full dashboard
- * content width):
- *   - base: the rail width minus 2rem, so the current card dominates and a
- *     constant ~1rem sliver of the next one always shows to signal more.
- *   - `md`: two across, comfortable on a tablet.
- *   - `lg`+: three across, matching the creation cards below.
- * `gap-4` (1rem) is the space subtracted between each pair. `snap-start` (plus
- * the rail's small `scroll-px`) lands every card's left edge on the content line.
+ * One card's width as a share of the rail: one across on a phone, less 2rem so a
+ * sliver of the next always shows, two on a tablet and three above that.
  */
 const RAIL_ITEM =
   'min-w-0 shrink-0 basis-[calc(100%-2rem)] snap-start md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)]'
 
-/**
- * How far past the edge of the tolerance we treat a scroll position as "still
- * at the end", to absorb the fractional `scrollLeft` browsers report.
- */
+/** Absorbs the fractional `scrollLeft` browsers report at the ends. */
 const EDGE_EPS = 2
 
-/**
- * The nav control, in both placements. Always a circle: equal width/height,
- * `shrink-0`, and centred icon, so nothing can squeeze it oval.
- */
 const NAV_CIRCLE =
   'grid shrink-0 place-items-center rounded-full border border-border bg-surface text-accent-foreground shadow-sm transition-colors duration-150 ease-out hover:border-accent-solid/55 hover:bg-surface-alt/60 hover:text-accent-strong'
 
 /**
- * Side-mounted controls appear only at `min-[1200px]` and up. Below that, the
- * dashboard's centred column (`max-w-280` = 1120px) has less side margin than a
- * chevron is wide, so there is nowhere to put one beside a heading-aligned card
- * without lapping it — the pair goes under the rail instead. 1200 ≈ 1120 + 2 ×
- * (button + breathing room), so at the threshold there is real space, not a
- * squeeze.
- *
- * The control is an absolute overlay — never layout — so showing or hiding it
- * can't move the rail. Its `left` / `right` offset is a `vw`-based `clamp()` in
- * index.css: it enters ~1.5rem clear of the card at the threshold and slides
- * further into the widening page margin from there. It never laps a card.
+ * Side controls appear only from 1200px, where the centred column finally leaves
+ * room beside a card for a chevron. An absolute overlay, never layout, so showing
+ * one cannot move the rail.
  */
 const RAIL_NAV_SIDE =
   `${NAV_CIRCLE} absolute top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 min-[1200px]:grid min-[1440px]:h-9 min-[1440px]:w-9`
@@ -68,19 +44,13 @@ const RAIL_NAV_SIDE_LEFT = 'rail-nav-left'
 const RAIL_NAV_SIDE_RIGHT = 'rail-nav-right'
 
 /**
- * Below-rail controls, below `min-[1200px]`. Pinned to the two rail edges
- * (`justify-between`), not centred, so they read as the rail's own ends. Kept as
- * a fixed pair — the unavailable direction is disabled, not removed, so neither
- * button moves.
+ * Below-rail controls under 1200px, pinned to the rail's own ends. The
+ * unavailable direction is disabled rather than removed, so neither button moves.
  */
 const RAIL_NAV_BELOW =
   `${NAV_CIRCLE} h-9 w-9 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none`
 
-/**
- * Tracks whether the rail can still scroll further in each direction, so the
- * chevrons only appear when there is off-screen content that way. Kept in sync
- * with arrow clicks, trackpad/touch scrolling, and any resize of the rail.
- */
+/** Whether the rail can still scroll each way, so a chevron only shows when it can. */
 function useRailOverflow(itemCount: number) {
   const railRef = useRef<HTMLUListElement>(null)
   const [overflow, setOverflow] = useState({ left: false, right: false })
@@ -100,8 +70,6 @@ function useRailOverflow(itemCount: number) {
     if (!el) return
     sync()
     el.addEventListener('scroll', sync, { passive: true })
-    // Observing the rail catches window resizes and any layout shift that
-    // changes how many cards fit, without a separate window listener.
     const observer = new ResizeObserver(sync)
     observer.observe(el)
     return () => {
@@ -110,14 +78,6 @@ function useRailOverflow(itemCount: number) {
     }
   }, [sync, itemCount])
 
-  /**
-   * Scroll to the real position of the next / previous card rather than adding
-   * an assumed "card width + gap" each time — a relative step accumulates the
-   * subpixel error from the `calc()` card widths and leaves the leftmost card
-   * sitting a few pixels under the rail edge. Snapping to a specific element and
-   * letting the browser align its start edge keeps every landing deterministic
-   * and flush with the content line.
-   */
   const scrollToStep = useCallback((direction: 1 | -1) => {
     const el = railRef.current
     if (!el) return
@@ -127,7 +87,6 @@ function useRailOverflow(itemCount: number) {
     const railLeft = el.getBoundingClientRect().left
     const anchor = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0
 
-    // The card whose left edge currently sits closest to the snap line.
     let currentIndex = 0
     let closest = Infinity
     items.forEach((item, index) => {
@@ -151,10 +110,8 @@ function useRailOverflow(itemCount: number) {
 }
 
 /**
- * The backend schedules in whole calendar days of the user's own time zone, so
- * there is no time of day to count down to and nothing here ever ticks. The
- * queue only carries decks that are already due, so a future date is defensive
- * rather than expected.
+ * The backend schedules in whole calendar days, so nothing here ticks. A future
+ * date is defensive: the queue only carries decks already due.
  */
 function dueLabel(nextReviewDate: string, timeZone: string): string {
   const days = calendarDaysFromToday(nextReviewDate, timeZone)
@@ -166,46 +123,27 @@ function dueLabel(nextReviewDate: string, timeZone: string): string {
 }
 
 /**
- * One deck in the rail. The card surface is inert — only the Review action
- * starts a session, so there is no wrapping link and no whole-card hover. The
- * first card is the next recommended review and carries a faint accent wash,
- * its position named, and a due-now cue.
- *
- * Two regions, so the review status and its action read as one unit rather than
- * as two things floating at the bottom of an open card:
- *   - body: optional "Next up" micro-label, then the title row — tinted icon
- *     tile + deck title, with the card count as secondary metadata directly
- *     beneath the title
- *   - footer: a divider and a faint tint enclose the review timing (the fact
- *     that matters for a spaced-repetition queue) and the Review control
+ * One deck in the rail. The surface is inert, so only Review starts a session.
+ * The first card is the next recommended review and is marked as such.
  */
 function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean }) {
-  // An empty deck can sit in the queue but the review endpoint rejects it, so
-  // it points at its overview to be filled instead of at a run it cannot start.
   const timeZone = useUserTimeZone()
   const isEmpty = deck.cardCount === 0
   const to = isEmpty ? `/flashcards/${deck.deckId}` : `/flashcards/${deck.deckId}/play`
   const action = isEmpty ? 'Add cards' : isNext ? 'Review now' : 'Review'
   const daysFromToday = calendarDaysFromToday(deck.nextReviewDate, timeZone)
   const isOverdue = daysFromToday !== null && daysFromToday < 0
-  // "Due now" makes today's first action immediate, but an overdue deck keeps
-  // its age visible rather than having lateness flattened into the same label.
   const timing = isNext && daysFromToday === 0 ? 'Due now' : dueLabel(deck.nextReviewDate, timeZone)
   const lastRating = deck.lastRating ? RATING_BADGES[deck.lastRating] : null
 
   return (
     <li className={RAIL_ITEM}>
-      {/* `overflow-hidden` so the footer tint is clipped to the card's own
-          corners. */}
       <div
         className={`flex h-full flex-col overflow-hidden rounded-md border ${
           isNext ? 'border-accent-solid/40 bg-accent-soft/40' : 'border-border bg-surface'
         }`}
       >
         <div className="flex-1 p-4">
-          {/* The label line is always present so every card is the same height
-              and every title row aligns across the rail; it only carries text
-              on the next-up card. */}
           <p
             className="rail-next-label mb-1.5 text-xs text-accent-strong"
             aria-hidden={isNext ? undefined : true}
@@ -243,8 +181,6 @@ function QueueCard({ deck, isNext }: { deck: ReviewQueueDeck; isNext: boolean })
           </div>
         </div>
 
-        {/* The footer encloses the two review facts: a divider and a faint tint
-            group the timing with the control that acts on it. */}
         <div
           className={`flex items-center justify-between gap-2 border-t px-4 py-2.5 ${
             isOverdue
@@ -284,14 +220,12 @@ interface ReviewQueueProps {
   isLoading: boolean
   isError: boolean
   onRetry: () => void
-  /** Someone with no decks at all has nothing to be caught up on. */
   hasDecks: boolean
 }
 
 /**
- * The spaced-repetition queue, in the backend's order: study what is already
- * due before making anything new. It only claims the dashboard's full width
- * when something is actually due; every other state is one compact row.
+ * The spaced-repetition queue in the backend's order. It only takes the
+ * dashboard's full width when something is actually due.
  */
 export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: ReviewQueueProps) {
   const due = decks ?? []
@@ -326,7 +260,6 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
   }
 
   if (due.length === 0) {
-    // Nothing to be caught up on before the first deck exists.
     if (!hasDecks) return null
 
     return (
@@ -364,14 +297,6 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
         </AppLink>
       </div>
 
-      {/* The wrapper is the normal dashboard content width; the rail fills it,
-          so the first card lines up with the heading. Left to right is the
-          review order, so the rail scrolls rather than wraps. The native
-          scrollbar is hidden; the chevrons drive it instead.
-
-          `px` + matching `scroll-px` (3px) keep the first and last cards a hair
-          inside the overflow clip at both ends, so a fractional-DPI scroll
-          position can't shave a card's left or right border. */}
       <div className="relative">
         <ul
           ref={railRef}
@@ -382,9 +307,6 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
           ))}
         </ul>
 
-        {/* Side controls: `min-[1200px]` and up. Absolute overlays with a
-            clamped offset (see RAIL_NAV_SIDE); the below-rail pair covers the
-            rest. */}
         {overflow.left && (
           <button
             type="button"
@@ -407,7 +329,6 @@ export function ReviewQueue({ decks, isLoading, isError, onRetry, hasDecks }: Re
         )}
       </div>
 
-      {/* Below-rail controls: below `min-[1200px]`, pinned to the rail's edges. */}
       <div className="mt-4 flex justify-between min-[1200px]:hidden">
         <button
           type="button"

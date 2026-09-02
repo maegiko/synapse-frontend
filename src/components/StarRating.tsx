@@ -10,7 +10,6 @@ interface StarRatingProps {
   className?: string
 }
 
-/** Whole stars only: hovering previews a rating and each button sets it outright. */
 export function StarRating({
   value,
   onChange,

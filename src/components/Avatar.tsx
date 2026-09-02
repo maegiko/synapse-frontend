@@ -8,12 +8,10 @@ function initialsOf(fullName: string): string {
 
 interface AvatarProps {
   fullName: string
-  /** `sm` sits in the header bar; `lg` is the profile card's identity block. */
   size?: 'sm' | 'lg'
   className?: string
 }
 
-/** Initials chip, in the same accent-soft treatment as the app's other chips. */
 export function Avatar({ fullName, size = 'sm', className = '' }: AvatarProps) {
   const sizing = size === 'lg' ? 'h-14 w-14 text-lg' : 'h-9 w-9 text-sm'
   return (

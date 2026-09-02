@@ -2,7 +2,6 @@ import { useSyncExternalStore } from 'react'
 import { currentTheme, setTheme, subscribeToTheme } from '../lib/theme'
 import { IconMoon, IconSun } from './icons'
 
-/** A persisted global theme switch, styled as the same compact pill in every header. */
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribeToTheme, currentTheme)
 

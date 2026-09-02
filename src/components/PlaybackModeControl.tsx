@@ -7,10 +7,6 @@ const MODES: { value: PlaybackMode; label: string }[] = [
   { value: 'shuffle', label: 'Shuffle' },
 ]
 
-/**
- * Compact two-segment control for how a deck's run is dealt. Kept quieter than
- * the Play button: a muted track with a soft-lavender selected segment.
- */
 export function PlaybackModeControl({
   value,
   onChange,

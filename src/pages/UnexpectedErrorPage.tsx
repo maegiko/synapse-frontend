@@ -3,14 +3,9 @@ import { IconAlert } from '../components/icons'
 import { btnGhostLg, btnPrimaryLg } from '../components/ui'
 
 /**
- * What {@link AppErrorBoundary} shows in place of the app after a rendering
- * failure. Whatever broke is unknown from here, so this page assumes nothing
- * is working: no router, no auth, no query cache. Both ways out leave the
- * current React tree behind entirely, a full reload and a native link, so
- * neither depends on the code that just failed.
- *
- * The visitor is told what happened and what to do, never how it broke. The
- * details go to the console in development, which is where they are useful.
+ * What {@link AppErrorBoundary} shows after a rendering failure. Whatever broke is
+ * unknown from here, so this assumes nothing works: no router, no auth, no query
+ * cache, and both ways out leave the current React tree behind entirely.
  */
 export function UnexpectedErrorPage() {
   return (

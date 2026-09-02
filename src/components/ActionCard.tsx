@@ -5,12 +5,10 @@ import { surfaceCard } from './ui'
 
 interface ActionCardProps {
   to: string
-  /** Decorative artwork, bled off the card's bottom-right corner. */
   art: ReactNode
   title: string
   body: string
   cta: string
-  /** Flashcards and quizzes are generated from a note, so they need one first. */
   blockedReason?: string
 }
 

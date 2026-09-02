@@ -9,15 +9,8 @@ import { btnGhostLg, btnPrimaryLg } from '../components/ui'
 const TITLE = 'Page not found - Synapse'
 
 /**
- * The destination for an address that matches no route at all.
- *
- * A page that exists but has no content behind it is a different thing: a
- * deleted note, a deck on another account. Those keep their own not-found
- * state on their own page, which can say what is missing and offer to make a
- * new one. This page only knows that the address itself leads nowhere, so it
- * says exactly that and points back at somewhere real. It never redirects on
- * its own: the visitor decides where to go next, and the address stays put so
- * a mistyped link is still visible and fixable.
+ * An address that matches no route. A page that exists but has no content behind
+ * it is a different thing, and keeps its own not-found state on its own page.
  */
 export function NotFoundPage() {
   const { status } = useAuth()
@@ -30,8 +23,6 @@ export function NotFoundPage() {
     }
   }, [])
 
-  // The recovery actions depend on who is asking, so wait out the one boot
-  // refresh rather than offering a signed-out route to a signed-in visitor.
   if (status === 'loading') return <AuthBootScreen />
 
   const signedIn = status === 'authenticated'

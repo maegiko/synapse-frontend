@@ -3,7 +3,6 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { IconSpinner } from './icons'
 
-/** Shown for the one refresh call the app makes on boot. */
 export function AuthBootScreen() {
   return (
     <div className="grid min-h-screen place-items-center" role="status" aria-live="polite">
@@ -15,7 +14,6 @@ export function AuthBootScreen() {
   )
 }
 
-/** Signed-in only. Remembers where the visitor was headed. */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { status } = useAuth()
   const location = useLocation()
@@ -27,7 +25,6 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-/** Signed-out only: the landing page and both auth forms. */
 export function GuestRoute({ children }: { children: ReactNode }) {
   const { status } = useAuth()
 

@@ -1,7 +1,6 @@
 /**
- * The access token lives in memory only, as FRONTEND_API.md recommends. A page
- * reload deliberately loses it; the HttpOnly refresh cookie restores the
- * session on boot.
+ * The access token lives in memory only. A reload deliberately loses it; the
+ * HttpOnly refresh cookie is what restores the session on boot.
  */
 
 type AccessTokenListener = (token: string | null) => void

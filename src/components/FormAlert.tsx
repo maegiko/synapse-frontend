@@ -1,6 +1,5 @@
 import { formAlert } from './ui'
 
-/** Form-level failure message, announced to screen readers when it appears. */
 export function FormAlert({ message }: { message: string }) {
   return (
     <p className={formAlert} role="alert">

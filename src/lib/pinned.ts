@@ -1,8 +1,6 @@
 /**
- * Pin state is the backend's ordering concern rather than the client's: the
- * note, deck, and quiz list endpoints, and each of a group's three content
- * lists, all arrive with pinned records first. Nothing here re-sorts a list
- * into a different order — these helpers only read the one it came in.
+ * Pin state is the backend's ordering concern: every list endpoint arrives with
+ * pinned records first. Nothing here re-sorts a list, only reads the order given.
  */
 
 /** Any record the API marks with a pin state. */
@@ -11,11 +9,8 @@ export interface Pinnable {
 }
 
 /**
- * Pinned items first, everything else in the order it arrived. A defensive
- * fallback only: group content already comes back this way, so this is a stable
- * partition that leaves a correctly ordered list untouched — reference
- * included — and degrades an out-of-order one to the right shape instead of
- * imposing a second, contradictory sort.
+ * A defensive fallback only. Group content already arrives this way, so this is a
+ * stable partition that leaves a correct list untouched, reference included.
  */
 export function pinnedFirst<T extends Pinnable>(items: T[]): T[] {
   const pinned = items.filter((item) => item.pinned)
@@ -25,23 +20,16 @@ export function pinnedFirst<T extends Pinnable>(items: T[]): T[] {
 
 /** What a paged list can currently say about its pinned records. */
 export interface PinnedSlice<T> {
-  /** The pinned records among the pages loaded so far. */
   items: T[]
   /**
-   * True once every pinned record the query matches has been loaded. There is
-   * no pinned-only parameter on the list endpoints, but the pinned-first order
-   * means the pinned records are a prefix of the whole result: the moment an
-   * unpinned one appears, nothing pinned can follow it, and running out of
-   * pages settles it too. Until then the pinned set on screen is a partial one,
-   * so no count is claimed from it.
+   * True once every pinned record has been loaded. There is no pinned-only
+   * parameter, but the pinned-first order makes them a prefix: the first unpinned
+   * record settles it, and so does running out of pages.
    */
   isComplete: boolean
 }
 
-/**
- * The pinned prefix of a paged list, and whether it is all of it. `loaded` is
- * every record from the pages fetched so far, in the order the backend gave.
- */
+/** `loaded` is every record from the pages fetched so far, in the backend's order. */
 export function pinnedSlice<T extends Pinnable>(
   loaded: T[],
   query: { isSuccess: boolean; hasNextPage: boolean },

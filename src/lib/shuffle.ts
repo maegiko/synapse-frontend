@@ -13,9 +13,9 @@ function randomFrom(seed: number): () => number {
 }
 
 /**
- * Fisher-Yates on a copy, so the query cache's array is never reordered. The
- * shuffle is seeded rather than free: `useMemo` may drop its cache at any time,
- * and a re-shuffle mid-run would repeat items and skip others.
+ * Fisher-Yates on a copy, so the query cache's array is never reordered. Seeded
+ * rather than free: `useMemo` may drop its cache, and a re-shuffle mid-run would
+ * repeat items and skip others.
  */
 export function shuffled<T>(items: T[], seed: number): T[] {
   const random = randomFrom(seed)

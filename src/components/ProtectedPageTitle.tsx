@@ -17,13 +17,11 @@ const PROTECTED_TITLES = [
   { path: '/quiz/:quizId/scores', label: 'Scores' },
   { path: '/quiz/:quizId/play', label: 'Quiz' },
   { path: '/quiz/:quizId', label: 'Quiz' },
-  // These legacy addresses immediately redirect into the filtered library.
   { path: '/notes', label: 'Library' },
   { path: '/flashcards', label: 'Library' },
   { path: '/quiz', label: 'Library' },
 ] as const
 
-/** Gives every protected route a short, stable browser and history title. */
 export function ProtectedPageTitle() {
   const { pathname } = useLocation()
   const page = PROTECTED_TITLES.find(({ path }) => matchPath({ path, end: true }, pathname))

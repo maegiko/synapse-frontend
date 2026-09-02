@@ -13,16 +13,11 @@ import type {
 } from './types'
 
 /**
- * Creates an unverified account and emails it a verification link. It answers
- * `202` with the address it wrote to, and no token or cookie: the caller must
- * show a check-your-email state rather than signing anybody in.
+ * Creates an unverified account and emails it a verification link. Answers 202
+ * with no session, so the caller shows a check-your-email state.
  *
- * DTO validation runs before the backend trims the email, so trim it here or a
- * padded address can fail @Email validation.
- *
- * The account's time zone is seeded from the device unless the caller names one.
- * It is only a starting point: from here on the saved value is what counts, and
- * it changes only when the user changes it in their profile.
+ * The email is trimmed here because DTO validation runs before the backend
+ * trims it, and a padded address fails @Email.
  */
 export function register(payload: RegisterRequest): Promise<RegisterResponse> {
   return apiRequest<RegisterResponse>(API_PATHS.auth.register, {
@@ -37,18 +32,9 @@ export function register(payload: RegisterRequest): Promise<RegisterResponse> {
 }
 
 /**
- * Confirms an emailed link, for both a new registration and an email change.
- * The answer's `kind` says which it was, and it is the only thing the caller
- * may branch on.
- *
- * A registration link is also the sign-in: it answers with an access token and
- * sets the refresh cookie, which is why this call needs the cookie flag even
- * though it sends no bearer token. An email-change link mints nothing.
- *
- * Every unusable token — unknown, expired, replaced, already used — answers the
- * same `400`, so the caller cannot and should not tell those apart. The token
- * belongs in this request and nowhere else: never log it, store it, or leave it
- * in the address bar.
+ * Confirms an emailed link. `kind` says whether it was a registration, which
+ * also signs the user in and sets the refresh cookie, or an email change, which
+ * mints nothing. Every unusable token answers the same 400.
  */
 export function verifyEmail(token: string): Promise<VerifyEmailResponse> {
   return apiRequest<VerifyEmailResponse>(API_PATHS.auth.verifyEmail, {
@@ -59,9 +45,8 @@ export function verifyEmail(token: string): Promise<VerifyEmailResponse> {
 }
 
 /**
- * Sends a fresh registration link. It answers `204` for an unknown address, an
- * already verified one, and a genuinely pending one alike, so the caller must
- * say something neutral: this response cannot reveal whether an account exists.
+ * Sends a fresh registration link. Answers 204 for unknown, already verified and
+ * pending addresses alike, so the caller must not imply an account exists.
  */
 export function resendVerification(email: string): Promise<void> {
   return apiRequest<void>(API_PATHS.auth.resendVerification, {
@@ -91,13 +76,8 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Asks for a password-reset link. It answers `204` for an unknown address, an
- * unverified one, a live one, and a backend whose email provider failed alike,
- * so the caller must show one generic confirmation whatever was typed: this
- * response cannot reveal whether an account exists. A `429` counts unknown
- * addresses too, so it proves nothing either and must keep the same wording.
- *
- * Sets no cookie, so unlike the reset below it does not need the cookie flag.
+ * Asks for a password-reset link. Answers 204 whatever was typed, and a 429
+ * counts unknown addresses too, so both need the same generic confirmation.
  */
 export function forgotPassword(email: string): Promise<void> {
   return apiRequest<void>(API_PATHS.auth.forgotPassword, {
@@ -107,14 +87,8 @@ export function forgotPassword(email: string): Promise<void> {
 }
 
 /**
- * Sets a new password from an emailed link. It signs nobody in — no token comes
- * back — but it revokes every refresh token of that account and clears the
- * caller's refresh cookie, which is why it needs the cookie flag.
- *
- * Every unusable token — unknown, expired, replaced by a newer request, or
- * already used — answers the same `400`, so the caller cannot and should not
- * tell those apart. The token is a credential: it belongs in this request and
- * nowhere else, so it is never logged, stored, or left in the address bar.
+ * Sets a new password from an emailed link. Signs nobody in, but revokes every
+ * refresh token for the account and clears this caller's refresh cookie.
  */
 export function resetPassword(payload: ResetPasswordRequest): Promise<void> {
   return apiRequest<void>(API_PATHS.auth.resetPassword, {

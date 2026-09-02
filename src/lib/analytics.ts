@@ -1,9 +1,6 @@
 import type { AnalyticsPeriodDays } from '../api'
 
-/**
- * The only windows the analytics endpoint accepts. It never clamps to the
- * nearest one, so the selector offers exactly these and nothing else.
- */
+/** The endpoint never clamps to the nearest one, so offer exactly these. */
 export const ANALYTICS_PERIODS: readonly AnalyticsPeriodDays[] = [7, 30, 90, 365]
 
 export const DEFAULT_ANALYTICS_PERIOD: AnalyticsPeriodDays = 30
@@ -19,9 +16,8 @@ export function periodDescription(period: AnalyticsPeriodDays): string {
 }
 
 /**
- * What a rate or an average says when there is nothing to average. The API
- * sends `null` rather than `0` for exactly this case — a retention rate of zero
- * and no reviews at all are different facts — so it is never rendered as a zero.
+ * What a rate or an average says with nothing to average. The API sends null
+ * rather than 0 for this, so it is never rendered as a zero.
  */
 export const NO_DATA_LABEL = 'No data yet'
 
@@ -30,10 +26,7 @@ function trimDecimal(value: number, maxDecimals = 1): string {
   return String(Number(value.toFixed(maxDecimals)))
 }
 
-/**
- * A span of recorded study time. Seconds below a minute so a short session is
- * not flattened to "0m", and hours once there are any.
- */
+/** Seconds below a minute, so a short session is not flattened to "0m". */
 export function formatStudyDuration(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds))
   if (whole < 60) return `${whole}s`
@@ -61,10 +54,7 @@ export function formatRatioAsPercentage(ratio: number | null): string {
   return ratio === null ? NO_DATA_LABEL : `${Math.round(ratio * 100)}%`
 }
 
-/**
- * Improvement is a difference between two percentages, so it is in percentage
- * points rather than percent, and it carries its sign.
- */
+/** A difference between percentages, so percentage points, carrying its sign. */
 export function formatImprovement(points: number | null): string {
   if (points === null) return NO_DATA_LABEL
   const rounded = Number(points.toFixed(1))

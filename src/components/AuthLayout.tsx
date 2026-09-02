@@ -12,7 +12,6 @@ interface AuthLayoutProps {
   footer: ReactNode
 }
 
-/** Split page used by both auth routes: the pitch on the left, form on the right. */
 export function AuthLayout({
   title,
   subtitle,

@@ -34,8 +34,6 @@ export function NewQuizPage() {
       onGenerate={async (note) => {
         const quiz = await recordQualifyingAction(() => api.quiz.generate(note.id))
         capture('quiz_generated')
-        // The generation response is the whole quiz, so the detail view can
-        // render it without a refetch.
         queryClient.setQueryData(queryKeys.quiz(quiz.id), quiz)
         void queryClient.invalidateQueries({ queryKey: queryKeys.quizzes, exact: true })
         return `/quiz/${quiz.id}`

@@ -1,11 +1,10 @@
 /**
- * The theme is a browser-local preference. Nothing in the API stores it, so
- * every rule here reads and writes the localStorage of the device in front of
- * us, and the applied theme is `data-theme` on `<html>`.
+ * A browser-local preference: nothing in the API stores it, so this reads and
+ * writes localStorage and applies `data-theme` to `<html>`.
  *
- * The bootstrap script in index.html sets that attribute before the first
- * paint; it repeats the default and the storage key on purpose, because it has
- * to run before any module loads. Keep the two in step.
+ * The bootstrap script in index.html sets that attribute before the first paint.
+ * It repeats the default and the storage key because it runs before any module
+ * loads, so keep the two in step.
  */
 
 export type Theme = 'light' | 'dark'
@@ -15,10 +14,7 @@ export const THEME_STORAGE_KEY = 'synapse-theme'
 /** What a browser with no saved choice gets, whatever its OS prefers. */
 export const DEFAULT_THEME: Theme = 'light'
 
-/**
- * Stamped once the one-time move to dark has been decided for this browser,
- * either way. See {@link migrateExistingUserToDark}.
- */
+/** Stamped once the move to dark has been decided for this browser, either way. */
 const DARK_MIGRATION_KEY = 'synapse-theme-dark-migration'
 
 /** The browser chrome behind the page; mirrors `--color-background` per theme. */
@@ -60,13 +56,9 @@ export function currentTheme(): Theme {
 }
 
 /**
- * Repaints the browser chrome behind the page: on iOS that is the strip the
- * notch and the clock sit in, above the viewport.
- *
- * The tag is replaced rather than edited. iOS Safari reads `theme-color` when
- * the tag is parsed and does not reliably notice a later `content` change, so
- * editing it in place left that strip on the previous theme's colour until the
- * page was reloaded. Every other browser treats the swap as an ordinary update.
+ * Repaints the browser chrome, which on iOS is the strip behind the notch. The
+ * tag is replaced rather than edited: iOS Safari reads `theme-color` when the tag
+ * is parsed and does not reliably notice a later `content` change.
  */
 function paintBrowserChrome(theme: Theme): void {
   const replacement = document.createElement('meta')
@@ -90,10 +82,7 @@ export function setTheme(theme: Theme): void {
   storeTheme(theme)
 }
 
-/**
- * Follows the applied theme, including the change another tab makes: the
- * preference is shared storage, so every open tab moves together.
- */
+/** The preference is shared storage, so every open tab moves together. */
 export function subscribeToTheme(listener: ThemeListener): () => void {
   function onStorage(event: StorageEvent) {
     if (event.key !== THEME_STORAGE_KEY) return
@@ -112,8 +101,6 @@ function migrationSettled(): boolean {
   try {
     return localStorage.getItem(DARK_MIGRATION_KEY) !== null
   } catch {
-    // Nothing can be remembered here, and a migration that cannot be recorded
-    // would fire again on every load. Treat it as already handled.
     return true
   }
 }
@@ -122,18 +109,15 @@ function settleMigration(): void {
   try {
     localStorage.setItem(DARK_MIGRATION_KEY, 'done')
   } catch {
-    // Handled above: without storage the migration never starts.
+    // Without storage the migration never starts, so there is nothing to record.
   }
 }
 
 /**
  * Moves an account that predates the light default over to dark, once per
- * browser.
- *
- * There is no server-side preference to migrate, so "predates" is read from the
- * session: a refresh cookie restored on boot, or a password login. Both mean an
- * account that existed before this visit. Registering is deliberately not one
- * of them — see {@link skipDarkMigration}.
+ * browser. There is no server-side preference, so "predates" is read from the
+ * session: a restored refresh cookie, or a password login. Registering is
+ * deliberately not one of them, see {@link skipDarkMigration}.
  */
 export function migrateExistingUserToDark(): void {
   if (migrationSettled()) return
@@ -142,9 +126,8 @@ export function migrateExistingUserToDark(): void {
 }
 
 /**
- * Settles the same one-time decision the other way, for a browser that has just
- * created an account: a new account keeps the light default, and signing in
- * again later must not mistake it for an old one.
+ * Settles the same decision for a browser that has just created an account, so
+ * signing in again later does not mistake it for an old one.
  */
 export function skipDarkMigration(): void {
   if (migrationSettled()) return

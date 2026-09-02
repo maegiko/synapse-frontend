@@ -3,12 +3,9 @@ import { PostHogProvider } from '@posthog/react'
 import { productAnalyticsConfig } from '../lib/productAnalytics'
 
 /**
- * Product analytics is production-configured through Vite environment
- * variables. Local development works without them and sends nothing.
- *
- * Synapse records only explicitly named events. Autocapture, session replay,
- * exception capture, and person profiles stay off so form values and study
- * material are never collected accidentally.
+ * Configured through Vite environment variables, so local development sends
+ * nothing. Only named events are recorded: autocapture, session replay, exception
+ * capture and person profiles stay off so study material is never collected.
  */
 export function ProductAnalyticsProvider({ children }: { children: ReactNode }) {
   if (!productAnalyticsConfig.enabled) return children

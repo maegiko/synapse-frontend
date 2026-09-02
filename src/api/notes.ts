@@ -9,9 +9,8 @@ import type {
 } from './types'
 
 /**
- * One page of notes, newest first, each with its full summary content. `query`
- * searches note titles. The whole envelope is returned because the paging
- * metadata beside `notes` is the point of it; field names are left alone.
+ * One page of notes, each with its full summary. The whole envelope is returned
+ * because the paging metadata beside `notes` is the point of it.
  */
 export async function list(params: ListParams = {}): Promise<NoteListResponse> {
   return apiRequest<NoteListResponse>(listPath(API_PATHS.notes.list, params), {
@@ -19,10 +18,7 @@ export async function list(params: ListParams = {}): Promise<NoteListResponse> {
   })
 }
 
-/**
- * Every note, by walking the pages. For the screens that count or pick across
- * the whole library rather than showing a paged list of it.
- */
+/** Every note, by walking the pages. */
 export async function listAll(): Promise<NoteSummary[]> {
   const all: NoteSummary[] = []
   for (let page = 0; ; page++) {
@@ -38,9 +34,8 @@ export async function get(noteId: PublicId): Promise<NoteSummary> {
 }
 
 /**
- * Edits the note title and/or overview. Only the supplied fields change; the
- * structured keypoints, concepts, and terms stay as they were. Returns the
- * complete updated summary.
+ * Only the supplied fields change; the structured keypoints, concepts and terms
+ * are not editable through the API.
  */
 export async function update(noteId: PublicId, body: UpdateNoteRequest): Promise<NoteSummary> {
   return apiRequest<NoteSummary>(API_PATHS.notes.detail(noteId), {
@@ -51,8 +46,7 @@ export async function update(noteId: PublicId, body: UpdateNoteRequest): Promise
 }
 
 /**
- * Deletes the note and its summary. Answers 204, so there is nothing to read.
- * Decks and quizzes generated from it stay; only their link to the note is lost.
+ * Decks and quizzes generated from the note stay; only their link to it is lost.
  */
 export async function remove(noteId: PublicId): Promise<void> {
   await apiRequest<void>(API_PATHS.notes.detail(noteId), {
@@ -62,9 +56,8 @@ export async function remove(noteId: PublicId): Promise<void> {
 }
 
 /**
- * The only multipart endpoint. It extracts the text, calls the LLM
- * synchronously, and saves the note before answering, so it takes far longer
- * than ordinary requests: always call it behind a loading state.
+ * Extracts the text, calls the LLM and saves the note before answering, so it
+ * takes far longer than an ordinary request. Always call it behind a loader.
  */
 export async function summarise(file: File, signal?: AbortSignal): Promise<NoteSummary> {
   const formData = new FormData()

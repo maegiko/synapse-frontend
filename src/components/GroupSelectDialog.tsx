@@ -16,7 +16,6 @@ import type { GroupContentKind, StudyGroupListItem } from '../api'
 const SEARCH_THRESHOLD = 6
 
 interface GroupSelectDialogProps {
-  /** The resource being filed, named in the move confirmation. */
   resourceTitle: string
   kind: GroupContentKind
   resourceId: string
@@ -31,10 +30,8 @@ function groupCounts(group: StudyGroupListItem): string {
 }
 
 /**
- * Picks the group one note, deck, or quiz belongs to. Membership is
- * single-valued, so this is a single choice, never a multi-select: choosing a
- * group while the resource is already in another one moves it, and that is
- * confirmed by name before anything happens.
+ * Membership is single-valued, so this is a single choice. Picking a group while
+ * the resource is in another one moves it, confirmed by name first.
  */
 export function GroupSelectDialog({
   resourceTitle,
@@ -48,7 +45,6 @@ export function GroupSelectDialog({
   const createGroup = useCreateGroup()
 
   const [search, setSearch] = useState('')
-  /** The group awaiting a move confirmation, if any. */
   const [pendingMove, setPendingMove] = useState<StudyGroupListItem | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -75,7 +71,6 @@ export function GroupSelectDialog({
 
   function choose(group: StudyGroupListItem) {
     setErrorMessage('')
-    // Already somewhere else: say so plainly before taking it out of there.
     if (currentGroupId && currentGroupId !== group.id) {
       setPendingMove(group)
       return
@@ -98,8 +93,6 @@ export function GroupSelectDialog({
             { name, description: description || null },
             {
               onSuccess: (group) => {
-                // The group exists now: back to the list, so a failed add is
-                // retried by picking it rather than by creating it twice.
                 setIsCreating(false)
                 fileInto(group.id)
               },

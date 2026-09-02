@@ -8,10 +8,8 @@ interface PeriodSelectorProps {
 }
 
 /**
- * Which window the progress page reports on. An `sr-only` radio group styled as
- * a segmented control — the same pattern as {@link PlaybackModeControl}, so
- * arrow-key navigation, a single tab stop, and a real checked state all come
- * from the browser rather than from ARIA bolted onto buttons.
+ * An `sr-only` radio group styled as a segmented control, so arrow-key movement
+ * and a real checked state come from the browser rather than from ARIA.
  */
 export function PeriodSelector({ value, onChange }: PeriodSelectorProps) {
   const name = useId()

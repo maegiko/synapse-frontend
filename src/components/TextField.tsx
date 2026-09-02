@@ -8,7 +8,6 @@ interface TextFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id
   hint?: string
 }
 
-/** Labelled input. Password fields get a reveal toggle. */
 export function TextField({ label, error, hint, type = 'text', ...inputProps }: TextFieldProps) {
   const id = useId()
   const [revealed, setRevealed] = useState(false)

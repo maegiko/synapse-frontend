@@ -63,20 +63,7 @@ function App() {
                 </GuestRoute>
               }
             />
-            {/*
-              Public, and behind no guard on purpose. The visitor arriving from
-              their inbox is normally signed out, and a signed-in one confirming
-              an email change must not be bounced to the dashboard.
-            */}
             <Route path="/verify-email" element={<VerifyEmailPage />} />
-            {/*
-              The forgotten-password pair, both public and behind no guard. The
-              visitor opening a reset link is signed out, and a signed-in one
-              must not be bounced to the dashboard: the reset applies to the
-              account the token belongs to, not to the session this browser
-              happens to hold. `/reset-password` is the address the emailed
-              link points at, so the path is fixed by the backend.
-            */}
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
@@ -223,18 +210,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/*
-              Development-only check for the error boundary: a route that
-              throws while rendering. `import.meta.env.DEV` is replaced with
-              `false` at build time, so this branch and the module behind it
-              are dropped from production output.
-            */}
             {import.meta.env.DEV && <Route path="/__error-test" element={<ErrorTestRoute />} />}
-            {/*
-              Anything that matches no route above. A missing note, deck, quiz
-              or group is not this: those addresses are real, so they stay on
-              their own page and show its resource-specific not-found state.
-            */}
             <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </StreakCelebrationProvider>

@@ -10,20 +10,15 @@ import { useCreateGroup } from '../lib/groupMutations'
 import { useGroups } from '../lib/queries'
 import { plural } from '../lib/plural'
 
-/** The newest few; the rest are one click away on the groups page. */
 const DASHBOARD_LIMIT = 3
 
-/**
- * The streak and review-queue cards' shape, so every compact state under the
- * dashboard's hero reads as one family of rows.
- */
+/** The streak and review-queue cards' shape, so the compact rows match. */
 const COMPACT_CARD =
   'mt-14 rounded-md border border-border bg-surface px-4 py-3 shadow-sm sm:px-6 sm:py-4'
 
 /**
- * The dashboard's study-group section. Groups organise content that already
- * exists, so this is not another "Start something new" card: with no groups it
- * collapses to a single onboarding row rather than an empty rail.
+ * Groups organise content that already exists, so with none this collapses to a
+ * single onboarding row rather than an empty rail.
  */
 export function DashboardGroups() {
   const groups = useGroups()
@@ -51,8 +46,6 @@ export function DashboardGroups() {
         createGroup.mutate(
           { name, description: description || null },
           {
-            // A new group is empty, so its own page — where Add content is the
-            // obvious next step — is the right place to land.
             onSuccess: (group) => navigate(`/groups/${group.id}`),
             onError: (error) => setCreateError(toFormMessage(error)),
           },
@@ -108,9 +101,6 @@ export function DashboardGroups() {
             <h2 id="groups-heading" className="text-sm sm:text-lg">
               Group your study material
             </h2>
-            {/* Supporting copy only, and on a phone it is what turns this row
-                into four cramped lines beside the button. The heading and the
-                button say the same thing between them at that size. */}
             <p className="mt-0.5 hidden text-xs text-text-muted sm:mt-1 sm:block">
               A study group keeps one subject's notes, decks, and quizzes together in one place.
             </p>

@@ -43,7 +43,6 @@ function StreakCelebrationModal({
         event.preventDefault()
         onClose()
       } else if (event.key === 'Tab') {
-        // This dialog has one control, so Tab and Shift+Tab both stay on it.
         event.preventDefault()
         buttonRef.current?.focus()
       }
@@ -120,7 +119,7 @@ export function StreakCelebrationProvider({ children }: { children: ReactNode })
       before = await api.user.getStreak()
       queryClient.setQueryData(queryKeys.streak, before)
     } catch {
-      // Streak status must never prevent the action itself.
+      // Streak status must never block the action itself.
     }
 
     const result = await action()

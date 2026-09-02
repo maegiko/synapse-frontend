@@ -11,11 +11,7 @@ import type {
 import { queryKeys } from './queries'
 import { queryClient } from './queryClient'
 
-/**
- * Where each content kind's cached state lives. Group membership is stored on
- * the resource itself (`groupId`), so a membership change invalidates both the
- * resource's own query and the list it appears in.
- */
+/** Membership lives on the resource, so a change touches it and its list. */
 const RESOURCE_KEYS: Record<
   GroupContentKind,
   { list: readonly string[]; detail: (id: string) => readonly string[] }
@@ -25,11 +21,7 @@ const RESOURCE_KEYS: Record<
   quizzes: { list: queryKeys.quizzes, detail: queryKeys.quiz },
 }
 
-/**
- * Sibling caches that share a resource's key prefix but carry no `groupId`, so
- * a group change never makes them stale: the review queue under
- * `['flashcard-decks', …]` and score history under `['quizzes', id, 'scores']`.
- */
+/** Siblings sharing a key prefix but carrying no `groupId`, so never stale. */
 function carriesGroupId(queryKey: readonly unknown[]): boolean {
   if (queryKey[0] === 'flashcard-decks') return queryKey[1] !== 'review-queue'
   if (queryKey[0] === 'quizzes') return queryKey[2] !== 'scores'
@@ -37,12 +29,9 @@ function carriesGroupId(queryKey: readonly unknown[]): boolean {
 }
 
 /**
- * One resource's membership changed. The counts on every group card move, the
- * groups at both ends of the change gain or lose an item, and the resource's
- * own `groupId` is now stale in its detail and list queries.
- *
- * `groupIds` is the target and, for a move, the group it came from; nulls and
- * duplicates are ignored so callers can pass `[groupId, fromGroupId]` directly.
+ * One resource's membership changed, so the counts on every group card move and
+ * both ends of the change gain or lose an item. `groupIds` is the target and, for
+ * a move, the group it left; nulls and duplicates are ignored.
  */
 function invalidateMembership(
   kind: GroupContentKind,
@@ -50,7 +39,6 @@ function invalidateMembership(
   groupIds: (PublicId | null | undefined)[],
 ): void {
   const keys = RESOURCE_KEYS[kind]
-  // Counts live on the list rows, so the list is refreshed for any change.
   void queryClient.invalidateQueries({ queryKey: queryKeys.groups, exact: true })
   for (const groupId of new Set(groupIds.filter((id): id is PublicId => Boolean(id)))) {
     void queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) })
@@ -60,9 +48,8 @@ function invalidateMembership(
 }
 
 /**
- * Deleting a group leaves every note, deck, and quiz it held in place but
- * ungrouped, so each one's cached `groupId` is stale — not just the ones on
- * screen. Sibling caches without a `groupId` are left alone.
+ * Deleting a group leaves its contents in place but ungrouped, so every cached
+ * `groupId` is stale, not just the ones on screen.
  */
 function invalidateAllGroupedResources(): void {
   for (const { list } of Object.values(RESOURCE_KEYS)) {
@@ -86,8 +73,6 @@ export function useUpdateGroup(groupId: PublicId) {
   return useMutation({
     mutationFn: (body: UpdateGroupRequest) => api.groups.update(groupId, body),
     onSuccess: (group: StudyGroup) => {
-      // The response is the confirmed new name and description, so the open
-      // detail page can show them at once rather than after the refetch lands.
       queryClient.setQueryData<StudyGroupDetail>(
         queryKeys.group(groupId),
         (current) =>
@@ -103,7 +88,6 @@ export function useDeleteGroup() {
   return useMutation({
     mutationFn: (groupId: PublicId) => api.groups.remove(groupId),
     onSuccess: (_result, groupId) => {
-      // The group is gone rather than stale, so its entry is dropped outright.
       queryClient.removeQueries({ queryKey: queryKeys.group(groupId) })
       void queryClient.invalidateQueries({ queryKey: queryKeys.groups, exact: true })
       invalidateAllGroupedResources()
@@ -115,17 +99,11 @@ export interface MembershipVariables {
   groupId: PublicId
   kind: GroupContentKind
   resourceId: PublicId
-  /**
-   * The group the resource is in today, when it is in one. Adding it elsewhere
-   * moves it, so that group loses an item and needs refreshing too.
-   */
+  /** The group it is in today, which a move leaves and so must refresh too. */
   fromGroupId?: PublicId | null
 }
 
-/**
- * Adds a resource to a group — or moves it, if it already belongs to another
- * one. Membership is single-valued, so there is no separate move call.
- */
+/** Adds a resource, or moves it: membership is single-valued, so there is no move call. */
 export function useAddToGroup() {
   return useMutation({
     mutationFn: ({ groupId, kind, resourceId }: MembershipVariables) =>
@@ -136,10 +114,7 @@ export function useAddToGroup() {
   })
 }
 
-/**
- * Clears a resource's group. The note, deck, or quiz itself is never deleted —
- * this is not part of any delete flow.
- */
+/** Clears the group. The resource itself is never deleted here. */
 export function useRemoveFromGroup() {
   return useMutation({
     mutationFn: ({ groupId, kind, resourceId }: MembershipVariables) =>

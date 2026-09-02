@@ -18,20 +18,14 @@ import type {
   UpdateFlashcardRequest,
 } from './types'
 
-/**
- * One page of decks, newest first, with every card of each deck included.
- * `query` searches deck titles, not card text.
- */
+/** `query` searches deck titles, not card text. */
 export async function list(params: ListParams = {}): Promise<FlashcardListResponse> {
   return apiRequest<FlashcardListResponse>(listPath(API_PATHS.flashcards.list, params), {
     authenticated: true,
   })
 }
 
-/**
- * Every deck, by walking the pages. For the screens that count or pick across
- * the whole library rather than showing a paged list of it.
- */
+/** Every deck, by walking the pages. */
 export async function listAll(): Promise<FlashcardDeck[]> {
   const all: FlashcardDeck[] = []
   for (let page = 0; ; page++) {
@@ -41,10 +35,7 @@ export async function listAll(): Promise<FlashcardDeck[]> {
   }
 }
 
-/**
- * Synchronous AI call, so it belongs behind a loading state. The deck title is
- * copied from the source note, and the card count varies from note to note.
- */
+/** Synchronous AI call, so it belongs behind a loading state. */
 export async function generate(noteId: PublicId): Promise<FlashcardGenerateResponse> {
   return apiRequest<FlashcardGenerateResponse>(API_PATHS.flashcards.generate, {
     method: 'POST',
@@ -58,10 +49,7 @@ export async function get(deckId: PublicId): Promise<FlashcardDeck> {
   return apiRequest<FlashcardDeck>(API_PATHS.flashcards.detail(deckId), { authenticated: true })
 }
 
-/**
- * Appends one hand-written card. The response names the question `question`,
- * while the saved deck names the same field `title`.
- */
+/** The response names the question `question`; the saved deck calls it `title`. */
 export async function addCard(
   deckId: PublicId,
   card: AddFlashcardRequest,
@@ -73,10 +61,7 @@ export async function addCard(
   })
 }
 
-/**
- * Renames a deck. Returns the complete updated deck, cards included and in
- * position order. The deck's review schedule and history are untouched.
- */
+/** Returns the whole updated deck. Its review schedule and history are untouched. */
 export async function updateDeck(
   deckId: PublicId,
   body: UpdateDeckRequest,
@@ -88,10 +73,7 @@ export async function updateDeck(
   })
 }
 
-/**
- * Edits one card's question and/or answer. Only the supplied fields change. The
- * response names the question `question`, while the saved deck names it `title`.
- */
+/** Only the supplied fields change. */
 export async function updateCard(
   deckId: PublicId,
   cardId: PublicId,
@@ -104,7 +86,7 @@ export async function updateCard(
   })
 }
 
-/** Removes the deck and every card in it. Answers 204, so there is nothing to read. */
+/** Removes the deck and every card in it. */
 export async function remove(deckId: PublicId): Promise<void> {
   await apiRequest<void>(API_PATHS.flashcards.detail(deckId), {
     method: 'DELETE',
@@ -120,9 +102,8 @@ export async function removeCard(deckId: PublicId, cardId: PublicId): Promise<vo
 }
 
 /**
- * The decks due today or earlier, oldest due date first. Metadata only: load a
- * chosen deck's cards with `get`. A deck with no cards can appear here but
- * cannot be reviewed.
+ * Decks due today or earlier, oldest first. Metadata only, so a chosen deck's
+ * cards still need `get`. An empty deck can appear here but cannot be reviewed.
  */
 export async function reviewQueue(): Promise<ReviewQueueDeck[]> {
   const { decks } = await apiRequest<ReviewQueueResponse>(API_PATHS.flashcards.reviewQueue, {
@@ -132,15 +113,9 @@ export async function reviewQueue(): Promise<ReviewQueueDeck[]> {
 }
 
 /**
- * Records a finished study session and reschedules the deck from the rating.
- * This is not repeatable: every call moves the due date again and adds to the
- * lifetime review total, so send it once per completed run and never as a blind
- * retry. It also feeds the streak. A deck with no cards answers 400.
- *
- * `durationSeconds` is how long the session took. It is optional and left off
- * the request when it is not supplied, so an untimed run is saved with no
- * duration rather than a guessed one: it still counts as a session and an
- * active day, and only contributes no study time to analytics.
+ * Records a finished session and reschedules the deck from the rating. Not
+ * repeatable: every call moves the due date again and adds to the lifetime
+ * total, so send it once per run and never as a blind retry.
  */
 export async function review(
   deckId: PublicId,
