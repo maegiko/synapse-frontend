@@ -9,7 +9,12 @@ import { IconCheck } from '../components/icons'
 import { btnPrimaryLg, btnSubmit, successAlert } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, validatePassword } from '../lib/validation'
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  isUsableEmailedToken,
+  validatePassword,
+} from '../lib/validation'
 
 const ASIDE_BULLETS = [
   'Pick something you have not used on this account before.',
@@ -17,29 +22,20 @@ const ASIDE_BULLETS = [
   'Reset links work once, and expire 30 minutes after they are sent.',
 ]
 
-/** What the page is doing, in the order a visit moves through it. */
 type Outcome = 'form' | 'unusable' | 'done'
 
 /**
- * The page every password-reset link points at. It reads the `token` query
- * parameter, collects a new password, and posts the two together.
+ * Public on purpose: whoever opens the link is normally signed out, and a
+ * signed-in visitor is not bounced away either, since the reset applies to the
+ * account the token belongs to rather than the one this browser holds.
  *
- * Public on purpose: whoever opens the link has forgotten their password and is
- * normally signed out. A signed-in visitor is not bounced to the dashboard
- * either — the reset applies to the account the *token* belongs to, which need
- * not be the one this browser is signed into.
- *
- * The token is a credential: anyone holding this URL can take the account over
- * until it is used or expires. It is read once into memory, sent in exactly one
+ * The token is a credential. It is read once into memory, sent in exactly one
  * request, and never logged, stored, rendered, or left in the address bar.
  */
 export function ResetPasswordPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { status, logout } = useAuth()
 
-  // Captured on the first render, before the effect below strips it from the
-  // URL. Component state and nothing else: not localStorage, not a cookie, not
-  // anything an analytics or error report could pick up.
   const [token] = useState(() => searchParams.get('token') ?? '')
 
   const [password, setPassword] = useState('')
@@ -47,21 +43,14 @@ export function ResetPasswordPage() {
   const [fieldErrors, setFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  // A visit with no token has nothing to send and never calls the backend: it
-  // is decided here, in the first render, rather than in an effect.
-  const [outcome, setOutcome] = useState<Outcome>(token ? 'form' : 'unusable')
+  const [outcome, setOutcome] = useState<Outcome>(
+    isUsableEmailedToken(token) ? 'form' : 'unusable',
+  )
 
-  // Out of the address bar as soon as the page has it, so the token does not
-  // sit in history, survive a bookmark or a shared URL, or leak through a
-  // Referer header. Nothing is submitted on load: the user has to type a
-  // password first, which is also what stops a mail scanner's prefetch from
-  // consuming the link.
   useEffect(() => {
     if (searchParams.has('token')) setSearchParams({}, { replace: true })
   }, [searchParams, setSearchParams])
 
-  // The panel that replaces the form once the reset is done or the link is
-  // spent, focused so the keyboard is not left on a control that has gone.
   const panel = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (outcome !== 'form') panel.current?.focus()
@@ -71,9 +60,6 @@ export function ResetPasswordPage() {
     event.preventDefault()
     if (submitting) return
 
-    // The backend has no confirmation field, so the match is checked here. A
-    // validation 400 does not consume the token, but catching the rules before
-    // sending is what keeps a mistyped password from looking like a dead link.
     const errors = {
       password: validatePassword(password) ?? undefined,
       confirmPassword: !confirmPassword
@@ -89,18 +75,11 @@ export function ResetPasswordPage() {
     setSubmitting(true)
     try {
       await api.auth.resetPassword({ token, newPassword: password })
-      // Nothing comes back to sign anybody in, and the response has just
-      // cleared this browser's refresh cookie, so a session held here is over
-      // whichever account it belonged to. Drop it locally rather than leave the
-      // header showing a session the next refresh will fail.
       if (status === 'authenticated') void logout().catch(() => {})
       setPassword('')
       setConfirmPassword('')
       setOutcome('done')
     } catch (error) {
-      // Unknown, expired, superseded by a newer request, and already used all
-      // answer the same 400 on purpose; the backend does not say which, so this
-      // shows one "cannot be used" state and a way to ask for a fresh link.
       if (isStatus(error, 400)) {
         setOutcome('unusable')
         return

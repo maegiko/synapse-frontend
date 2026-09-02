@@ -8,6 +8,7 @@ import { IconCheck } from '../components/icons'
 import { btnPrimaryLg, successAlert } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, toFormMessage } from '../lib/apiErrors'
+import { isUsableEmailedToken } from '../lib/validation'
 import { useProductAnalytics } from '../lib/productAnalytics'
 
 const ASIDE_BULLETS = [
@@ -16,21 +17,12 @@ const ASIDE_BULLETS = [
   'Links are single use, and a newer link always replaces an older one.',
 ]
 
-/** What the one request to the backend has told us so far. */
 type Outcome = 'checking' | 'confirmed' | 'unusable' | 'failed'
 
 /**
- * The page every verification link in an email points at, for a new account and
- * for a confirmed email change alike. It reads the `token` query parameter,
- * posts it once, and reports what came back.
- *
- * Public on purpose: whoever opens the link out of their inbox is normally
- * signed out, and the call itself takes no bearer token. Registration
- * verification signs the new account in; email-change verification does not.
- *
- * The token is used for exactly one thing. It is not logged, not stored, not
- * put in application state, and it is dropped from the address bar as soon as
- * the request has it, so a shared or bookmarked URL carries nothing.
+ * Where every emailed verification link lands, for a new account and a confirmed
+ * email change alike. Public on purpose: whoever opens it is normally signed out,
+ * and the call takes no bearer token.
  */
 export function VerifyEmailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -38,46 +30,26 @@ export function VerifyEmailPage() {
   const { status, adoptSession, refreshUser } = useAuth()
   const capture = useProductAnalytics()
 
-  // A visit with no token in the URL has nothing to check and never calls the
-  // backend: it is decided here, in the first render, rather than in an effect.
   const [outcome, setOutcome] = useState<Outcome>(
-    searchParams.get('token') ? 'checking' : 'unusable',
+    isUsableEmailedToken(searchParams.get('token') ?? '') ? 'checking' : 'unusable',
   )
   const [failureMessage, setFailureMessage] = useState('')
-  /** The address a confirmed email change moved the account onto. */
   const [confirmedEmail, setConfirmedEmail] = useState('')
 
-  /**
-   * Only ever used to choose a *recovery* route after an unusable link, which
-   * is the one thing the backend cannot tell us: a `400` does not say which
-   * kind of link it was, and being signed in is the only signal that it was
-   * probably an email change. A successful confirmation never consults this;
-   * that branches on the response's `kind`.
-   */
   const signedIn = status === 'authenticated'
 
-  // One request per visit. A verification link is opened by mail-client
-  // previews and second clicks, and development Strict Mode mounts the page
-  // twice, so the guard is a ref: it survives a re-render, a re-mount, and the
-  // URL rewrite below, none of which are a new attempt.
   const requested = useRef(false)
 
   useEffect(() => {
     if (requested.current) return
-    // Auth state settles on one refresh call at boot, and that call writes the
-    // same access token and refresh cookie a registration link is about to
-    // replace. Letting it finish first keeps the two out of each other's way,
-    // so the session this page issues is the one that survives.
     if (status === 'loading') return
 
-    const token = searchParams.get('token')
-    if (!token) {
+    const token = searchParams.get('token') ?? ''
+    if (!isUsableEmailedToken(token)) {
       requested.current = true
       return
     }
     requested.current = true
-    // The analytics SDK includes the current URL with an event. Remove the raw
-    // credential before the request or any successful event can be captured.
     setSearchParams({}, { replace: true })
 
     const wasSignedIn = status === 'authenticated'
@@ -86,35 +58,21 @@ export function VerifyEmailPage() {
         const confirmed = await api.auth.verifyEmail(token)
 
         if (confirmed.kind === 'REGISTRATION') {
-          // The confirmation is the sign-in: this answer carries an access
-          // token and the call has already set the refresh cookie, so the new
-          // account is signed in here and goes straight into the app without
-          // ever typing the password a second time.
           adoptSession(confirmed)
           capture('email_verified')
           setOutcome('confirmed')
-          // `replace`, so this history entry and the token in it are gone: back
-          // never returns to a spent link.
           navigate('/dashboard', { replace: true })
           return
         }
 
-        // An email change instead: no session was issued, and any existing one
-        // carries on. Only the profile is stale, and only for whoever is signed
-        // in here. The confirmation itself has already succeeded, so a failure
-        // to re-read the profile is not this page's news to report.
         if (wasSignedIn) await refreshUser().catch(() => {})
         setConfirmedEmail(confirmed.email)
         setOutcome('confirmed')
       } catch (error) {
-        // Unknown, expired, replaced, and already used all answer the same 400,
-        // including a second open of a link that already worked.
         if (isStatus(error, 400)) {
           setOutcome('unusable')
           return
         }
-        // A 409 means somebody else claimed the address before this link was
-        // opened; the account keeps the one it has.
         setFailureMessage(
           isStatus(error, 409)
             ? 'That address now belongs to another account, so your account keeps the address it has.'
@@ -151,10 +109,6 @@ export function VerifyEmailPage() {
           <p className="text-sm font-semibold text-text-muted">Confirming your email address…</p>
         )}
 
-        {/*
-          Only an email change ever rests here: confirming a registration link
-          signs the account in and leaves for the dashboard.
-        */}
         {outcome === 'confirmed' && (
           <>
             <p className={successAlert}>
@@ -173,9 +127,6 @@ export function VerifyEmailPage() {
 
         {outcome === 'unusable' &&
           (signedIn ? (
-            // Signed in, so this was most likely an email-change link. The
-            // account keeps the address it has, and a fresh request starts from
-            // the profile rather than from a resend.
             <>
               <p className="text-sm text-text-muted">
                 This link cannot be used. It may have expired, it may already have been used, or a
@@ -187,8 +138,6 @@ export function VerifyEmailPage() {
               </Link>
             </>
           ) : (
-            // A registration link lasts an hour, so a stale one is an ordinary
-            // thing to arrive with. The way out is a new link, asked for here.
             <>
               <VerificationPending description="Tell us the address it was sent to and we will send a new one." />
               <p className="text-center text-sm text-text-muted">
