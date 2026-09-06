@@ -6,7 +6,7 @@ import { shell } from '../components/ui'
 
 const TITLE = 'Privacy policy - Synapse'
 const LAST_UPDATED = '6 September 2026'
-const CONTACT_EMAIL = 'privacy@studysynapse.app'
+const CONTACT_EMAIL = 'kennethk.dev@gmail.com'
 
 /**
  * The privacy policy, at a fixed public address.
