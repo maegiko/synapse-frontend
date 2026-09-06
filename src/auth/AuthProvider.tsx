@@ -75,6 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [adopt],
   )
 
+  const continueWithGoogle = useCallback(
+    async (credential: string) => {
+      adopt(await api.auth.googleLogin(credential))
+      migrateExistingUserToDark()
+    },
+    [adopt],
+  )
+
   const logout = useCallback(async () => {
     try {
       await api.auth.logout()
@@ -95,8 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, login, adoptSession, logout, setUserDetails, refreshUser }),
-    [status, user, login, adoptSession, logout, setUserDetails, refreshUser],
+    () => ({
+      status,
+      user,
+      login,
+      continueWithGoogle,
+      adoptSession,
+      logout,
+      setUserDetails,
+      refreshUser,
+    }),
+    [status, user, login, continueWithGoogle, adoptSession, logout, setUserDetails, refreshUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

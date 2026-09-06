@@ -11,6 +11,12 @@ export interface AuthContextValue {
   status: AuthStatus
   user: UserDetails | null
   login: (email: string, password: string) => Promise<void>
+  /**
+   * Exchanges a Google credential for a session. Deliberately not called
+   * `register`: the backend decides whether it creates an account, links one, or
+   * signs an existing one in, and answers identically for all three.
+   */
+  continueWithGoogle: (credential: string) => Promise<void>
   adoptSession: (session: AuthResponse) => void
   logout: () => Promise<void>
   setUserDetails: (details: UserDetails) => void
