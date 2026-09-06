@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
+import { useAuth } from '../auth/useAuth'
 import { AuthLayout } from '../components/AuthLayout'
+import { AuthDivider, GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormAlert } from '../components/FormAlert'
 import { TextField } from '../components/TextField'
 import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
 import { isStatus, toEmailSendMessage } from '../lib/apiErrors'
+import { googleSignInEnabled } from '../lib/googleIdentity'
+import { googleSignInMessage } from '../lib/googleErrors'
 import { useProductAnalytics } from '../lib/productAnalytics'
 import {
   PASSWORD_MAX_LENGTH,
@@ -32,6 +36,8 @@ interface FieldErrors {
 
 export function RegisterPage() {
   const capture = useProductAnalytics()
+  const { continueWithGoogle } = useAuth()
+  const navigate = useNavigate()
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -46,6 +52,25 @@ export function RegisterPage() {
    * this lands on the same screen, worded so it never claims an email was sent.
    */
   const [sendFailed, setSendFailed] = useState(false)
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
+
+  /**
+   * A Google account is verified from the moment it exists, so this skips the
+   * check-your-email step entirely and lands in the app. No verification email is
+   * sent, and the same call signs in an account that already existed.
+   */
+  async function handleGoogleCredential(credential: string) {
+    setGoogleSubmitting(true)
+    setFormError('')
+    try {
+      await continueWithGoogle(credential)
+      capture('login_succeeded')
+      navigate('/dashboard', { replace: true })
+    } catch (error) {
+      setFormError(googleSignInMessage(error))
+      setGoogleSubmitting(false)
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -186,9 +211,19 @@ export function RegisterPage() {
           onChange={(event) => setConfirmPassword(event.target.value)}
         />
 
-        <button type="submit" className={btnSubmit} disabled={submitting}>
+        <button type="submit" className={btnSubmit} disabled={submitting || googleSubmitting}>
           {submitting ? 'Creating account…' : 'Create account'}
         </button>
+
+        {googleSignInEnabled && (
+          <>
+            <AuthDivider />
+            <GoogleSignInButton
+              onCredential={handleGoogleCredential}
+              busy={submitting || googleSubmitting}
+            />
+          </>
+        )}
       </form>
       )}
     </AuthLayout>

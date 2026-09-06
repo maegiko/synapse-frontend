@@ -2,12 +2,15 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '../components/AuthLayout'
+import { AuthDivider, GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormAlert } from '../components/FormAlert'
 import { TextField } from '../components/TextField'
 import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
 import { useAuth } from '../auth/useAuth'
 import { isStatus, isUnverifiedAccount, toFormMessage } from '../lib/apiErrors'
+import { googleSignInEnabled } from '../lib/googleIdentity'
+import { googleSignInMessage } from '../lib/googleErrors'
 import { useProductAnalytics } from '../lib/productAnalytics'
 import { validateEmail, validatePassword } from '../lib/validation'
 
@@ -18,7 +21,7 @@ const ASIDE_BULLETS = [
 ]
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, continueWithGoogle } = useAuth()
   const capture = useProductAnalytics()
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,6 +34,25 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   /** Normalized the way the backend normalizes it, so a resend finds the account. */
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
+  const [googleSubmitting, setGoogleSubmitting] = useState(false)
+
+  /**
+   * One endpoint creates, links and signs in, and the response is identical for
+   * all three, so there is nothing to branch on here: a Google visitor lands in
+   * the app exactly as a password visitor does.
+   */
+  async function handleGoogleCredential(credential: string) {
+    setGoogleSubmitting(true)
+    setFormError('')
+    try {
+      await continueWithGoogle(credential)
+      capture('login_succeeded')
+      navigate(redirectTo, { replace: true })
+    } catch (error) {
+      setFormError(googleSignInMessage(error))
+      setGoogleSubmitting(false)
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -138,9 +160,19 @@ export function LoginPage() {
           </Link>
         </p>
 
-        <button type="submit" className={btnSubmit} disabled={submitting}>
+        <button type="submit" className={btnSubmit} disabled={submitting || googleSubmitting}>
           {submitting ? 'Logging in…' : 'Log in'}
         </button>
+
+        {googleSignInEnabled && (
+          <>
+            <AuthDivider />
+            <GoogleSignInButton
+              onCredential={handleGoogleCredential}
+              busy={submitting || googleSubmitting}
+            />
+          </>
+        )}
       </form>
       )}
     </AuthLayout>
