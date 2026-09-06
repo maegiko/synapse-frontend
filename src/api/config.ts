@@ -18,10 +18,15 @@ export const API_PATHS = {
     resetPassword: '/api/auth/password/reset',
     verifyEmail: '/api/auth/email/verify',
     resendVerification: '/api/auth/email/resend',
+    /** Issues the single-use nonce a Google credential has to carry. */
+    googleNonce: '/api/auth/google/nonce',
+    google: '/api/auth/google',
   },
   user: {
     details: '/api/user/details',
     emailChange: '/api/user/email-change',
+    /** POST links a Google Account, DELETE unlinks it. */
+    googleLink: '/api/user/google-link',
     streak: '/api/user/streak',
     analytics: '/api/user/analytics',
   },

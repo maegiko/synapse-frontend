@@ -5,6 +5,7 @@ import { detectTimeZone } from '../lib/timeZone'
 import type {
   AuthResponse,
   ChangePasswordRequest,
+  GoogleNonceResponse,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -60,6 +61,35 @@ export function login(payload: LoginRequest): Promise<AuthResponse> {
     method: 'POST',
     withRefreshCookie: true,
     json: { email: payload.email.trim(), password: payload.password },
+  })
+}
+
+/**
+ * Starts one Google sign-in attempt. The returned nonce goes to Google Identity
+ * Services, and the same value is set as a cookie that must be sent back with the
+ * credential, so a fresh one is needed for every attempt including a retry.
+ */
+export function googleNonce(): Promise<GoogleNonceResponse> {
+  return apiRequest<GoogleNonceResponse>(API_PATHS.auth.googleNonce, {
+    method: 'POST',
+    withRefreshCookie: true,
+  })
+}
+
+/**
+ * Exchanges a Google credential for the ordinary Synapse session, answering the
+ * same shape login does.
+ *
+ * There is no separate Google registration call: the backend decides whether this
+ * creates an account, links one, or signs an existing one in, and the caller
+ * cannot tell which happened. The nonce travels in its cookie, which is why this
+ * needs credentials.
+ */
+export function googleLogin(credential: string): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>(API_PATHS.auth.google, {
+    method: 'POST',
+    withRefreshCookie: true,
+    json: { credential, timeZone: detectTimeZone() },
   })
 }
 

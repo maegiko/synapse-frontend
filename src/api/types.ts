@@ -75,6 +75,36 @@ export interface ResendVerificationRequest {
   email: string
 }
 
+/**
+ * The nonce for one Google sign-in attempt. The same value is set as an HttpOnly
+ * cookie, so the credential can only be spent by the browser that asked for it.
+ * Single use, and it expires after a few minutes.
+ */
+export interface GoogleNonceResponse {
+  nonce: string
+}
+
+/**
+ * `credential` is the ID token from the Google Identity Services callback. It is
+ * passed straight through: nothing in it is trustworthy until the backend has
+ * checked its signature, and it is never a Synapse bearer token.
+ */
+export interface GoogleLoginRequest {
+  credential: string
+  timeZone?: string
+}
+
+/** Linking proves both identities, so the password comes with the credential. */
+export interface LinkGoogleRequest {
+  credential: string
+  currentPassword: string
+}
+
+/** Unlinking removes a way in, so only the Synapse password authorises it. */
+export interface UnlinkGoogleRequest {
+  currentPassword: string
+}
+
 export interface ChangeEmailRequest {
   email: string
 }
@@ -102,6 +132,13 @@ export interface UserDetails {
   totalFlashcardsReviewed?: number
   /** Absent from the login and register responses; only /details sends it. */
   timeZone?: string
+  /**
+   * False for an account created by "Continue with Google" that has never set a
+   * password. Absent from the login and register responses; only /details sends it.
+   */
+  hasPassword?: boolean
+  /** Whether a Google Account is linked. At least one of these two is always true. */
+  googleLinked?: boolean
 }
 
 export interface StreakResponse {

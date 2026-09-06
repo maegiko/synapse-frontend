@@ -4,6 +4,8 @@ import type {
   AnalyticsPeriodDays,
   AnalyticsResponse,
   EmailChangeResponse,
+  LinkGoogleRequest,
+  UnlinkGoogleRequest,
   StreakResponse,
   UpdateUserDetailsRequest,
   UserDetails,
@@ -41,6 +43,36 @@ export async function requestEmailChange(email: string): Promise<EmailChangeResp
     json: { email: email.trim() },
   })
   return pending ?? null
+}
+
+/**
+ * Attaches a Google Account to the signed-in account, so it can afterwards sign
+ * in either way. This is how a Google address that is not the Synapse address
+ * gets linked; "Continue with Google" deliberately will not guess at that.
+ *
+ * Needs the nonce cookie as well as the bearer token, and the two addresses do
+ * not have to match. Presenting the already-linked account changes nothing.
+ */
+export function linkGoogle(payload: LinkGoogleRequest): Promise<void> {
+  return apiRequest<void>(API_PATHS.user.googleLink, {
+    method: 'POST',
+    authenticated: true,
+    withRefreshCookie: true,
+    json: payload,
+  })
+}
+
+/**
+ * Removes the Google identity. The account, its content and its other sessions
+ * are untouched. An account with no password is refused with 409, because
+ * unlinking would leave it with no way in.
+ */
+export function unlinkGoogle(payload: UnlinkGoogleRequest): Promise<void> {
+  return apiRequest<void>(API_PATHS.user.googleLink, {
+    method: 'DELETE',
+    authenticated: true,
+    json: payload,
+  })
 }
 
 /** Counted in calendar days of the user's saved time zone. */
