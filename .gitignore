@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 FRONTEND_API.md
 .design-foundations
+
+# Local environment. .env.example is the committed template.
+.env
+.env.local
