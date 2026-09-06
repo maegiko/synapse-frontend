@@ -9,6 +9,7 @@ import {
   type UserDetails,
 } from '../api'
 import { AppHeader } from '../components/AppHeader'
+import { AuthDivider, GoogleSignInButton } from '../components/GoogleSignInButton'
 import { AppLink } from '../components/AppLink'
 import { BackLink } from '../components/BackLink'
 import { Avatar } from '../components/Avatar'
@@ -30,6 +31,7 @@ import {
 import streakFlame from '../assets/streak_flame.webp'
 import streakFlameMuted from '../assets/streak_flame_muted.webp'
 import {
+  btnDangerGhostSm,
   btnGhostSm,
   btnPrimaryDisabled,
   btnPrimarySm,
@@ -45,6 +47,8 @@ import {
   toFormMessage,
   toReasonMessage,
 } from '../lib/apiErrors'
+import { googleLinkMessage } from '../lib/googleErrors'
+import { googleSignInEnabled } from '../lib/googleIdentity'
 import { useCooldown } from '../lib/useCooldown'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatCalendarDate, formatDateTime } from '../lib/formatDate'
@@ -157,7 +161,7 @@ interface PasswordErrors {
   confirmNewPassword?: string
 }
 
-type Panel = 'summary' | 'details' | 'email' | 'password'
+type Panel = 'summary' | 'details' | 'email' | 'password' | 'google'
 
 type PerfTab = 'flashcards' | 'quizzes'
 const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
@@ -174,7 +178,7 @@ const SNAPSHOT_PERIOD = 30
  * server-side by `GET /api/user/analytics`.
  */
 export function ProfilePage() {
-  const { user, setUserDetails, logout } = useAuth()
+  const { user, setUserDetails, logout, refreshUser } = useAuth()
   const details = useUserDetails(user)
   const streak = useStreak()
   const notes = useNotes()
@@ -210,6 +214,20 @@ export function ProfilePage() {
   const profile = details.data
   const timeZone = useUserTimeZone()
   const location = timeZoneLocation(timeZone)
+
+  const [googlePassword, setGooglePassword] = useState('')
+  const [googlePasswordError, setGooglePasswordError] = useState('')
+  const [googleFormError, setGoogleFormError] = useState('')
+  const [googleMessage, setGoogleMessage] = useState('')
+
+  function startManagingGoogle() {
+    setGooglePassword('')
+    setGooglePasswordError('')
+    setGoogleFormError('')
+    setGoogleMessage('')
+    setSavedMessage('')
+    setPanel('google')
+  }
 
   function startEditing() {
     if (!profile) return
@@ -249,6 +267,8 @@ export function ProfilePage() {
     setEmailFormError('')
     setPasswordErrors({})
     setPasswordFormError('')
+    setGooglePasswordError('')
+    setGoogleFormError('')
   }
 
   const save = useMutation({
@@ -314,6 +334,83 @@ export function ProfilePage() {
       setPasswordFormError(toFormMessage(error))
     },
   })
+
+  const linkGoogle = useMutation({
+    mutationFn: (credential: string) =>
+      api.user.linkGoogle({ credential, currentPassword: googlePassword }),
+    onSuccess: async () => {
+      setGooglePassword('')
+      setGoogleMessage('Google is now linked. You can sign in either way from now on.')
+      await refreshUser()
+    },
+    onError: (error) => {
+      // Here a 401 is a wrong password or an unusable credential, not an expired token.
+      if (isStatus(error, 401)) {
+        setGooglePasswordError('That password is not correct, or the Google sign-in failed.')
+        setGoogleFormError('')
+        return
+      }
+      setGooglePasswordError('')
+      setGoogleFormError(googleLinkMessage(error))
+    },
+  })
+
+  const unlinkGoogle = useMutation({
+    mutationFn: () => api.user.unlinkGoogle({ currentPassword: googlePassword }),
+    // Unlinking revokes every refresh token, so this session is already finished:
+    // a session obtained through a Google Account that has since been compromised
+    // must not outlive the link. Same handling as a password change.
+    onSuccess: () => {
+      setGooglePassword('')
+      void logout()
+    },
+    onError: (error) => {
+      if (isStatus(error, 401)) {
+        setGooglePasswordError('That password is not correct.')
+        setGoogleFormError('')
+        return
+      }
+      setGooglePasswordError('')
+      setGoogleFormError(googleLinkMessage(error))
+    },
+  })
+
+  /**
+   * A Google-only account has no current password to check, so the change form
+   * cannot serve it. The forgotten-password flow can: the account is verified, so
+   * it is sent a link like any other.
+   */
+  const sendPasswordSetup = useMutation({
+    mutationFn: (email: string) => api.auth.forgotPassword(email),
+    onError: (error) => setPasswordFormError(toFormMessage(error)),
+  })
+
+  const googleBusy = linkGoogle.isPending || unlinkGoogle.isPending
+
+  function handleGoogleCredential(credential: string) {
+    if (!googlePassword) {
+      setGooglePasswordError('Enter your current password first.')
+      return Promise.resolve()
+    }
+    setGooglePasswordError('')
+    setGoogleFormError('')
+    setGoogleMessage('')
+    return linkGoogle.mutateAsync(credential).catch(() => undefined)
+  }
+
+  function handleUnlinkSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (googleBusy) return
+
+    if (!googlePassword) {
+      setGooglePasswordError('Enter your current password.')
+      return
+    }
+    setGooglePasswordError('')
+    setGoogleFormError('')
+    setGoogleMessage('')
+    unlinkGoogle.mutate()
+  }
 
   const trimmedName = fullName.trim()
   const nameChanged = Boolean(profile) && trimmedName !== profile?.fullName
@@ -488,8 +585,13 @@ export function ProfilePage() {
                     Change email
                   </button>
                   <button type="button" className={btnGhostSm} onClick={startChangingPassword}>
-                    Change password
+                    {profile.hasPassword === false ? 'Set a password' : 'Change password'}
                   </button>
+                  {googleSignInEnabled && (
+                    <button type="button" className={btnGhostSm} onClick={startManagingGoogle}>
+                      {profile.googleLinked ? 'Manage Google' : 'Link Google'}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -669,7 +771,56 @@ export function ProfilePage() {
             </div>
           )}
 
-          {profile && panel === 'password' && (
+          {profile && panel === 'password' && profile.hasPassword === false && (
+            <div className="app-content-in grid gap-5">
+              <div>
+                <h2 className="text-base font-medium">Set a password</h2>
+                <p className="mt-1 text-sm text-text-muted">
+                  This account signs in with Google and has never had a password. We can email a
+                  link to <span className="font-semibold text-text">{profile.email}</span> that lets
+                  you set one. Google stays linked, and afterwards either way signs you in.
+                </p>
+              </div>
+
+              {passwordFormError && <FormAlert message={passwordFormError} />}
+
+              {sendPasswordSetup.isSuccess ? (
+                <div className="grid gap-4" role="status">
+                  <p className={successAlert}>
+                    <IconCheck className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+                    <span>
+                      If that address has an account, a link is on its way. It expires in 30
+                      minutes.
+                    </span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className={btnPrimarySm} onClick={closePanel}>
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    className={`${btnPrimarySm} ${btnPrimaryDisabled}`}
+                    disabled={sendPasswordSetup.isPending}
+                    onClick={() => {
+                      setPasswordFormError('')
+                      sendPasswordSetup.mutate(profile.email)
+                    }}
+                  >
+                    {sendPasswordSetup.isPending ? 'Sending…' : 'Email me a link'}
+                  </button>
+                  <button type="button" className={btnGhostSm} onClick={closePanel}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {profile && panel === 'password' && profile.hasPassword !== false && (
             changePassword.isSuccess ? (
               <div className="app-content-in grid gap-2" role="status">
                 <h2 className="text-base font-medium">Password changed</h2>
@@ -747,6 +898,110 @@ export function ProfilePage() {
                 </div>
               </form>
             )
+          )}
+
+          {profile && panel === 'google' && (
+            <div className="app-content-in grid gap-5">
+              <div>
+                <h2 className="text-base font-medium">
+                  {profile.googleLinked ? 'Google is linked' : 'Link your Google Account'}
+                </h2>
+                <p className="mt-1 text-sm text-text-muted">
+                  {profile.googleLinked
+                    ? 'You can sign in to this account with Google or with your password. Unlinking removes the Google option and signs you out on every device; your account and everything in it are untouched.'
+                    : 'Link a Google Account and you can sign in either way. It does not have to use the same address as this account, and neither address is copied onto the other.'}
+                </p>
+              </div>
+
+              {googleMessage && (
+                <p className={successAlert} role="status">
+                  {googleMessage}
+                </p>
+              )}
+              {googleFormError && <FormAlert message={googleFormError} />}
+
+              {googleMessage ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <button type="button" className={btnPrimarySm} onClick={closePanel}>
+                    Done
+                  </button>
+                </div>
+              ) : profile.googleLinked && !profile.hasPassword ? (
+                <div className="grid gap-4">
+                  <p className="text-sm text-text-muted">
+                    Google is the only way into this account, so it cannot be unlinked yet. Set a
+                    password first and the option appears here.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className={btnPrimarySm} onClick={startChangingPassword}>
+                      Set a password
+                    </button>
+                    <button type="button" className={btnGhostSm} onClick={closePanel}>
+                      Back to profile
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form className="grid gap-5" onSubmit={handleUnlinkSubmit} noValidate>
+                  <TextField
+                    label="Current password"
+                    type="password"
+                    name="currentPassword"
+                    autoComplete="current-password"
+                    hint={
+                      profile.googleLinked
+                        ? 'Unlinking signs you out everywhere, so you will need to log in again.'
+                        : 'Confirms it is you before a second way into the account is added.'
+                    }
+                    value={googlePassword}
+                    error={googlePasswordError}
+                    disabled={googleBusy}
+                    onChange={(event) => setGooglePassword(event.target.value)}
+                  />
+
+                  {profile.googleLinked ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="submit"
+                        className={btnDangerGhostSm}
+                        disabled={googleBusy || !googlePassword}
+                      >
+                        {unlinkGoogle.isPending ? 'Unlinking…' : 'Unlink Google'}
+                      </button>
+                      <button
+                        type="button"
+                        className={btnGhostSm}
+                        onClick={closePanel}
+                        disabled={googleBusy}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <AuthDivider label="then" />
+                      <div className="max-w-100">
+                        <GoogleSignInButton
+                          onCredential={handleGoogleCredential}
+                          label="Sign in with Google"
+                          busy={googleBusy}
+                        />
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          className={btnGhostSm}
+                          onClick={closePanel}
+                          disabled={googleBusy}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </form>
+              )}
+            </div>
           )}
         </section>
 
