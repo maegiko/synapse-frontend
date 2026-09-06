@@ -21,6 +21,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { NotePage } from './pages/NotePage'
 import { PlayDeckPage } from './pages/PlayDeckPage'
 import { PlayQuizPage } from './pages/PlayQuizPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
@@ -64,6 +65,7 @@ function App() {
               }
             />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
