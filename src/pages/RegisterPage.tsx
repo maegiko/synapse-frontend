@@ -64,7 +64,7 @@ export function RegisterPage() {
     setFormError('')
     try {
       await continueWithGoogle(credential)
-      capture('login_succeeded')
+      capture('google_signup_submitted')
       navigate('/dashboard', { replace: true })
     } catch (error) {
       setFormError(googleSignInMessage(error))

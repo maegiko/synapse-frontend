@@ -49,6 +49,7 @@ import {
 } from '../lib/apiErrors'
 import { googleLinkMessage } from '../lib/googleErrors'
 import { googleSignInEnabled } from '../lib/googleIdentity'
+import { useProductAnalytics } from '../lib/productAnalytics'
 import { useCooldown } from '../lib/useCooldown'
 import { DASHBOARD_BACK } from '../lib/backTrail'
 import { formatCalendarDate, formatDateTime } from '../lib/formatDate'
@@ -179,6 +180,7 @@ const SNAPSHOT_PERIOD = 30
  */
 export function ProfilePage() {
   const { user, setUserDetails, logout, refreshUser } = useAuth()
+  const capture = useProductAnalytics()
   const details = useUserDetails(user)
   const streak = useStreak()
   const notes = useNotes()
@@ -341,6 +343,7 @@ export function ProfilePage() {
     onSuccess: async () => {
       setGooglePassword('')
       setGoogleMessage('Google is now linked. You can sign in either way from now on.')
+      capture('google_linked')
       await refreshUser()
     },
     onError: (error) => {
@@ -362,6 +365,8 @@ export function ProfilePage() {
     // must not outlive the link. Same handling as a password change.
     onSuccess: () => {
       setGooglePassword('')
+      // Captured before the sign-out, which unmounts this page.
+      capture('google_unlinked')
       void logout()
     },
     onError: (error) => {

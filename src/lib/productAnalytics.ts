@@ -14,6 +14,20 @@ export type ProductAnalyticsEvent =
   | 'registration_submitted'
   | 'email_verified'
   | 'login_succeeded'
+  /**
+   * Google sign-in is counted apart from the password events above, so those two
+   * keep meaning what they meant before Google existed and stay comparable across
+   * the change.
+   *
+   * `google_signup_submitted` is intent, not outcome: it means somebody used
+   * Google from the register page. One endpoint creates, links, claims and signs
+   * in, and it answers identically for all four on purpose, so the frontend
+   * cannot know which happened and must not imply that it does.
+   */
+  | 'google_login_succeeded'
+  | 'google_signup_submitted'
+  | 'google_linked'
+  | 'google_unlinked'
   | 'note_created'
   | 'flashcard_deck_generated'
   | 'quiz_generated'

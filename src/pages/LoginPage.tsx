@@ -46,7 +46,7 @@ export function LoginPage() {
     setFormError('')
     try {
       await continueWithGoogle(credential)
-      capture('login_succeeded')
+      capture('google_login_succeeded')
       navigate(redirectTo, { replace: true })
     } catch (error) {
       setFormError(googleSignInMessage(error))
