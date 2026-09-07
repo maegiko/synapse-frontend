@@ -28,6 +28,7 @@ import { QuizPage } from './pages/QuizPage'
 import { QuizScoresPage } from './pages/QuizScoresPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { TermsPage } from './pages/TermsPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 import { ErrorTestRoute } from './dev/ErrorTestRoute'
 import { queryClient } from './lib/queryClient'
@@ -68,6 +69,7 @@ function App() {
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/account-deleted" element={<AccountDeletedPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
