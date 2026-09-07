@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { AuthLayout } from '../components/AuthLayout'
 import { AuthDivider, GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormAlert } from '../components/FormAlert'
+import { LegalConsentNotice } from '../components/LegalConsentNotice'
 import { TextField } from '../components/TextField'
 import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
@@ -99,6 +100,7 @@ export function LoginPage() {
       }
       asideTitle="Your study material is waiting."
       asideBullets={ASIDE_BULLETS}
+      showLegalLinks={false}
       footer={
         unverified ? (
           <button
@@ -159,6 +161,8 @@ export function LoginPage() {
             Forgot your password?
           </Link>
         </p>
+
+        <LegalConsentNotice />
 
         <button type="submit" className={btnSubmit} disabled={submitting || googleSubmitting}>
           {submitting ? 'Logging in…' : 'Log in'}

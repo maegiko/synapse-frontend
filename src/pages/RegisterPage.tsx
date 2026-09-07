@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth'
 import { AuthLayout } from '../components/AuthLayout'
 import { AuthDivider, GoogleSignInButton } from '../components/GoogleSignInButton'
 import { FormAlert } from '../components/FormAlert'
+import { LegalConsentNotice } from '../components/LegalConsentNotice'
 import { TextField } from '../components/TextField'
 import { VerificationPending } from '../components/VerificationPending'
 import { btnSubmit } from '../components/ui'
@@ -132,6 +133,7 @@ export function RegisterPage() {
       }
       asideTitle="From upload to quiz score, in one sitting."
       asideBullets={ASIDE_BULLETS}
+      showLegalLinks={false}
       footer={
         done ? (
           <>
@@ -210,6 +212,8 @@ export function RegisterPage() {
           disabled={submitting}
           onChange={(event) => setConfirmPassword(event.target.value)}
         />
+
+        <LegalConsentNotice confirmAge />
 
         <button type="submit" className={btnSubmit} disabled={submitting || googleSubmitting}>
           {submitting ? 'Creating account…' : 'Create account'}

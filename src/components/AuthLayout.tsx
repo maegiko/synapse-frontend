@@ -10,6 +10,13 @@ interface AuthLayoutProps {
   asideBullets: string[]
   children: ReactNode
   footer: ReactNode
+  /**
+   * Whether to close the column with links to the privacy policy and terms.
+   * Log in and register set this false: both carry {@link LegalConsentNotice}
+   * beside their submit button already, and a second pair of links four lines
+   * below the first is just noise.
+   */
+  showLegalLinks?: boolean
 }
 
 export function AuthLayout({
@@ -19,6 +26,7 @@ export function AuthLayout({
   asideBullets,
   children,
   footer,
+  showLegalLinks = true,
 }: AuthLayoutProps) {
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,35fr)_minmax(0,65fr)]">
@@ -38,6 +46,17 @@ export function AuthLayout({
           <div className={authCard}>{children}</div>
 
           <p className="mt-6 text-center text-sm text-text-muted">{footer}</p>
+
+          {showLegalLinks && (
+            <p className="mt-4 flex justify-center gap-4 text-xs text-text-muted">
+              <Link to="/privacy" className="no-underline hover:text-accent-foreground">
+                Privacy
+              </Link>
+              <Link to="/terms" className="no-underline hover:text-accent-foreground">
+                Terms
+              </Link>
+            </p>
+          )}
         </div>
       </main>
 

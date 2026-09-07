@@ -1502,6 +1502,15 @@ export function ProfilePage() {
             </AppLink>
           </section>
         </div>
+
+        <footer className="mt-12 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-6 text-xs text-text-muted lg:mx-12">
+          <AppLink to="/privacy" className="no-underline hover:text-accent-foreground">
+            Privacy policy
+          </AppLink>
+          <AppLink to="/terms" className="no-underline hover:text-accent-foreground">
+            Terms of service
+          </AppLink>
+        </footer>
       </main>
     </>
   )

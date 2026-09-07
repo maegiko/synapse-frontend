@@ -277,7 +277,13 @@ export function LandingPage() {
             </Link>
             <p className="text-xs leading-none text-text-muted">Built by Kenneth Koon</p>
           </div>
-          <div className="flex gap-5 text-sm font-semibold">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+            <Link to="/privacy" className="text-text-muted no-underline hover:text-accent-foreground">
+              Privacy
+            </Link>
+            <Link to="/terms" className="text-text-muted no-underline hover:text-accent-foreground">
+              Terms
+            </Link>
             <Link to="/login" className="text-text-muted no-underline hover:text-accent-foreground">
               Log in
             </Link>
