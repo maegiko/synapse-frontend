@@ -12,8 +12,9 @@ interface ErrorPageShellProps {
 }
 
 /**
- * The shared frame behind both error destinations. Deliberately plain: no hooks,
- * no router links and no data, because the unexpected-error fallback renders it
+ * The shared frame behind the standalone destinations: both error pages, and the
+ * confirmation a deleted account lands on. Deliberately plain: no hooks, no
+ * router links and no data, because the unexpected-error fallback renders it
  * after something else has already failed.
  */
 export function ErrorPageShell({

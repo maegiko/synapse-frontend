@@ -105,6 +105,21 @@ export interface UnlinkGoogleRequest {
   currentPassword: string
 }
 
+/**
+ * DELETE /api/user. Irreversible: the account and everything in it are gone the
+ * moment this answers.
+ *
+ * `confirmEmail` is the account's own address, typed out by the user; the backend
+ * trims and lowercases both sides before comparing. Then exactly one proof, and
+ * which one is decided by the account rather than by the caller: `currentPassword`
+ * when {@link UserDetails.hasPassword} is true, and `credential` only when it is
+ * false. An account with both a password and a linked Google Account is deleted by
+ * its password, and its credential is refused here.
+ */
+export type DeleteAccountRequest =
+  | { confirmEmail: string; currentPassword: string; credential?: never }
+  | { confirmEmail: string; currentPassword?: never; credential: string }
+
 export interface ChangeEmailRequest {
   email: string
 }

@@ -3,6 +3,7 @@ import { analyticsPath, API_PATHS } from './config'
 import type {
   AnalyticsPeriodDays,
   AnalyticsResponse,
+  DeleteAccountRequest,
   EmailChangeResponse,
   LinkGoogleRequest,
   UnlinkGoogleRequest,
@@ -71,6 +72,26 @@ export function unlinkGoogle(payload: UnlinkGoogleRequest): Promise<void> {
   return apiRequest<void>(API_PATHS.user.googleLink, {
     method: 'DELETE',
     authenticated: true,
+    json: payload,
+  })
+}
+
+/**
+ * Destroys the account and everything the database cascades from it: notes,
+ * decks, cards, review history, quizzes, scores, groups, streak days and every
+ * refresh token on every device. Nothing is archived and there is no undo, so the
+ * caller owns the job of making this deliberate before it is reached.
+ *
+ * Needs the refresh cookie: the response clears it, and the credential path sends
+ * the `googleNonce` cookie with it. On success there is no account left for the
+ * access token to reach, so discard the session at once rather than calling
+ * logout. A 404 means a retry arrived after the account was already gone.
+ */
+export function deleteAccount(payload: DeleteAccountRequest): Promise<void> {
+  return apiRequest<void>(API_PATHS.user.account, {
+    method: 'DELETE',
+    authenticated: true,
+    withRefreshCookie: true,
     json: payload,
   })
 }

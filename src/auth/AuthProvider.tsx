@@ -94,6 +94,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  /**
+   * The same teardown as {@link logout} without the request, because the account
+   * behind the token no longer exists. Clearing the cache matters as much as the
+   * token here: every cached note, deck and quiz belongs to an account that is
+   * gone.
+   */
+  const endSession = useCallback(() => {
+    setAccessToken(null)
+    setUser(null)
+    setStatus('anonymous')
+    clearQueryCache()
+  }, [])
+
   const setUserDetails = useCallback((details: UserDetails) => setUser(details), [])
 
   const refreshUser = useCallback(async () => {
@@ -110,10 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       continueWithGoogle,
       adoptSession,
       logout,
+      endSession,
       setUserDetails,
       refreshUser,
     }),
-    [status, user, login, continueWithGoogle, adoptSession, logout, setUserDetails, refreshUser],
+    [
+      status,
+      user,
+      login,
+      continueWithGoogle,
+      adoptSession,
+      logout,
+      endSession,
+      setUserDetails,
+      refreshUser,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

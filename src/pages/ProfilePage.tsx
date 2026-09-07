@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import {
   api,
   type ChangePasswordRequest,
+  type DeleteAccountRequest,
   type EmailChangeResponse,
   type UpdateUserDetailsRequest,
   type UserDetails,
@@ -32,6 +34,7 @@ import streakFlame from '../assets/streak_flame.webp'
 import streakFlameMuted from '../assets/streak_flame_muted.webp'
 import {
   btnDangerGhostSm,
+  btnDangerSm,
   btnGhostSm,
   btnPrimaryDisabled,
   btnPrimarySm,
@@ -162,7 +165,7 @@ interface PasswordErrors {
   confirmNewPassword?: string
 }
 
-type Panel = 'summary' | 'details' | 'email' | 'password' | 'google'
+type Panel = 'summary' | 'details' | 'email' | 'password' | 'google' | 'delete'
 
 type PerfTab = 'flashcards' | 'quizzes'
 const PERF_TABS: { id: PerfTab; label: string; icon: ReactNode }[] = [
@@ -179,7 +182,8 @@ const SNAPSHOT_PERIOD = 30
  * server-side by `GET /api/user/analytics`.
  */
 export function ProfilePage() {
-  const { user, setUserDetails, logout, refreshUser } = useAuth()
+  const { user, setUserDetails, logout, endSession, refreshUser } = useAuth()
+  const navigate = useNavigate()
   const capture = useProductAnalytics()
   const details = useUserDetails(user)
   const streak = useStreak()
@@ -217,6 +221,12 @@ export function ProfilePage() {
   const timeZone = useUserTimeZone()
   const location = timeZoneLocation(timeZone)
 
+  const [deleteEmail, setDeleteEmail] = useState('')
+  const [deleteEmailError, setDeleteEmailError] = useState('')
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deletePasswordError, setDeletePasswordError] = useState('')
+  const [deleteFormError, setDeleteFormError] = useState('')
+
   const [googlePassword, setGooglePassword] = useState('')
   const [googlePasswordError, setGooglePasswordError] = useState('')
   const [googleFormError, setGoogleFormError] = useState('')
@@ -229,6 +239,16 @@ export function ProfilePage() {
     setGoogleMessage('')
     setSavedMessage('')
     setPanel('google')
+  }
+
+  function startDeleting() {
+    setDeleteEmail('')
+    setDeleteEmailError('')
+    setDeletePassword('')
+    setDeletePasswordError('')
+    setDeleteFormError('')
+    setSavedMessage('')
+    setPanel('delete')
   }
 
   function startEditing() {
@@ -271,6 +291,9 @@ export function ProfilePage() {
     setPasswordFormError('')
     setGooglePasswordError('')
     setGoogleFormError('')
+    setDeleteEmailError('')
+    setDeletePasswordError('')
+    setDeleteFormError('')
   }
 
   const save = useMutation({
@@ -381,6 +404,69 @@ export function ProfilePage() {
   })
 
   /**
+   * Which proof the deletion needs is the account's decision, not this page's: an
+   * account holding a password is deleted by that password even when it also has
+   * Google linked, and the backend refuses a credential from it.
+   */
+  const deleteWithGoogle = profile?.hasPassword === false
+
+  /** Capitalisation and stray spaces do not matter; the backend normalises both sides. */
+  const confirmedEmail = deleteEmail.trim()
+  const deleteEmailMatches =
+    confirmedEmail.length > 0 &&
+    confirmedEmail.toLowerCase() === profile?.email.trim().toLowerCase()
+
+  /**
+   * The account is gone, so there is no logout to call and no token worth
+   * keeping. Navigating first means the profile is no longer the current route
+   * when the session drops, so the protected-route guard never gets the chance to
+   * bounce this to the login page on the way out.
+   */
+  function finishDeletion() {
+    navigate('/account-deleted', { replace: true, state: { deleted: true } })
+    endSession()
+  }
+
+  const deleteAccount = useMutation({
+    mutationFn: (payload: DeleteAccountRequest) => api.user.deleteAccount(payload),
+    onSuccess: finishDeletion,
+    onError: (error) => {
+      // A retry landing after the account has already gone. What was asked for
+      // has happened, so this is the ending, not a failure to report.
+      if (isStatus(error, 404)) {
+        finishDeletion()
+        return
+      }
+      setDeleteEmailError('')
+      setDeletePasswordError('')
+      setDeleteFormError('')
+
+      // The address is checked here before it is sent, so a 400 means the two no
+      // longer agree — an edited field, or an address changed in another tab.
+      if (isStatus(error, 400)) {
+        setDeleteEmailError("That is not this account's email address.")
+        return
+      }
+      // A 401 here is the proof being wrong, not an expired access token.
+      if (isStatus(error, 401)) {
+        if (deleteWithGoogle) {
+          setDeleteFormError(
+            'That Google sign-in could not be verified. It has to be the Google Account linked to this one.',
+          )
+        } else {
+          setDeletePasswordError('That password is not correct.')
+        }
+        return
+      }
+      setDeleteFormError(
+        isStatus(error, 502)
+          ? 'Google could not be reached just now. Try again in a moment.'
+          : toFormMessage(error),
+      )
+    },
+  })
+
+  /**
    * A Google-only account has no current password to check, so the change form
    * cannot serve it. The forgotten-password flow can: the account is verified, so
    * it is sent a link like any other.
@@ -415,6 +501,35 @@ export function ProfilePage() {
     setGoogleFormError('')
     setGoogleMessage('')
     unlinkGoogle.mutate()
+  }
+
+  function handleDeleteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (deleteAccount.isPending || !profile) return
+
+    if (!deleteEmailMatches) {
+      setDeleteEmailError("Type this account's email address to confirm.")
+      return
+    }
+    if (!deletePassword) {
+      setDeletePasswordError('Enter your current password.')
+      return
+    }
+    setDeleteEmailError('')
+    setDeletePasswordError('')
+    setDeleteFormError('')
+    deleteAccount.mutate({ confirmEmail: confirmedEmail, currentPassword: deletePassword })
+  }
+
+  /** The passwordless path: the linked Google Account stands in for the password. */
+  function handleDeleteCredential(credential: string) {
+    if (!deleteEmailMatches) {
+      setDeleteEmailError("Type this account's email address to confirm.")
+      return Promise.resolve()
+    }
+    setDeleteEmailError('')
+    setDeleteFormError('')
+    return deleteAccount.mutateAsync({ confirmEmail: confirmedEmail, credential }).catch(() => undefined)
   }
 
   const trimmedName = fullName.trim()
@@ -626,6 +741,18 @@ export function ProfilePage() {
                   </dd>
                 </div>
               </dl>
+
+              <div className="mt-7 flex flex-wrap items-start justify-between gap-4 border-t border-border pt-6 sm:mt-8">
+                <div className="max-w-[54ch]">
+                  <h2 className="text-sm font-bold text-text">Delete account</h2>
+                  <p className="mt-1 text-sm text-text-muted">
+                    Removes the account and everything in it, on every device. It cannot be undone.
+                  </p>
+                </div>
+                <button type="button" className={btnDangerGhostSm} onClick={startDeleting}>
+                  Delete account
+                </button>
+              </div>
             </div>
           )}
 
@@ -903,6 +1030,124 @@ export function ProfilePage() {
                 </div>
               </form>
             )
+          )}
+
+          {profile && panel === 'delete' && (
+            <div className="app-content-in grid gap-5">
+              <div>
+                <h2 className="text-base font-medium">Delete your account</h2>
+                <p className="mt-1 text-sm text-text-muted">
+                  Everything belonging to{' '}
+                  <span className="font-semibold text-text">{profile.email}</span> goes the moment
+                  you confirm: your notes and their summaries, your flashcard decks and their review
+                  history, your quizzes and every score, your study groups, and your streak. Every
+                  device is signed out.
+                </p>
+                <p className="mt-2 text-sm font-bold text-error-solid">
+                  None of it can be restored, and there is no undo.
+                </p>
+              </div>
+
+              {deleteFormError && <FormAlert message={deleteFormError} />}
+
+              {deleteWithGoogle && !googleSignInEnabled ? (
+                <div className="grid gap-4">
+                  <p className="text-sm text-text-muted">
+                    This account signs in with Google only, and Google sign-in is unavailable just
+                    now, so it cannot confirm the deletion. Try again later, or set a password first
+                    and delete the account with that.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className={btnPrimarySm} onClick={startChangingPassword}>
+                      Set a password
+                    </button>
+                    <button type="button" className={btnGhostSm} onClick={closePanel}>
+                      Back to profile
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form className="grid gap-5" onSubmit={handleDeleteSubmit} noValidate>
+                  <TextField
+                    label="Confirm your email address"
+                    type="email"
+                    name="confirmEmail"
+                    autoComplete="off"
+                    placeholder={profile.email}
+                    hint="Type it out in full. Capitalisation and spaces do not matter."
+                    value={deleteEmail}
+                    error={deleteEmailError}
+                    disabled={deleteAccount.isPending}
+                    onChange={(event) => setDeleteEmail(event.target.value)}
+                  />
+
+                  {deleteWithGoogle ? (
+                    <>
+                      <p className="text-sm text-text-muted">
+                        This account has no password, so Google confirms it instead. It has to be
+                        the Google Account already linked to this one.
+                      </p>
+                      <AuthDivider label="then" />
+                      <div className="max-w-100">
+                        <GoogleSignInButton
+                          onCredential={handleDeleteCredential}
+                          label="Sign in with Google"
+                          busy={deleteAccount.isPending}
+                        />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          className={btnGhostSm}
+                          onClick={closePanel}
+                          disabled={deleteAccount.isPending}
+                        >
+                          Cancel
+                        </button>
+                        {!deleteEmailMatches && !deleteAccount.isPending && (
+                          <span className="text-xs text-text-muted">
+                            Confirm your address before signing in.
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <TextField
+                        label="Current password"
+                        type="password"
+                        name="currentPassword"
+                        autoComplete="current-password"
+                        value={deletePassword}
+                        error={deletePasswordError}
+                        disabled={deleteAccount.isPending}
+                        onChange={(event) => setDeletePassword(event.target.value)}
+                      />
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="submit"
+                          className={btnDangerSm}
+                          disabled={
+                            deleteAccount.isPending || !deleteEmailMatches || !deletePassword
+                          }
+                        >
+                          {deleteAccount.isPending ? 'Deleting…' : 'Delete my account'}
+                        </button>
+                        <button
+                          type="button"
+                          className={btnGhostSm}
+                          onClick={closePanel}
+                          disabled={deleteAccount.isPending}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </form>
+              )}
+            </div>
           )}
 
           {profile && panel === 'google' && (

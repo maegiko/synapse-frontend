@@ -19,6 +19,12 @@ export interface AuthContextValue {
   continueWithGoogle: (credential: string) => Promise<void>
   adoptSession: (session: AuthResponse) => void
   logout: () => Promise<void>
+  /**
+   * Drops the session locally, with no call to the backend. For the one case
+   * where {@link logout} cannot be used: the account has just been deleted, so
+   * there is nothing left to revoke and no account for the token to reach.
+   */
+  endSession: () => void
   setUserDetails: (details: UserDetails) => void
   refreshUser: () => Promise<void>
 }

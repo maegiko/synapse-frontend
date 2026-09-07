@@ -5,6 +5,7 @@ import { GuestRoute, ProtectedRoute } from './components/RouteGuards'
 import { ProtectedPageTitle } from './components/ProtectedPageTitle'
 import { ScrollToTop } from './components/ScrollToTop'
 import { StreakCelebrationProvider } from './components/StreakCelebration'
+import { AccountDeletedPage } from './pages/AccountDeletedPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { DeckPage } from './pages/DeckPage'
@@ -65,6 +66,7 @@ function App() {
               }
             />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/account-deleted" element={<AccountDeletedPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

@@ -23,6 +23,8 @@ export const API_PATHS = {
     google: '/api/auth/google',
   },
   user: {
+    /** DELETE destroys the account. The profile itself lives at `details`. */
+    account: '/api/user',
     details: '/api/user/details',
     emailChange: '/api/user/email-change',
     /** POST links a Google Account, DELETE unlinks it. */
