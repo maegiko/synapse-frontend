@@ -5,8 +5,17 @@ import synapseLogo from '../assets/synapse_logo.webp'
 import { shell } from '../components/ui'
 
 const TITLE = 'Privacy policy - Synapse'
-const LAST_UPDATED = '6 September 2026'
+const LAST_UPDATED = '7 September 2026'
 const CONTACT_EMAIL = 'kennethk.dev@gmail.com'
+
+/**
+ * Where the backend and its database actually run: the Northflank project sits in
+ * its US-Central region. Set by hand, because only the deployment knows this, and
+ * it moves if the project is ever redeployed elsewhere. Keep it accurate — naming
+ * the wrong country in a transfer disclosure is worse than the vaguer sentence it
+ * replaced.
+ */
+const HOSTING_REGION = 'the United States'
 
 /**
  * The privacy policy, at a fixed public address.
@@ -84,8 +93,11 @@ export function PrivacyPage() {
               receives your email address and the contents of those messages.
             </li>
             <li>
-              <strong className="font-bold text-text">Google</strong>, only if you choose "Continue
-              with Google" or link a Google Account. See below.
+              <strong className="font-bold text-text">Google</strong>, on the pages that offer
+              "Continue with Google". Those pages load Google's sign-in library, which means Google
+              sees your network address and may set its own cookies there, whether or not you go on
+              to use it. No other page contacts Google: the fonts and everything else are served by
+              Synapse. What Google tells Synapse when you do sign in is described below.
             </li>
             <li>
               <strong className="font-bold text-text">PostHog</strong> counts how often a handful of
@@ -102,6 +114,22 @@ export function PrivacyPage() {
           <p>
             Your account details and study material are not sold, rented, or shared with anyone
             else, and are not used to advertise to you.
+          </p>
+        </Section>
+
+        <Section title="Where it is held">
+          <p>
+            The services above are not all in one place, and most of them are not in Australia.
+            Groq, Resend, PostHog and Google all handle data in the United States. Northflank runs
+            the application and its database in {HOSTING_REGION}. Cloudflare serves the site itself
+            from whichever of its locations is nearest to you, which could be anywhere.
+          </p>
+          <p>
+            So if you are in the United Kingdom, the European Economic Area or Australia, using
+            Synapse means your data leaves it. Each of those providers publishes the data
+            processing terms it offers its customers, including the transfer safeguards it commits
+            to, and those published terms are what this transfer rests on. Ask at the address below
+            and you will be pointed at the right one.
           </p>
         </Section>
 
@@ -144,11 +172,10 @@ export function PrivacyPage() {
             schedule.
           </p>
           <p>
-            Synapse does not yet have a delete-my-account button. Email{' '}
-            <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-accent-foreground">
-              {CONTACT_EMAIL}
-            </a>{' '}
-            and your account and its contents will be removed.
+            You can delete your account yourself, from your profile. It is immediate and it is
+            final: there is no grace period, nothing is archived, and none of it can be brought
+            back. Your email address becomes free to register again afterwards, but doing so makes
+            a new empty account rather than restoring the old one.
           </p>
         </Section>
 
@@ -168,9 +195,9 @@ export function PrivacyPage() {
         <Section title="Your choices">
           <p>
             You can change your name and time zone, move your account to a different email address,
-            set or change your password, link or unlink Google, and delete any note, deck, quiz or
-            group, all from inside Synapse. To get a copy of your data or to delete your account
-            entirely, email the address below.
+            set or change your password, link or unlink Google, delete any note, deck, quiz or
+            group, and delete the whole account, all from inside Synapse. To get a copy of your
+            data, email the address below.
           </p>
         </Section>
 
@@ -192,9 +219,15 @@ export function PrivacyPage() {
           </p>
         </Section>
 
-        <p className="mt-12 text-sm">
+        <p className="mt-12 flex flex-wrap gap-x-5 gap-y-2 text-sm">
           <Link to="/" className="font-semibold text-accent-foreground no-underline hover:underline">
             Back to home
+          </Link>
+          <Link
+            to="/terms"
+            className="font-semibold text-accent-foreground no-underline hover:underline"
+          >
+            Terms of service
           </Link>
         </p>
       </main>
